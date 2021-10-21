@@ -100,9 +100,22 @@ export interface ReserveDexMarketAccounts {
   vaultSigner: PublicKey;
 }
 
+/**
+ * TODO:
+ * @export
+ * @class JetReserve
+ */
 export class JetReserve {
   private conn: Connection;
 
+  /**
+   * Creates an instance of JetReserve.
+   * @param {JetClient} client
+   * @param {JetMarket} market
+   * @param {PublicKey} address
+   * @param {ReserveData} data
+   * @memberof JetReserve
+   */
   constructor(
     private client: JetClient,
     private market: JetMarket,
@@ -112,11 +125,21 @@ export class JetReserve {
     this.conn = this.client.program.provider.connection;
   }
 
+  /**
+   * TODO:
+   * @returns {Promise<string>}
+   * @memberof JetReserve
+   */
   async refresh(): Promise<string> {
     let tx = new Transaction().add(this.makeRefreshIx());
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @returns {TransactionInstruction}
+   * @memberof JetReserve
+   */
   makeRefreshIx(): TransactionInstruction {
     return this.client.program.instruction.refreshReserve({
       accounts: {
@@ -133,6 +156,11 @@ export class JetReserve {
     });
   }
 
+  /**
+   * TODO:
+   * @returns {Promise<ReserveDexMarketAccounts>}
+   * @memberof JetReserve
+   */
   async loadDexMarketAccounts(): Promise<ReserveDexMarketAccounts> {
     if (this.data.tokenMint.equals(this.market.quoteTokenMint)) {
       // The quote token doesn't have a DEX market
@@ -177,6 +205,15 @@ export class JetReserve {
     };
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {JetClient} client
+   * @param {PublicKey} address
+   * @param {JetMarket} [maybeMarket]
+   * @returns {Promise<JetReserve>}
+   * @memberof JetReserve
+   */
   static async load(
     client: JetClient,
     address: PublicKey,
@@ -192,9 +229,11 @@ export class JetReserve {
 
   /**
    * Derive all the associated accounts for a reserve.
-   * @param address The reserve address to derive the accounts for.
-   * @param tokenMint The address of the mint for the token stored in the reserve.
-   * @param market The address of the market the reserve belongs to.
+   * @param {JetClient} client The client to use for the request
+   * @param {PublicKey} address The reserve address to derive the accounts for.
+   * @param {PublicKey} tokenMint The address of the mint for the token stored in the reserve.
+   * @returns {Promise<ReserveAccounts>}
+   * @memberof JetReserve
    */
   static async deriveAccounts(
     client: JetClient,

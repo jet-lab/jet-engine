@@ -2,7 +2,6 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import * as BL from "@solana/buffer-layout";
-
 import { CreateReserveParams, JetReserve } from "./reserve";
 import { JetClient, DEX_ID, DEX_ID_DEVNET } from ".";
 import * as util from "./util";
@@ -36,7 +35,24 @@ export interface JetMarketData {
   reserves: JetMarketReserveInfo[];
 }
 
+/**
+ * TODO:
+ * @export
+ * @class JetMarket
+ * @implements {JetMarketData}
+ */
 export class JetMarket implements JetMarketData {
+  /**
+   * Creates an instance of JetMarket.
+   * @param {JetClient} client
+   * @param {PublicKey} address
+   * @param {PublicKey} quoteTokenMint
+   * @param {string} quoteCurrency
+   * @param {PublicKey} marketAuthority
+   * @param {PublicKey} owner
+   * @param {JetMarketReserveInfo[]} reserves
+   * @memberof JetMarket
+   */
   private constructor(
     private client: JetClient,
     public address: PublicKey,
@@ -47,6 +63,15 @@ export class JetMarket implements JetMarketData {
     public reserves: JetMarketReserveInfo[]
   ) {}
 
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {JetClient} client
+   * @param {PublicKey} address
+   * @returns {Promise<[any, JetMarketReserveInfo[]]>}
+   * @memberof JetMarket
+   */
   private static async fetchData(
     client: JetClient,
     address: PublicKey
@@ -62,9 +87,10 @@ export class JetMarket implements JetMarketData {
 
   /**
    * Load the market account data from the network.
-   * @param client The program client
-   * @param address The address of the market.
-   * @returns An object for interacting with the Jet market.
+   * @param {JetClient} client The program client
+   * @param {PublicKey} address The address of the market.
+   * @returns {Promise<JetMarket>} An object for interacting with the Jet market.
+   * @memberof JetMarket
    */
   static async load(client: JetClient, address: PublicKey): Promise<JetMarket> {
     const [data, reserveInfoList] = await JetMarket.fetchData(client, address);
@@ -82,8 +108,9 @@ export class JetMarket implements JetMarketData {
 
   /**
    * Get the latest market account data from the network.
+   * @memberof JetMarket
    */
-  async refresh(): Promise<void> {
+  async refresh() {
     const [data, reserveInfoList] = await JetMarket.fetchData(
       this.client,
       this.address
@@ -96,6 +123,11 @@ export class JetMarket implements JetMarketData {
     this.quoteTokenMint = data.quoteTokenMint;
   }
 
+  /**
+   * TODO:
+   * @param {u64} flags
+   * @memberof JetMarket
+   */
   async setFlags(flags: u64) {
     await this.client.program.rpc.setMarketFlags(flags, {
       accounts: {
@@ -105,6 +137,12 @@ export class JetMarket implements JetMarketData {
     });
   }
 
+  /**
+   * TODO:
+   * @param {CreateReserveParams} params
+   * @returns {Promise<JetReserve>}
+   * @memberof JetMarket
+   */
   async createReserve(params: CreateReserveParams): Promise<JetReserve> {
     let account = params.account;
 
@@ -131,7 +169,7 @@ export class JetMarket implements JetMarketData {
     const createReserveAccount =
       await this.client.program.account.reserve.createInstruction(account);
 
-    const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
+    // const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
 
     await this.client.program.rpc.initReserve(bumpSeeds, params.config, {
       accounts: {

@@ -7,7 +7,6 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import * as anchor from "@project-serum/anchor";
-
 import { Amount, DEX_ID, DEX_ID_DEVNET } from ".";
 import { DerivedAccount, JetClient } from "./client";
 import { JetMarket, JetMarketReserveInfo } from "./market";
@@ -18,7 +17,18 @@ import {
 } from "@solana/spl-token";
 import { JetReserve } from "./reserve";
 
+/**
+ * TODO:
+ * @export
+ * @class TokenAmount
+ */
 export class TokenAmount {
+  /**
+   * Creates an instance of TokenAmount.
+   * @param {PublicKey} mint
+   * @param {anchor.BN} amount
+   * @memberof TokenAmount
+   */
   constructor(public mint: PublicKey, public amount: anchor.BN) {}
 }
 
@@ -35,13 +45,26 @@ export interface User {
   loans(): TokenAmount[];
 }
 
+/**
+ * TODO:
+ * @export
+ * @class JetUser
+ * @implements {User}
+ */
 export class JetUser implements User {
   private _deposits: TokenAmount[] = [];
   private _collateral: TokenAmount[] = [];
   private _loans: TokenAmount[] = [];
-
   private conn: Connection;
 
+  /**
+   * Creates an instance of JetUser.
+   * @param {JetClient} client
+   * @param {JetMarket} market
+   * @param {PublicKey} address
+   * @param {DerivedAccount} obligation
+   * @memberof JetUser
+   */
   private constructor(
     private client: JetClient,
     public market: JetMarket,
@@ -51,6 +74,15 @@ export class JetUser implements User {
     this.conn = this.client.program.provider.connection;
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {JetClient} client
+   * @param {JetMarket} market
+   * @param {PublicKey} address
+   * @returns {Promise<JetUser>}
+   * @memberof JetUser
+   */
   static async load(
     client: JetClient,
     market: JetMarket,
@@ -67,6 +99,13 @@ export class JetUser implements User {
     return user;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} loanReserve
+   * @param {JetReserve} collateralReserve
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async liquidateDex(
     loanReserve: JetReserve,
     collateralReserve: JetReserve
@@ -75,6 +114,13 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} loanReserve
+   * @param {JetReserve} collateralReserve
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeLiquidateDexTx(
     loanReserve: JetReserve,
     collateralReserve: JetReserve
@@ -125,6 +171,16 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} loanReserve
+   * @param {JetReserve} collateralReserve
+   * @param {PublicKey} payerAccount
+   * @param {PublicKey} receiverAccount
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async liquidate(
     loanReserve: JetReserve,
     collateralReserve: JetReserve,
@@ -142,6 +198,16 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} _loanReserve
+   * @param {JetReserve} _collateralReserve
+   * @param {PublicKey} _payerAccount
+   * @param {PublicKey} _receiverAccount
+   * @param {Amount} _amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeLiquidateTx(
     _loanReserve: JetReserve,
     _collateralReserve: JetReserve,
@@ -152,6 +218,14 @@ export class JetUser implements User {
     throw new Error("not yet implemented");
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async repay(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -161,6 +235,14 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeRepayTx(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -193,6 +275,13 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async withdrawCollateral(
     reserve: JetReserve,
     amount: Amount
@@ -201,6 +290,13 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeWithdrawCollateralTx(
     reserve: JetReserve,
     amount: Amount
@@ -234,6 +330,14 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async withdraw(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -243,6 +347,14 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeWithdrawTx(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -278,6 +390,14 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async deposit(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -287,6 +407,14 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} tokenAccount
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
   async makeDepositTx(
     reserve: JetReserve,
     tokenAccount: PublicKey,
@@ -330,6 +458,13 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async depositCollateral(
     reserve: JetReserve,
     amount: Amount
@@ -338,7 +473,17 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
-  async makeDepositCollateralTx(reserve: JetReserve, amount: Amount) {
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
+  async makeDepositCollateralTx(
+    reserve: JetReserve,
+    amount: Amount
+  ): Promise<Transaction> {
     const accounts = await this.findReserveAccounts(reserve);
     const obligationAccountInfo = await this.conn.getAccountInfo(
       this.obligation.address
@@ -384,6 +529,14 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} receiver
+   * @param {Amount} amount
+   * @returns {Promise<string>}
+   * @memberof JetUser
+   */
   async borrow(
     reserve: JetReserve,
     receiver: PublicKey,
@@ -393,7 +546,19 @@ export class JetUser implements User {
     return await this.client.program.provider.send(tx);
   }
 
-  async makeBorrowTx(reserve: JetReserve, receiver: PublicKey, amount: Amount) {
+  /**
+   * TODO:
+   * @param {JetReserve} reserve
+   * @param {PublicKey} receiver
+   * @param {Amount} amount
+   * @returns {Promise<Transaction>}
+   * @memberof JetUser
+   */
+  async makeBorrowTx(
+    reserve: JetReserve,
+    receiver: PublicKey,
+    amount: Amount
+  ): Promise<Transaction> {
     const accounts = await this.findReserveAccounts(reserve);
     const loanAccountInfo = await this.conn.getAccountInfo(
       accounts.loan.address
@@ -428,6 +593,14 @@ export class JetUser implements User {
     return tx;
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {JetReserve} reserve
+   * @param {DerivedAccount} account
+   * @returns {TransactionInstruction}
+   * @memberof JetUser
+   */
   private makeInitDepositAccountIx(
     reserve: JetReserve,
     account: DerivedAccount
@@ -453,6 +626,14 @@ export class JetUser implements User {
     );
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {JetReserve} reserve
+   * @param {DerivedAccount} account
+   * @returns {TransactionInstruction}
+   * @memberof JetUser
+   */
   private makeInitCollateralAccountIx(
     reserve: JetReserve,
     account: DerivedAccount
@@ -478,6 +659,14 @@ export class JetUser implements User {
     );
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {JetReserve} reserve
+   * @param {DerivedAccount} account
+   * @returns {TransactionInstruction}
+   * @memberof JetUser
+   */
   private makeInitLoanAccountIx(
     reserve: JetReserve,
     account: DerivedAccount
@@ -500,6 +689,12 @@ export class JetUser implements User {
     });
   }
 
+  /**
+   * TODO:
+   * @private
+   * @returns {TransactionInstruction}
+   * @memberof JetUser
+   */
   private makeInitObligationAccountIx(): TransactionInstruction {
     return this.client.program.instruction.initObligation(
       this.obligation.bumpSeed,
@@ -518,6 +713,10 @@ export class JetUser implements User {
     );
   }
 
+  /**
+   * TODO:
+   * @memberof JetUser
+   */
   async refresh() {
     this._loans = [];
     this._deposits = [];
@@ -528,6 +727,12 @@ export class JetUser implements User {
     }
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {JetMarketReserveInfo} reserve
+   * @memberof JetUser
+   */
   private async refreshReserve(reserve: JetMarketReserveInfo) {
     const accounts = await this.findReserveAccounts(reserve);
 
@@ -536,6 +741,13 @@ export class JetUser implements User {
     await this.refreshAccount(this._collateral, accounts.collateral);
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {TokenAmount[]} appendTo
+   * @param {DerivedAccount} account
+   * @memberof JetUser
+   */
   private async refreshAccount(
     appendTo: TokenAmount[],
     account: DerivedAccount
@@ -553,6 +765,13 @@ export class JetUser implements User {
     }
   }
 
+  /**
+   * TODO:
+   * @private
+   * @param {(JetMarketReserveInfo | JetReserve)} reserve
+   * @returns {Promise<UserReserveAccounts>}
+   * @memberof JetUser
+   */
   private async findReserveAccounts(
     reserve: JetMarketReserveInfo | JetReserve
   ): Promise<UserReserveAccounts> {
@@ -584,22 +803,28 @@ export class JetUser implements User {
   /**
    * Get all the deposits held by the user, excluding those amounts being
    * used as collateral for a loan.
+   * @returns {TokenAmount[]}
+   * @memberof JetUser
    */
-  deposits() {
+  deposits(): TokenAmount[] {
     return this._deposits;
   }
 
   /**
    * Get all the collateral deposits held by the user.
+   * @returns {TokenAmount[]}
+   * @memberof JetUser
    */
-  collateral() {
+  collateral(): TokenAmount[] {
     return this._collateral;
   }
 
   /**
    * Get the loans held by the user
+   * @returns {TokenAmount[]}
+   * @memberof JetUser
    */
-  loans() {
+  loans(): TokenAmount[] {
     return this._loans;
   }
 }

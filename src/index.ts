@@ -28,17 +28,49 @@ export type AmountUnits =
   | { depositNotes: {} }
   | { loanNotes: {} };
 
+/**
+ * TODO:
+ * @export
+ * @class Amount
+ */
 export class Amount {
+  /**
+   * Creates an instance of Amount.
+   * @param {AmountUnits} units
+   * @param {anchor.BN} value
+   * @memberof Amount
+   */
   constructor(public units: AmountUnits, public value: anchor.BN) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {(number | u64)} amount
+   * @returns {Amount}
+   * @memberof Amount
+   */
   static tokens(amount: number | u64): Amount {
     return new Amount({ tokens: {} }, new anchor.BN(amount));
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {(number | u64)} amount
+   * @returns {Amount}
+   * @memberof Amount
+   */
   static depositNotes(amount: number | u64): Amount {
     return new Amount({ depositNotes: {} }, new anchor.BN(amount));
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {(number | u64)} amount
+   * @returns {Amount}
+   * @memberof Amount
+   */
   static loanNotes(amount: number | u64): Amount {
     return new Amount({ loanNotes: {} }, new anchor.BN(amount));
   }

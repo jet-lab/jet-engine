@@ -1,18 +1,7 @@
 import { PublicKey, Keypair } from "@solana/web3.js";
 import * as anchor from "@project-serum/anchor";
-
-import { JET_ID } from ".";
 import { CreateMarketParams, JetMarket } from "./market";
-
-export class DerivedAccount {
-  public address: PublicKey;
-  public bumpSeed: number;
-
-  constructor(address: PublicKey, bumpSeed: number) {
-    this.address = address;
-    this.bumpSeed = bumpSeed;
-  }
-}
+import { JET_ID } from ".";
 
 interface ToBytes {
   toBytes(): Uint8Array;
@@ -24,13 +13,47 @@ interface HasPublicKey {
 
 type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string;
 
+/**
+ * TODO:
+ * @export
+ * @class DerivedAccount
+ */
+export class DerivedAccount {
+  public address: PublicKey;
+  public bumpSeed: number;
+
+  /**
+   * Creates an instance of DerivedAccount.
+   * @param {PublicKey} address
+   * @param {number} bumpSeed
+   * @memberof DerivedAccount
+   */
+  constructor(address: PublicKey, bumpSeed: number) {
+    this.address = address;
+    this.bumpSeed = bumpSeed;
+  }
+}
+
+/**
+ * TODO:
+ * @export
+ * @class JetClient
+ */
 export class JetClient {
+  /**
+   * Creates an instance of JetClient.
+   * @param {anchor.Program} program
+   * @param {boolean} [devnet]
+   * @memberof JetClient
+   */
   constructor(public program: anchor.Program, public devnet?: boolean) {}
 
   /**
    * Create a new client for interacting with the Jet lending program.
-   * @param provider The provider with wallet/network access that can be used to send transactions.
-   * @returns The client
+   * @param {anchor.Provider} provider The provider with wallet/network access that can be used to send transactions.
+   * @param {boolean} [devnet] Flag to determine if the connection is for devnet
+   * @returns {Promise<JetClient>} The client
+   * @memberof JetClient
    */
   static async connect(
     provider: anchor.Provider,
@@ -44,8 +67,9 @@ export class JetClient {
 
   /**
    * Find a PDA
-   * @param seeds
-   * @returns
+   * @param {DerivedAccountSeed[]} seeds
+   * @returns {Promise<DerivedAccount>}
+   * @memberof JetClient
    */
   async findDerivedAccount(
     seeds: DerivedAccountSeed[]
@@ -68,6 +92,12 @@ export class JetClient {
     return new DerivedAccount(address, bumpSeed);
   }
 
+  /**
+   * TODO:
+   * @param {CreateMarketParams} params
+   * @returns {Promise<JetMarket>}
+   * @memberof JetClient
+   */
   async createMarket(params: CreateMarketParams): Promise<JetMarket> {
     let account = params.account;
 
