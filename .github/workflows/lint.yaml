@@ -1,9 +1,6 @@
 name: Lint
 
-on:
-  push:
-    branches:
-      - "*"
+on: [push]
 
 env:
   NODE_VERSION: 16

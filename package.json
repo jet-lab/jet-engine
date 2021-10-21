@@ -7,6 +7,7 @@
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "build": "tsc",
+    "docs": "typedoc --excludePrivate --includeVersion src/index.ts",
     "fmt:write": "prettier . --write",
     "fmt:check": "prettier . --check",
     "lint": "eslint src/ --ext .ts",
@@ -23,6 +24,7 @@
     "@typescript-eslint/parser": "^5.1.0",
     "eslint": "^8.0.1",
     "prettier": "^2.3.2",
+    "typedoc": "^0.22.6",
     "typescript": "^4.3.5"
   },
   "files": [
