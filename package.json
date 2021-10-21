@@ -2,9 +2,23 @@
   "name": "@jet-lab/jet-engine",
   "version": "0.1.0",
   "description": "Library for interacting with the Jet on-chain programs",
+  "keywords": [
+    "solana",
+    "jet",
+    "protocol",
+    "blockchain"
+  ],
+  "homepage": "https://github.com/jet-lab/jet-engine#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jet-lab/jet-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jet-lab/jet-engine/issues"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "license": "AGPL-3.0-or-later",
+  "license": "GPL-3.0",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib/",
@@ -28,9 +42,15 @@
     "typedoc": "^0.22.6",
     "typescript": "^4.3.5"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
-    "./bin/*",
-    "./lib/*"
+    "lib",
+    "package.json",
+    "tsconfig.json",
+    "LICENSE",
+    "README.md"
   ],
   "directories": {
     "lib": "lib"
