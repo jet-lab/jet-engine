@@ -4,6 +4,7 @@
   "description": "Library for interacting with the Jet on-chain programs",
   "main": "./lib/index.js",
   "typings": "./lib/index.d.ts",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "build": "tsc",
     "lint": "tslint -c tslint.json src/**/*.ts",
