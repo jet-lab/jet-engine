@@ -754,7 +754,12 @@ export class JetUser implements User {
   ) {
     try {
       const info = await this.conn.getAccountInfo(account.address);
-      const tokenAccount: TokenAccount = TokenAccountLayout.decode(info?.data);
+
+      if (!info) {
+        throw Error(`failed to get account info for ${account.address}`); // FIXME:
+      }
+
+      const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data);
 
       appendTo.push({
         mint: tokenAccount.mint,
