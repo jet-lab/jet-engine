@@ -43,9 +43,9 @@ export class PubkeyField extends BL.Layout {
 }
 
 export function numberField(property?: string): NumberField {
-    return new NumberField(property);
+  return new NumberField(property);
 }
 
-export function pubkeyField(property? :string): PubkeyField {
-    return new PubkeyField(property);
+export function pubkeyField(property?: string): PubkeyField {
+  return new PubkeyField(property);
 }

@@ -117,7 +117,7 @@ export class JetUser implements User {
           dexProgram: this.client.devnet ? DEX_ID_DEVNET : DEX_ID,
 
           tokenProgram: TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY
+          rent: SYSVAR_RENT_PUBKEY,
         },
       })
     );

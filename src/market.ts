@@ -45,7 +45,7 @@ export class JetMarket implements JetMarketData {
     public marketAuthority: PublicKey,
     public owner: PublicKey,
     public reserves: JetMarketReserveInfo[]
-  ) { }
+  ) {}
 
   private static async fetchData(
     client: JetClient,
@@ -100,8 +100,8 @@ export class JetMarket implements JetMarketData {
     await this.client.program.rpc.setMarketFlags(flags, {
       accounts: {
         market: this.address,
-        owner: this.owner
-      }
+        owner: this.owner,
+      },
     });
   }
 
@@ -199,5 +199,5 @@ export enum MarketFlags {
   HaltBorrows = 1 << 0,
   HaltRepays = 1 << 1,
   HaltDeposits = 1 << 2,
-  HaltAll = HaltBorrows | HaltRepays | HaltDeposits
+  HaltAll = HaltBorrows | HaltRepays | HaltDeposits,
 }

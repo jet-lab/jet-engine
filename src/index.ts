@@ -23,7 +23,10 @@ export const JET_ID = new PublicKey(
   "JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU"
 );
 
-export type AmountUnits = { tokens: {} } | { depositNotes: {} } | { loanNotes: {} };
+export type AmountUnits =
+  | { tokens: {} }
+  | { depositNotes: {} }
+  | { loanNotes: {} };
 
 export class Amount {
   constructor(public units: AmountUnits, public value: anchor.BN) {}
