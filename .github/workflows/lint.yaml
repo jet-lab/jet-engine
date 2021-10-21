@@ -1,6 +1,12 @@
 name: Lint
 
-on: [push]
+on:
+  push:
+    paths:
+      - src/**/*.ts
+      - .eslint*
+      - .prettier*
+      - '*.json'
 
 env:
   NODE_VERSION: 16
