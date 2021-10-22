@@ -253,7 +253,7 @@ export class JetUser implements User {
 
     tx.add(reserve.makeRefreshIx());
     tx.add(
-      this.client.program.instruction.repay(amount, {
+      this.client.program.instruction.repay(amount.toRpcArg(), {
         accounts: {
           market: this.market.address,
           marketAuthority: this.market.marketAuthority,
@@ -310,21 +310,25 @@ export class JetUser implements User {
 
     tx.add(reserve.makeRefreshIx());
     tx.add(
-      this.client.program.instruction.withdrawCollateral(bumpSeeds, amount, {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.withdrawCollateral(
+        bumpSeeds,
+        amount.toRpcArg(),
+        {
+          accounts: {
+            market: this.market.address,
+            marketAuthority: this.market.marketAuthority,
 
-          owner: this.address,
-          obligation: this.obligation.address,
+            owner: this.address,
+            obligation: this.obligation.address,
 
-          reserve: reserve.address,
-          collateralAccount: accounts.collateral.address,
-          depositAccount: accounts.deposits.address,
+            reserve: reserve.address,
+            collateralAccount: accounts.collateral.address,
+            depositAccount: accounts.deposits.address,
 
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      })
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        }
+      )
     );
 
     return tx;
@@ -367,7 +371,7 @@ export class JetUser implements User {
     tx.add(
       this.client.program.instruction.withdraw(
         accounts.deposits.bumpSeed,
-        amount,
+        amount.toRpcArg(),
         {
           accounts: {
             market: this.market.address,
@@ -435,7 +439,7 @@ export class JetUser implements User {
     tx.add(
       this.client.program.instruction.deposit(
         accounts.deposits.bumpSeed,
-        amount,
+        amount.toRpcArg(),
         {
           accounts: {
             market: this.market.address,
@@ -508,22 +512,24 @@ export class JetUser implements User {
 
     tx.add(reserve.makeRefreshIx());
     tx.add(
-      this.client.program.instruction.depositCollateral(bumpSeeds, amount, {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.depositCollateral(
+        bumpSeeds,
+        amount.toRpcArg(),
+        {
+          accounts: {
+            market: this.market.address,
+            marketAuthority: this.market.marketAuthority,
 
-          obligation: this.obligation.address,
-          depositAccount: accounts.deposits.address,
-          collateralAccount: accounts.collateral.address,
-          owner: this.address,
+            obligation: this.obligation.address,
+            depositAccount: accounts.deposits.address,
+            collateralAccount: accounts.collateral.address,
+            owner: this.address,
+            reserve: reserve.address,
 
-          reserve: reserve.address,
-          noteMint: reserve.data.depositNoteMint,
-
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      })
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        }
+      )
     );
 
     return tx;
@@ -572,22 +578,26 @@ export class JetUser implements User {
 
     tx.add(reserve.makeRefreshIx());
     tx.add(
-      this.client.program.instruction.borrow(accounts.loan.bumpSeed, amount, {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.borrow(
+        accounts.loan.bumpSeed,
+        amount.toRpcArg(),
+        {
+          accounts: {
+            market: this.market.address,
+            marketAuthority: this.market.marketAuthority,
 
-          reserve: reserve.address,
-          obligation: this.obligation.address,
-          vault: reserve.data.vault,
-          loanNoteMint: reserve.data.loanNoteMint,
-          borrower: this.address,
-          loanAccount: accounts.loan.address,
+            reserve: reserve.address,
+            obligation: this.obligation.address,
+            vault: reserve.data.vault,
+            loanNoteMint: reserve.data.loanNoteMint,
+            borrower: this.address,
+            loanAccount: accounts.loan.address,
 
-          receiverAccount: receiver,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      })
+            receiverAccount: receiver,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        }
+      )
     );
 
     return tx;

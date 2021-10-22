@@ -23,10 +23,14 @@ export const JET_ID = new PublicKey(
   "JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU"
 );
 
+type AmountUnitsTokens = { tokens: {} };
+type AmountUnitsDepositNotes = { depositNotes: {} };
+type AmountUnitsLoanNotes = { loanNotes: {} };
+
 export type AmountUnits =
-  | { tokens: {} }
-  | { depositNotes: {} }
-  | { loanNotes: {} };
+  | AmountUnitsTokens
+  | AmountUnitsDepositNotes
+  | AmountUnitsLoanNotes;
 
 /**
  * TODO:
@@ -73,5 +77,12 @@ export class Amount {
    */
   static loanNotes(amount: number | u64): Amount {
     return new Amount({ loanNotes: {} }, new anchor.BN(amount));
+  }
+
+  toRpcArg(): { units: never; value: anchor.BN } {
+    return {
+      units: this.units as never,
+      value: this.value,
+    };
   }
 }

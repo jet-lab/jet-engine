@@ -27,6 +27,8 @@ export interface ReserveConfig {
   loanOriginationFee: number;
   liquidationSlippage: number;
   liquidationDexTradeMax: anchor.BN;
+  reserved0: number;
+  reserved1: number[];
 }
 
 export interface ReserveAccounts {
