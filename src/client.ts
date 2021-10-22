@@ -1,5 +1,6 @@
 import { PublicKey, Keypair } from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
+import { Program, Provider } from "@project-serum/anchor";
+import { Jet, IDL } from "./jet";
 import { CreateMarketParams, JetMarket } from "./market";
 import { JET_ID } from ".";
 
@@ -42,27 +43,24 @@ export class DerivedAccount {
 export class JetClient {
   /**
    * Creates an instance of JetClient.
-   * @param {anchor.Program} program
+   * @param {Program<Jet>} program
    * @param {boolean} [devnet]
    * @memberof JetClient
    */
-  constructor(public program: anchor.Program, public devnet?: boolean) {}
+  constructor(public program: Program<Jet>, public devnet?: boolean) {}
 
   /**
    * Create a new client for interacting with the Jet lending program.
-   * @param {anchor.Provider} provider The provider with wallet/network access that can be used to send transactions.
+   * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
    * @param {boolean} [devnet] Flag to determine if the connection is for devnet
    * @returns {Promise<JetClient>} The client
    * @memberof JetClient
    */
   static async connect(
-    provider: anchor.Provider,
+    provider: Provider,
     devnet?: boolean
   ): Promise<JetClient> {
-    const idl = await anchor.Program.fetchIdl(JET_ID, provider);
-    const program = new anchor.Program(idl, JET_ID, provider);
-
-    return new JetClient(program, devnet);
+    return new JetClient(new Program(IDL, JET_ID, provider), devnet);
   }
 
   /**
