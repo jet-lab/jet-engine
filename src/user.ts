@@ -4,18 +4,18 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
-import { Amount, DEX_ID, DEX_ID_DEVNET } from ".";
-import { DerivedAccount, JetClient } from "./client";
-import { JetMarket, JetMarketReserveInfo } from "./market";
+  TransactionInstruction
+} from '@solana/web3.js'
+import * as anchor from '@project-serum/anchor'
+import { Amount, DEX_ID, DEX_ID_DEVNET } from '.'
+import { DerivedAccount, JetClient } from './client'
+import { JetMarket, JetMarketReserveInfo } from './market'
 import {
   AccountLayout as TokenAccountLayout,
   AccountInfo as TokenAccount,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { JetReserve } from "./reserve";
+  TOKEN_PROGRAM_ID
+} from '@solana/spl-token'
+import { JetReserve } from './reserve'
 
 /**
  * TODO:
@@ -33,16 +33,16 @@ export class TokenAmount {
 }
 
 export interface User {
-  address: PublicKey;
+  address: PublicKey
 
-  deposits(): TokenAmount[];
+  deposits(): TokenAmount[]
 
-  collateral(): TokenAmount[];
+  collateral(): TokenAmount[]
 
   /**
    * Get the loans held by the user
    */
-  loans(): TokenAmount[];
+  loans(): TokenAmount[]
 }
 
 /**
@@ -52,10 +52,10 @@ export interface User {
  * @implements {User}
  */
 export class JetUser implements User {
-  private _deposits: TokenAmount[] = [];
-  private _collateral: TokenAmount[] = [];
-  private _loans: TokenAmount[] = [];
-  private conn: Connection;
+  private _deposits: TokenAmount[] = []
+  private _collateral: TokenAmount[] = []
+  private _loans: TokenAmount[] = []
+  private conn: Connection
 
   /**
    * Creates an instance of JetUser.
@@ -71,7 +71,7 @@ export class JetUser implements User {
     public address: PublicKey,
     private obligation: DerivedAccount
   ) {
-    this.conn = this.client.program.provider.connection;
+    this.conn = this.client.program.provider.connection
   }
 
   /**
@@ -83,20 +83,16 @@ export class JetUser implements User {
    * @returns {Promise<JetUser>}
    * @memberof JetUser
    */
-  static async load(
-    client: JetClient,
-    market: JetMarket,
-    address: PublicKey
-  ): Promise<JetUser> {
+  static async load(client: JetClient, market: JetMarket, address: PublicKey): Promise<JetUser> {
     const obligationAccount = await client.findDerivedAccount([
-      "obligation",
+      'obligation',
       market.address,
-      address,
-    ]);
-    const user = new JetUser(client, market, address, obligationAccount);
+      address
+    ])
+    const user = new JetUser(client, market, address, obligationAccount)
 
-    user.refresh();
-    return user;
+    user.refresh()
+    return user
   }
 
   /**
@@ -106,12 +102,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async liquidateDex(
-    loanReserve: JetReserve,
-    collateralReserve: JetReserve
-  ): Promise<string> {
-    const tx = await this.makeLiquidateDexTx(loanReserve, collateralReserve);
-    return await this.client.program.provider.send(tx);
+  async liquidateDex(loanReserve: JetReserve, collateralReserve: JetReserve): Promise<string> {
+    const tx = await this.makeLiquidateDexTx(loanReserve, collateralReserve)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -125,18 +118,15 @@ export class JetUser implements User {
     loanReserve: JetReserve,
     collateralReserve: JetReserve
   ): Promise<Transaction> {
-    const loanDexAccounts = await loanReserve.loadDexMarketAccounts();
-    const collateralDexAccounts =
-      await collateralReserve.loadDexMarketAccounts();
-    const loanAccounts = await this.findReserveAccounts(loanReserve);
-    const collateralAccounts = await this.findReserveAccounts(
-      collateralReserve
-    );
+    const loanDexAccounts = await loanReserve.loadDexMarketAccounts()
+    const collateralDexAccounts = await collateralReserve.loadDexMarketAccounts()
+    const loanAccounts = await this.findReserveAccounts(loanReserve)
+    const collateralAccounts = await this.findReserveAccounts(collateralReserve)
 
-    const tx = new Transaction();
+    const tx = new Transaction()
 
-    tx.add(loanReserve.makeRefreshIx());
-    tx.add(collateralReserve.makeRefreshIx());
+    tx.add(loanReserve.makeRefreshIx())
+    tx.add(collateralReserve.makeRefreshIx())
 
     tx.add(
       this.client.program.instruction.liquidateDex({
@@ -163,12 +153,12 @@ export class JetUser implements User {
           dexProgram: this.client.devnet ? DEX_ID_DEVNET : DEX_ID,
 
           tokenProgram: TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
+          rent: SYSVAR_RENT_PUBKEY
+        }
       })
-    );
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -194,8 +184,8 @@ export class JetUser implements User {
       payerAccount,
       receiverAccount,
       amount
-    );
-    return await this.client.program.provider.send(tx);
+    )
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -215,7 +205,7 @@ export class JetUser implements User {
     _receiverAccount: PublicKey,
     _amount: Amount
   ): Promise<Transaction> {
-    throw new Error("not yet implemented");
+    throw new Error('not yet implemented')
   }
 
   /**
@@ -226,13 +216,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async repay(
-    reserve: JetReserve,
-    tokenAccount: PublicKey,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeRepayTx(reserve, tokenAccount, amount);
-    return await this.client.program.provider.send(tx);
+  async repay(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
+    const tx = await this.makeRepayTx(reserve, tokenAccount, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -248,10 +234,10 @@ export class JetUser implements User {
     tokenAccount: PublicKey,
     amount: Amount
   ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
-    const tx = new Transaction();
+    const accounts = await this.findReserveAccounts(reserve)
+    const tx = new Transaction()
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
       this.client.program.instruction.repay(amount.toRpcArg(), {
         accounts: {
@@ -267,12 +253,12 @@ export class JetUser implements User {
           loanAccount: accounts.loan.address,
           payerAccount: tokenAccount,
 
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
       })
-    );
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -282,12 +268,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async withdrawCollateral(
-    reserve: JetReserve,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeWithdrawCollateralTx(reserve, amount);
-    return await this.client.program.provider.send(tx);
+  async withdrawCollateral(reserve: JetReserve, amount: Amount): Promise<string> {
+    const tx = await this.makeWithdrawCollateralTx(reserve, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -297,41 +280,34 @@ export class JetUser implements User {
    * @returns {Promise<Transaction>}
    * @memberof JetUser
    */
-  async makeWithdrawCollateralTx(
-    reserve: JetReserve,
-    amount: Amount
-  ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
+  async makeWithdrawCollateralTx(reserve: JetReserve, amount: Amount): Promise<Transaction> {
+    const accounts = await this.findReserveAccounts(reserve)
     const bumpSeeds = {
       collateralAccount: accounts.collateral.bumpSeed,
-      depositAccount: accounts.deposits.bumpSeed,
-    };
-    const tx = new Transaction();
+      depositAccount: accounts.deposits.bumpSeed
+    }
+    const tx = new Transaction()
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
-      this.client.program.instruction.withdrawCollateral(
-        bumpSeeds,
-        amount.toRpcArg(),
-        {
-          accounts: {
-            market: this.market.address,
-            marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.withdrawCollateral(bumpSeeds, amount.toRpcArg(), {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
 
-            owner: this.address,
-            obligation: this.obligation.address,
+          owner: this.address,
+          obligation: this.obligation.address,
 
-            reserve: reserve.address,
-            collateralAccount: accounts.collateral.address,
-            depositAccount: accounts.deposits.address,
+          reserve: reserve.address,
+          collateralAccount: accounts.collateral.address,
+          depositAccount: accounts.deposits.address,
 
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
+          tokenProgram: TOKEN_PROGRAM_ID
         }
-      )
-    );
+      })
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -342,13 +318,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async withdraw(
-    reserve: JetReserve,
-    tokenAccount: PublicKey,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeWithdrawTx(reserve, tokenAccount, amount);
-    return await this.client.program.provider.send(tx);
+  async withdraw(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
+    const tx = await this.makeWithdrawTx(reserve, tokenAccount, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -364,34 +336,30 @@ export class JetUser implements User {
     tokenAccount: PublicKey,
     amount: Amount
   ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
-    const tx = new Transaction();
+    const accounts = await this.findReserveAccounts(reserve)
+    const tx = new Transaction()
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
-      this.client.program.instruction.withdraw(
-        accounts.deposits.bumpSeed,
-        amount.toRpcArg(),
-        {
-          accounts: {
-            market: this.market.address,
-            marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.withdraw(accounts.deposits.bumpSeed, amount.toRpcArg(), {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
 
-            withdrawAccount: tokenAccount,
-            depositAccount: accounts.deposits.address,
-            depositor: this.address,
+          withdrawAccount: tokenAccount,
+          depositAccount: accounts.deposits.address,
+          depositor: this.address,
 
-            reserve: reserve.address,
-            vault: reserve.data.vault,
-            depositNoteMint: reserve.data.depositNoteMint,
+          reserve: reserve.address,
+          vault: reserve.data.vault,
+          depositNoteMint: reserve.data.depositNoteMint,
 
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
+          tokenProgram: TOKEN_PROGRAM_ID
         }
-      )
-    );
+      })
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -402,13 +370,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async deposit(
-    reserve: JetReserve,
-    tokenAccount: PublicKey,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeDepositTx(reserve, tokenAccount, amount);
-    return await this.client.program.provider.send(tx);
+  async deposit(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
+    const tx = await this.makeDepositTx(reserve, tokenAccount, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -424,42 +388,36 @@ export class JetUser implements User {
     tokenAccount: PublicKey,
     amount: Amount
   ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
-    const depositAccountInfo = await this.conn.getAccountInfo(
-      accounts.deposits.address
-    );
+    const accounts = await this.findReserveAccounts(reserve)
+    const depositAccountInfo = await this.conn.getAccountInfo(accounts.deposits.address)
 
-    const tx = new Transaction();
+    const tx = new Transaction()
 
     if (depositAccountInfo == null) {
-      tx.add(this.makeInitDepositAccountIx(reserve, accounts.deposits));
+      tx.add(this.makeInitDepositAccountIx(reserve, accounts.deposits))
     }
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
-      this.client.program.instruction.deposit(
-        accounts.deposits.bumpSeed,
-        amount.toRpcArg(),
-        {
-          accounts: {
-            market: this.market.address,
-            marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.deposit(accounts.deposits.bumpSeed, amount.toRpcArg(), {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
 
-            depositSource: tokenAccount,
-            depositAccount: accounts.deposits.address,
-            depositor: this.address,
+          depositSource: tokenAccount,
+          depositAccount: accounts.deposits.address,
+          depositor: this.address,
 
-            reserve: reserve.address,
-            vault: reserve.data.vault,
-            depositNoteMint: reserve.data.depositNoteMint,
+          reserve: reserve.address,
+          vault: reserve.data.vault,
+          depositNoteMint: reserve.data.depositNoteMint,
 
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
+          tokenProgram: TOKEN_PROGRAM_ID
         }
-      )
-    );
+      })
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -469,12 +427,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async depositCollateral(
-    reserve: JetReserve,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeDepositCollateralTx(reserve, amount);
-    return await this.client.program.provider.send(tx);
+  async depositCollateral(reserve: JetReserve, amount: Amount): Promise<string> {
+    const tx = await this.makeDepositCollateralTx(reserve, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -484,55 +439,44 @@ export class JetUser implements User {
    * @returns {Promise<Transaction>}
    * @memberof JetUser
    */
-  async makeDepositCollateralTx(
-    reserve: JetReserve,
-    amount: Amount
-  ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
-    const obligationAccountInfo = await this.conn.getAccountInfo(
-      this.obligation.address
-    );
-    const collateralAccountInfo = await this.conn.getAccountInfo(
-      accounts.collateral.address
-    );
+  async makeDepositCollateralTx(reserve: JetReserve, amount: Amount): Promise<Transaction> {
+    const accounts = await this.findReserveAccounts(reserve)
+    const obligationAccountInfo = await this.conn.getAccountInfo(this.obligation.address)
+    const collateralAccountInfo = await this.conn.getAccountInfo(accounts.collateral.address)
 
-    const tx = new Transaction();
+    const tx = new Transaction()
 
     if (obligationAccountInfo == null) {
-      tx.add(this.makeInitObligationAccountIx());
+      tx.add(this.makeInitObligationAccountIx())
     }
     if (collateralAccountInfo == null) {
-      tx.add(this.makeInitCollateralAccountIx(reserve, accounts.collateral));
+      tx.add(this.makeInitCollateralAccountIx(reserve, accounts.collateral))
     }
 
     const bumpSeeds = {
       depositAccount: accounts.deposits.bumpSeed,
-      collateralAccount: accounts.collateral.bumpSeed,
-    };
+      collateralAccount: accounts.collateral.bumpSeed
+    }
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
-      this.client.program.instruction.depositCollateral(
-        bumpSeeds,
-        amount.toRpcArg(),
-        {
-          accounts: {
-            market: this.market.address,
-            marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.depositCollateral(bumpSeeds, amount.toRpcArg(), {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
 
-            obligation: this.obligation.address,
-            depositAccount: accounts.deposits.address,
-            collateralAccount: accounts.collateral.address,
-            owner: this.address,
-            reserve: reserve.address,
+          obligation: this.obligation.address,
+          depositAccount: accounts.deposits.address,
+          collateralAccount: accounts.collateral.address,
+          owner: this.address,
+          reserve: reserve.address,
 
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
+          tokenProgram: TOKEN_PROGRAM_ID
         }
-      )
-    );
+      })
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -543,13 +487,9 @@ export class JetUser implements User {
    * @returns {Promise<string>}
    * @memberof JetUser
    */
-  async borrow(
-    reserve: JetReserve,
-    receiver: PublicKey,
-    amount: Amount
-  ): Promise<string> {
-    const tx = await this.makeBorrowTx(reserve, receiver, amount);
-    return await this.client.program.provider.send(tx);
+  async borrow(reserve: JetReserve, receiver: PublicKey, amount: Amount): Promise<string> {
+    const tx = await this.makeBorrowTx(reserve, receiver, amount)
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -565,42 +505,36 @@ export class JetUser implements User {
     receiver: PublicKey,
     amount: Amount
   ): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve);
-    const loanAccountInfo = await this.conn.getAccountInfo(
-      accounts.loan.address
-    );
+    const accounts = await this.findReserveAccounts(reserve)
+    const loanAccountInfo = await this.conn.getAccountInfo(accounts.loan.address)
 
-    const tx = new Transaction();
+    const tx = new Transaction()
 
     if (loanAccountInfo == null) {
-      tx.add(this.makeInitLoanAccountIx(reserve, accounts.loan));
+      tx.add(this.makeInitLoanAccountIx(reserve, accounts.loan))
     }
 
-    tx.add(reserve.makeRefreshIx());
+    tx.add(reserve.makeRefreshIx())
     tx.add(
-      this.client.program.instruction.borrow(
-        accounts.loan.bumpSeed,
-        amount.toRpcArg(),
-        {
-          accounts: {
-            market: this.market.address,
-            marketAuthority: this.market.marketAuthority,
+      this.client.program.instruction.borrow(accounts.loan.bumpSeed, amount.toRpcArg(), {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
 
-            reserve: reserve.address,
-            obligation: this.obligation.address,
-            vault: reserve.data.vault,
-            loanNoteMint: reserve.data.loanNoteMint,
-            borrower: this.address,
-            loanAccount: accounts.loan.address,
+          reserve: reserve.address,
+          obligation: this.obligation.address,
+          vault: reserve.data.vault,
+          loanNoteMint: reserve.data.loanNoteMint,
+          borrower: this.address,
+          loanAccount: accounts.loan.address,
 
-            receiverAccount: receiver,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
+          receiverAccount: receiver,
+          tokenProgram: TOKEN_PROGRAM_ID
         }
-      )
-    );
+      })
+    )
 
-    return tx;
+    return tx
   }
 
   /**
@@ -615,25 +549,22 @@ export class JetUser implements User {
     reserve: JetReserve,
     account: DerivedAccount
   ): TransactionInstruction {
-    return this.client.program.instruction.initDepositAccount(
-      account.bumpSeed,
-      {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+    return this.client.program.instruction.initDepositAccount(account.bumpSeed, {
+      accounts: {
+        market: this.market.address,
+        marketAuthority: this.market.marketAuthority,
 
-          reserve: reserve.address,
-          depositNoteMint: reserve.data.depositNoteMint,
+        reserve: reserve.address,
+        depositNoteMint: reserve.data.depositNoteMint,
 
-          depositor: this.address,
-          depositAccount: account.address,
+        depositor: this.address,
+        depositAccount: account.address,
 
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
       }
-    );
+    })
   }
 
   /**
@@ -648,25 +579,22 @@ export class JetUser implements User {
     reserve: JetReserve,
     account: DerivedAccount
   ): TransactionInstruction {
-    return this.client.program.instruction.initCollateralAccount(
-      account.bumpSeed,
-      {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+    return this.client.program.instruction.initCollateralAccount(account.bumpSeed, {
+      accounts: {
+        market: this.market.address,
+        marketAuthority: this.market.marketAuthority,
 
-          reserve: reserve.address,
-          depositNoteMint: reserve.data.depositNoteMint,
-          owner: this.address,
-          obligation: this.obligation.address,
-          collateralAccount: account.address,
+        reserve: reserve.address,
+        depositNoteMint: reserve.data.depositNoteMint,
+        owner: this.address,
+        obligation: this.obligation.address,
+        collateralAccount: account.address,
 
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
       }
-    );
+    })
   }
 
   /**
@@ -694,9 +622,9 @@ export class JetUser implements User {
 
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-        rent: SYSVAR_RENT_PUBKEY,
-      },
-    });
+        rent: SYSVAR_RENT_PUBKEY
+      }
+    })
   }
 
   /**
@@ -706,21 +634,18 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   private makeInitObligationAccountIx(): TransactionInstruction {
-    return this.client.program.instruction.initObligation(
-      this.obligation.bumpSeed,
-      {
-        accounts: {
-          market: this.market.address,
-          marketAuthority: this.market.marketAuthority,
+    return this.client.program.instruction.initObligation(this.obligation.bumpSeed, {
+      accounts: {
+        market: this.market.address,
+        marketAuthority: this.market.marketAuthority,
 
-          obligation: this.obligation.address,
-          borrower: this.address,
+        obligation: this.obligation.address,
+        borrower: this.address,
 
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        },
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
       }
-    );
+    })
   }
 
   /**
@@ -728,12 +653,12 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   async refresh() {
-    this._loans = [];
-    this._deposits = [];
-    this._collateral = [];
+    this._loans = []
+    this._deposits = []
+    this._collateral = []
 
     for (const reserve of this.market.reserves) {
-      await this.refreshReserve(reserve);
+      await this.refreshReserve(reserve)
     }
   }
 
@@ -744,11 +669,11 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   private async refreshReserve(reserve: JetMarketReserveInfo) {
-    const accounts = await this.findReserveAccounts(reserve);
+    const accounts = await this.findReserveAccounts(reserve)
 
-    await this.refreshAccount(this._deposits, accounts.deposits);
-    await this.refreshAccount(this._loans, accounts.loan);
-    await this.refreshAccount(this._collateral, accounts.collateral);
+    await this.refreshAccount(this._deposits, accounts.deposits)
+    await this.refreshAccount(this._loans, accounts.loan)
+    await this.refreshAccount(this._collateral, accounts.collateral)
   }
 
   /**
@@ -758,23 +683,20 @@ export class JetUser implements User {
    * @param {DerivedAccount} account
    * @memberof JetUser
    */
-  private async refreshAccount(
-    appendTo: TokenAmount[],
-    account: DerivedAccount
-  ) {
+  private async refreshAccount(appendTo: TokenAmount[], account: DerivedAccount) {
     try {
-      const info = await this.conn.getAccountInfo(account.address);
+      const info = await this.conn.getAccountInfo(account.address)
 
       if (!info) {
-        throw Error(`failed to get account info for ${account.address}`); // FIXME:
+        throw Error(`failed to get account info for ${account.address}`) // FIXME:
       }
 
-      const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data);
+      const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data)
 
       appendTo.push({
         mint: tokenAccount.mint,
-        amount: tokenAccount.amount,
-      });
+        amount: tokenAccount.amount
+      })
     } catch (e) {
       // ignore error, which should mean it's an invalid/uninitialized account
     }
@@ -791,28 +713,28 @@ export class JetUser implements User {
     reserve: JetMarketReserveInfo | JetReserve
   ): Promise<UserReserveAccounts> {
     const deposits = await this.client.findDerivedAccount([
-      "deposits",
+      'deposits',
       reserve.address,
-      this.address,
-    ]);
+      this.address
+    ])
     const loan = await this.client.findDerivedAccount([
-      "loan",
+      'loan',
       reserve.address,
       this.obligation.address,
-      this.address,
-    ]);
+      this.address
+    ])
     const collateral = await this.client.findDerivedAccount([
-      "collateral",
+      'collateral',
       reserve.address,
       this.obligation.address,
-      this.address,
-    ]);
+      this.address
+    ])
 
     return {
       deposits,
       loan,
-      collateral,
-    };
+      collateral
+    }
   }
 
   /**
@@ -822,7 +744,7 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   deposits(): TokenAmount[] {
-    return this._deposits;
+    return this._deposits
   }
 
   /**
@@ -831,7 +753,7 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   collateral(): TokenAmount[] {
-    return this._collateral;
+    return this._collateral
   }
 
   /**
@@ -840,7 +762,7 @@ export class JetUser implements User {
    * @memberof JetUser
    */
   loans(): TokenAmount[] {
-    return this._loans;
+    return this._loans
   }
 }
 
@@ -848,7 +770,7 @@ export class JetUser implements User {
  * The set of accounts that can be derived for a user, for each reserve in a market.
  */
 interface UserReserveAccounts {
-  deposits: DerivedAccount;
-  loan: DerivedAccount;
-  collateral: DerivedAccount;
+  deposits: DerivedAccount
+  loan: DerivedAccount
+  collateral: DerivedAccount
 }
