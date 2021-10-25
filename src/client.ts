@@ -16,10 +16,11 @@
  */
 
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
-import { Program, Provider, ProgramAccount, IdlAccounts } from "@project-serum/anchor"
+import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
 import { Jet } from "./idl/jet"
 import IDL from "./idl/jet.json"
 import { CreateMarketParams, JetMarket } from "./market"
+import { Market, Obligation, Reserve } from "./types"
 import { JET_ID } from "."
 
 interface ToBytes {
@@ -76,37 +77,31 @@ export class JetClient {
   /**
    * Return all `Market` program accounts that have been created
    * @param {GetProgramAccountsFilter[]} [filter]
-   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["market"]>[]>}
+   * @returns {Promise<ProgramAccount<Market>[]>}
    * @memberof JetClient
    */
-  async allMarkets(
-    filter?: GetProgramAccountsFilter[]
-  ): Promise<ProgramAccount<IdlAccounts<Jet>["market"]>[]> {
-    return (this.program.account.market as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
+  async allMarkets(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Market>[]> {
+    return this.program.account.market.all(filter)
   }
 
   /**
    * Return all `Obligation` program accounts that have been created
    * @param {GetProgramAccountsFilter[]} [filter]
-   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["obligation"]>[]>}
+   * @returns {Promise<ProgramAccount<Obligation>[]>}
    * @memberof JetClient
    */
-  async allObligations(
-    filter?: GetProgramAccountsFilter[]
-  ): Promise<ProgramAccount<IdlAccounts<Jet>["obligation"]>[]> {
-    return (this.program.account.obligation as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
+  async allObligations(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Obligation>[]> {
+    return (this.program.account.obligation as any).all(filter)
   }
 
   /**
    * Return all `Reserve` program accounts that have been created
    * @param {GetProgramAccountsFilter[]} [filter]
-   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["reserve"]>[]>}
+   * @returns {Promise<ProgramAccount<Reserve>[]>}
    * @memberof JetClient
    */
-  async allReserves(
-    filter?: GetProgramAccountsFilter[]
-  ): Promise<ProgramAccount<IdlAccounts<Jet>["reserve"]>[]> {
-    return (this.program.account.reserve as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
+  async allReserves(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Reserve>[]> {
+    return (this.program.account.reserve as any).all(filter)
   }
 
   /**
