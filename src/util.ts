@@ -10,12 +10,12 @@ import { PublicKey } from '@solana/web3.js'
  */
 export class NumberField extends BL.Layout {
   /**
-   * Creates an instance of NumberField.
-   * @param {string} [property]
-   * @memberof NumberField
+   * Creates an instance of NumberField which decodes to a BN.
+   * @param span The number of bytes in the number
+   * @param property Field name within in a struct
    */
-  constructor(property?: string) {
-    super(24, property)
+  constructor(span: number, property?: string) {
+    super(span, property)
   }
 
   /**
@@ -95,13 +95,22 @@ export class PubkeyField extends BL.Layout {
 }
 
 /**
- * TODO:
+ * Returns an unsigned number field that is 24 bytes wide
  * @export
  * @param {string} [property]
  * @returns {NumberField}
  */
 export function numberField(property?: string): NumberField {
-  return new NumberField(property)
+  return new NumberField(24, property)
+}
+
+/**
+ * Returns an unsigned number field that is 8 bytes wide
+ * @param property 
+ * @returns 
+ */
+export function u64Field(property?: string): NumberField {
+  return new NumberField(8, property)
 }
 
 /**
