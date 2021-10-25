@@ -91,7 +91,7 @@ export class JetUser implements User {
     ])
     const user = new JetUser(client, market, address, obligationAccount)
 
-    user.refresh()
+    await user.refresh()
     return user
   }
 
