@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair } from '@solana/web3.js'
-import { Program, Provider } from '@project-serum/anchor'
-import { Jet } from './idl/jet'
-import IDL from './idl/jet.json'
-import { CreateMarketParams, JetMarket } from './market'
-import { JET_ID } from '.'
+import { PublicKey, Keypair } from "@solana/web3.js"
+import { Program, Provider } from "@project-serum/anchor"
+import { Jet } from "./idl/jet"
+import IDL from "./idl/jet.json"
+import { CreateMarketParams, JetMarket } from "./market"
+import { JET_ID } from "."
 
 interface ToBytes {
   toBytes(): Uint8Array
@@ -82,11 +82,11 @@ export class JetClient {
    */
   async findDerivedAccount(seeds: DerivedAccountSeed[]): Promise<DerivedAccount> {
     const seedBytes = seeds.map(s => {
-      if (typeof s == 'string') {
+      if (typeof s == "string") {
         return Buffer.from(s)
-      } else if ('publicKey' in s) {
+      } else if ("publicKey" in s) {
         return s.publicKey.toBytes()
-      } else if ('toBytes' in s) {
+      } else if ("toBytes" in s) {
         return s.toBytes()
       } else {
         return s

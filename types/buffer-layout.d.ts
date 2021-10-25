@@ -1,4 +1,4 @@
-declare module 'buffer-layout' {
+declare module "buffer-layout" {
   export class Layout<T = any> {
     span: number
     property?: string

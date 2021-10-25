@@ -6,7 +6,7 @@ on:
       - src/**/*.ts
       - .eslint*
       - .prettier*
-      - '*.json'
+      - "*.json"
 
 env:
   NODE_VERSION: 16

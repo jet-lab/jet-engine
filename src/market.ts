@@ -15,22 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token'
-import * as anchor from '@project-serum/anchor'
-import * as BL from '@solana/buffer-layout'
-import { CreateReserveParams, JetReserve } from './reserve'
-import { JetClient, DEX_ID, DEX_ID_DEVNET } from '.'
-import * as util from './util'
+import { PublicKey, Keypair } from "@solana/web3.js"
+import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
+import * as anchor from "@project-serum/anchor"
+import * as BL from "@solana/buffer-layout"
+import { CreateReserveParams, JetReserve } from "./reserve"
+import { JetClient, DEX_ID, DEX_ID_DEVNET } from "."
+import * as util from "./util"
 
 const MAX_RESERVES = 32
 
 const ReserveInfoStruct = BL.struct([
   util.pubkeyField("address"),
-  BL.blob(80, '_UNUSED_0_'),
-  util.numberField('price'),
-  util.numberField('depositNoteExchangeRate'),
-  util.numberField('loanNoteExchangeRate'),
+  BL.blob(80, "_UNUSED_0_"),
+  util.numberField("price"),
+  util.numberField("depositNoteExchangeRate"),
+  util.numberField("loanNoteExchangeRate"),
   util.numberField("minCollateralRatio"),
   BL.u16("liquidationBonus"),
   BL.blob(158, "_UNUSED_1_"),

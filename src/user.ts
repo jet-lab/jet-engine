@@ -22,17 +22,17 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
-} from '@solana/web3.js'
-import * as anchor from '@project-serum/anchor'
-import { Amount, DEX_ID, DEX_ID_DEVNET } from '.'
-import { DerivedAccount, JetClient } from './client'
-import { JetMarket, JetMarketReserveInfo } from './market'
+} from "@solana/web3.js"
+import * as anchor from "@project-serum/anchor"
+import { Amount, DEX_ID, DEX_ID_DEVNET } from "."
+import { DerivedAccount, JetClient } from "./client"
+import { JetMarket, JetMarketReserveInfo } from "./market"
 import {
   AccountLayout as TokenAccountLayout,
   AccountInfo as TokenAccount,
   TOKEN_PROGRAM_ID
-} from '@solana/spl-token'
-import { JetReserve } from './reserve'
+} from "@solana/spl-token"
+import { JetReserve } from "./reserve"
 
 /**
  * TODO:
@@ -102,7 +102,7 @@ export class JetUser implements User {
    */
   static async load(client: JetClient, market: JetMarket, address: PublicKey): Promise<JetUser> {
     const obligationAccount = await client.findDerivedAccount([
-      'obligation',
+      "obligation",
       market.address,
       address
     ])
@@ -147,11 +147,11 @@ export class JetUser implements User {
 
     tx.add(
       // Turning off type checks here, because liquidateDex does not exist in
-      // the IDL, because liquidateDex is handled in a special way here: 
+      // the IDL, because liquidateDex is handled in a special way here:
       // https://github.com/jet-lab/jet-v1/blob/65a19e49fb27bc95a5b543f9fec49b43d799a8cd/programs/jet/src/lib.rs
       // And if it were a normal instruction, then a bug in rust would blow
       // the stack while validating anchor constraints.
-      // 
+      //
       // If liquidateDex ever appears in the IDL then please remove this 'as any' hack
       (this.client.program.instruction as any).liquidateDex({
         accounts: {
@@ -229,7 +229,7 @@ export class JetUser implements User {
     _receiverAccount: PublicKey,
     _amount: Amount
   ): Promise<Transaction> {
-    throw new Error('not yet implemented')
+    throw new Error("not yet implemented")
   }
 
   /**
@@ -683,7 +683,7 @@ export class JetUser implements User {
 
     for (const reserve of this.market.reserves) {
       if (reserve.address.equals(PublicKey.default)) {
-        continue;
+        continue
       }
 
       await this.refreshReserve(reserve)
@@ -716,17 +716,17 @@ export class JetUser implements User {
       const info = await this.conn.getAccountInfo(account.address)
 
       if (info == null) {
-        return;
+        return
       }
 
       const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data)
 
       appendTo.push({
         mint: new PublicKey(tokenAccount.mint),
-        amount: new anchor.BN(tokenAccount.amount, undefined, "le"),
+        amount: new anchor.BN(tokenAccount.amount, undefined, "le")
       })
     } catch (e) {
-      console.log(`error getting user account: ${e}`);
+      console.log(`error getting user account: ${e}`)
       // ignore error, which should mean it's an invalid/uninitialized account
     }
   }
@@ -742,18 +742,18 @@ export class JetUser implements User {
     reserve: JetMarketReserveInfo | JetReserve
   ): Promise<UserReserveAccounts> {
     const deposits = await this.client.findDerivedAccount([
-      'deposits',
+      "deposits",
       reserve.address,
       this.address
     ])
     const loan = await this.client.findDerivedAccount([
-      'loan',
+      "loan",
       reserve.address,
       this.obligation.address,
       this.address
     ])
     const collateral = await this.client.findDerivedAccount([
-      'collateral',
+      "collateral",
       reserve.address,
       this.obligation.address,
       this.address

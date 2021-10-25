@@ -15,22 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as anchor from '@project-serum/anchor'
-import { Market as SerumMarket } from '@project-serum/serum'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import * as anchor from "@project-serum/anchor"
+import { Market as SerumMarket } from "@project-serum/serum"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import {
   Connection,
   Keypair,
   PublicKey,
   Transaction,
   TransactionInstruction
-} from '@solana/web3.js'
-import * as BL from "@solana/buffer-layout";
+} from "@solana/web3.js"
+import * as BL from "@solana/buffer-layout"
 
-import { DEX_ID, DEX_ID_DEVNET } from '.'
-import { JetClient, DerivedAccount } from './client'
-import { JetMarket } from './market'
-import * as util from "./util";
+import { DEX_ID, DEX_ID_DEVNET } from "."
+import { JetClient, DerivedAccount } from "./client"
+import { JetMarket } from "./market"
+import * as util from "./util"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -110,12 +110,12 @@ export interface ReserveData {
 }
 
 export interface ReserveStateData {
-  accruedUntil: anchor.BN,
-  outstandingDebt: anchor.BN,
-  uncollectedFees: anchor.BN,
-  totalDeposits: anchor.BN,
-  totalDepositNotes: anchor.BN,
-  totalLoanNotes: anchor.BN,
+  accruedUntil: anchor.BN
+  outstandingDebt: anchor.BN
+  uncollectedFees: anchor.BN
+  totalDeposits: anchor.BN
+  totalDepositNotes: anchor.BN
+  totalLoanNotes: anchor.BN
 }
 
 export interface ReserveDexMarketAccounts {
@@ -131,10 +131,10 @@ export interface ReserveDexMarketAccounts {
 }
 
 export interface UpdateReserveConfigParams {
-  config: ReserveConfig;
-  reserve: PublicKey;
-  market: PublicKey;
-  owner: Keypair;
+  config: ReserveConfig
+  reserve: PublicKey
+  market: PublicKey
+  owner: Keypair
 }
 
 /**
@@ -169,19 +169,17 @@ export class JetReserve {
    * @memberof JetReserve
    */
   async refresh(): Promise<void> {
-    await this.market.refresh();
+    await this.market.refresh()
 
-    const data: any = (await this.client.program.account.reserve.fetch(
-      this.address
-    ));
-    const stateData = new Uint8Array(data.state);
-    this.state = ReserveStateStruct.decode(stateData) as ReserveStateData;
-    this.data = data as ReserveData;
+    const data: any = await this.client.program.account.reserve.fetch(this.address)
+    const stateData = new Uint8Array(data.state)
+    this.state = ReserveStateStruct.decode(stateData) as ReserveStateData
+    this.data = data as ReserveData
   }
-  
+
   async sendRefreshTx(): Promise<string> {
-    let tx = new Transaction().add(this.makeRefreshIx());
-    return await this.client.program.provider.send(tx);
+    let tx = new Transaction().add(this.makeRefreshIx())
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -232,7 +230,7 @@ export class JetReserve {
 
     const dexSignerNonce = dexMarket.vaultSignerNonce
     const vaultSigner = await PublicKey.createProgramAddress(
-      [dexMarket.ownAddress.toBuffer(), dexSignerNonce.toArrayLike(Buffer, 'le', 8)],
+      [dexMarket.ownAddress.toBuffer(), dexSignerNonce.toArrayLike(Buffer, "le", 8)],
       this.client.devnet ? DEX_ID_DEVNET : DEX_ID
     )
 
@@ -254,12 +252,12 @@ export class JetReserve {
       accounts: {
         market: params.market,
         reserve: params.reserve,
-        owner: params.owner.publicKey,
+        owner: params.owner.publicKey
       },
-      signers: [params.owner],
-    });
+      signers: [params.owner]
+    })
   }
-  
+
   /**
    * TODO:
    * @static
@@ -294,13 +292,13 @@ export class JetReserve {
     tokenMint: PublicKey
   ): Promise<ReserveAccounts> {
     return {
-      vault: await client.findDerivedAccount(['vault', address]),
-      feeNoteVault: await client.findDerivedAccount(['fee-vault', address]),
-      dexSwapTokens: await client.findDerivedAccount(['dex-swap-tokens', address]),
-      dexOpenOrders: await client.findDerivedAccount(['dex-open-orders', address]),
+      vault: await client.findDerivedAccount(["vault", address]),
+      feeNoteVault: await client.findDerivedAccount(["fee-vault", address]),
+      dexSwapTokens: await client.findDerivedAccount(["dex-swap-tokens", address]),
+      dexOpenOrders: await client.findDerivedAccount(["dex-open-orders", address]),
 
-      loanNoteMint: await client.findDerivedAccount(['loans', address, tokenMint]),
-      depositNoteMint: await client.findDerivedAccount(['deposits', address, tokenMint])
+      loanNoteMint: await client.findDerivedAccount(["loans", address, tokenMint]),
+      depositNoteMint: await client.findDerivedAccount(["deposits", address, tokenMint])
     }
   }
 }
@@ -313,4 +311,4 @@ const ReserveStateStruct = BL.struct([
   util.numberField("totalDepositNotes"),
   util.u64Field("totalLoanNotes"),
   BL.blob(416 + 16, "_RESERVED_")
-]); 
+])

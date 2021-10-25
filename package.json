@@ -1,6 +1,6 @@
 {
   "name": "@jet-lab/jet-engine",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Library for interacting with the Jet on-chain programs",
   "keywords": [
     "solana",
@@ -26,7 +26,7 @@
     "fmt:write": "prettier . --write",
     "fmt:check": "prettier . --check",
     "lint": "eslint src/ --ext .ts",
-    "prepublish": "npm run build",
+    "prepublish": "npm run fmt:write; npm run build",
     "test": "jest"
   },
   "dependencies": {

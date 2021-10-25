@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as BL from '@solana/buffer-layout'
-import { BN } from '@project-serum/anchor'
-import { PublicKey } from '@solana/web3.js'
+import * as BL from "@solana/buffer-layout"
+import { BN } from "@project-serum/anchor"
+import { PublicKey } from "@solana/web3.js"
 
 /**
  * TODO:
@@ -123,8 +123,8 @@ export function numberField(property?: string): NumberField {
 
 /**
  * Returns an unsigned number field that is 8 bytes wide
- * @param property 
- * @returns 
+ * @param property
+ * @returns
  */
 export function u64Field(property?: string): NumberField {
   return new NumberField(8, property)
