@@ -1,2 +1,6 @@
+README.md
+src/idl/*
+
 lib/
 node_modules/
+

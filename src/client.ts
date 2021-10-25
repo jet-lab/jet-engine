@@ -1,37 +1,34 @@
-import { PublicKey, Keypair } from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
-import { CreateMarketParams, JetMarket } from "./market";
-import { JET_ID } from ".";
+import { PublicKey, Keypair } from '@solana/web3.js'
+import { Program, Provider } from '@project-serum/anchor'
+import { Jet } from './idl/jet'
+import IDL from './idl/jet.json'
+import { CreateMarketParams, JetMarket } from './market'
+import { JET_ID } from '.'
 
 interface ToBytes {
-  toBytes(): Uint8Array;
+  toBytes(): Uint8Array
 }
 
 interface HasPublicKey {
-  publicKey: PublicKey;
+  publicKey: PublicKey
 }
 
-type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string;
+type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string
 
 /**
- * TODO:
+ * Utility class to store a calculated PDA and
+ * the bump nonce associated with it.
  * @export
  * @class DerivedAccount
  */
 export class DerivedAccount {
-  public address: PublicKey;
-  public bumpSeed: number;
-
   /**
    * Creates an instance of DerivedAccount.
    * @param {PublicKey} address
    * @param {number} bumpSeed
    * @memberof DerivedAccount
    */
-  constructor(address: PublicKey, bumpSeed: number) {
-    this.address = address;
-    this.bumpSeed = bumpSeed;
-  }
+  constructor(public address: PublicKey, public bumpSeed: number) {}
 }
 
 /**
@@ -42,54 +39,47 @@ export class DerivedAccount {
 export class JetClient {
   /**
    * Creates an instance of JetClient.
-   * @param {anchor.Program} program
+   * @param {Program<Jet>} program
    * @param {boolean} [devnet]
    * @memberof JetClient
    */
-  constructor(public program: anchor.Program, public devnet?: boolean) {}
+  constructor(public program: Program<Jet>, public devnet?: boolean) {}
 
   /**
    * Create a new client for interacting with the Jet lending program.
-   * @param {anchor.Provider} provider The provider with wallet/network access that can be used to send transactions.
+   * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
    * @param {boolean} [devnet] Flag to determine if the connection is for devnet
    * @returns {Promise<JetClient>} The client
    * @memberof JetClient
    */
-  static async connect(
-    provider: anchor.Provider,
-    devnet?: boolean
-  ): Promise<JetClient> {
-    const idl = await anchor.Program.fetchIdl(JET_ID, provider);
-    const program = new anchor.Program(idl, JET_ID, provider);
-
-    return new JetClient(program, devnet);
+  static async connect(provider: Provider, devnet?: boolean): Promise<JetClient> {
+    return new JetClient(new Program<Jet>(IDL as any, JET_ID, provider), devnet)
   }
 
   /**
-   * Find a PDA
+   * Derive a PDA and associated bump nonce from
+   * the argued list of seeds.
    * @param {DerivedAccountSeed[]} seeds
    * @returns {Promise<DerivedAccount>}
    * @memberof JetClient
    */
-  async findDerivedAccount(
-    seeds: DerivedAccountSeed[]
-  ): Promise<DerivedAccount> {
-    const seedBytes = seeds.map((s) => {
-      if (typeof s == "string") {
-        return Buffer.from(s);
-      } else if ("publicKey" in s) {
-        return s.publicKey.toBytes();
-      } else if ("toBytes" in s) {
-        return s.toBytes();
+  async findDerivedAccount(seeds: DerivedAccountSeed[]): Promise<DerivedAccount> {
+    const seedBytes = seeds.map(s => {
+      if (typeof s == 'string') {
+        return Buffer.from(s)
+      } else if ('publicKey' in s) {
+        return s.publicKey.toBytes()
+      } else if ('toBytes' in s) {
+        return s.toBytes()
       } else {
-        return s;
+        return s
       }
-    });
+    })
     const [address, bumpSeed] = await PublicKey.findProgramAddress(
       seedBytes,
       this.program.programId
-    );
-    return new DerivedAccount(address, bumpSeed);
+    )
+    return new DerivedAccount(address, bumpSeed)
   }
 
   /**
@@ -99,10 +89,10 @@ export class JetClient {
    * @memberof JetClient
    */
   async createMarket(params: CreateMarketParams): Promise<JetMarket> {
-    let account = params.account;
+    let account = params.account
 
     if (account == undefined) {
-      account = Keypair.generate();
+      account = Keypair.generate()
     }
 
     await this.program.rpc.initMarket(
@@ -111,15 +101,13 @@ export class JetClient {
       params.quoteCurrencyMint,
       {
         accounts: {
-          market: account.publicKey,
+          market: account.publicKey
         },
         signers: [account],
-        instructions: [
-          await this.program.account.market.createInstruction(account),
-        ],
+        instructions: [await this.program.account.market.createInstruction(account)]
       }
-    );
+    )
 
-    return JetMarket.load(this, account.publicKey);
+    return JetMarket.load(this, account.publicKey)
   }
 }

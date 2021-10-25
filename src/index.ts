@@ -1,32 +1,27 @@
-import { PublicKey } from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
-import { u64 } from "@solana/spl-token";
+import { PublicKey } from '@solana/web3.js'
+import * as anchor from '@project-serum/anchor'
+import { u64 } from '@solana/spl-token'
 
-export { JetClient } from "./client";
-export { JetMarket, MarketFlags } from "./market";
-export { JetReserve, ReserveConfig } from "./reserve";
-export { JetUser } from "./user";
+export { JetClient } from './client'
+export { JetMarket, MarketFlags } from './market'
+export { JetReserve, ReserveConfig } from './reserve'
+export { JetUser } from './user'
 
-export const PLACEHOLDER_ACCOUNT = PublicKey.default;
+export const PLACEHOLDER_ACCOUNT = PublicKey.default
 
 // FIXME: this is probably different on devnet
-export const DEX_ID = new PublicKey(
-  "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
-);
+export const DEX_ID = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin')
 
-export const DEX_ID_DEVNET = new PublicKey(
-  "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY"
-);
+export const DEX_ID_DEVNET = new PublicKey('DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY')
 
 // FIXME: ???
-export const JET_ID = new PublicKey(
-  "JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU"
-);
+export const JET_ID = new PublicKey('JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU')
 
-export type AmountUnits =
-  | { tokens: {} }
-  | { depositNotes: {} }
-  | { loanNotes: {} };
+type AmountUnitsTokens = { tokens: {} }
+type AmountUnitsDepositNotes = { depositNotes: {} }
+type AmountUnitsLoanNotes = { loanNotes: {} }
+
+export type AmountUnits = AmountUnitsTokens | AmountUnitsDepositNotes | AmountUnitsLoanNotes
 
 /**
  * TODO:
@@ -50,7 +45,7 @@ export class Amount {
    * @memberof Amount
    */
   static tokens(amount: number | u64): Amount {
-    return new Amount({ tokens: {} }, new anchor.BN(amount));
+    return new Amount({ tokens: {} }, new anchor.BN(amount))
   }
 
   /**
@@ -61,7 +56,7 @@ export class Amount {
    * @memberof Amount
    */
   static depositNotes(amount: number | u64): Amount {
-    return new Amount({ depositNotes: {} }, new anchor.BN(amount));
+    return new Amount({ depositNotes: {} }, new anchor.BN(amount))
   }
 
   /**
@@ -72,6 +67,13 @@ export class Amount {
    * @memberof Amount
    */
   static loanNotes(amount: number | u64): Amount {
-    return new Amount({ loanNotes: {} }, new anchor.BN(amount));
+    return new Amount({ loanNotes: {} }, new anchor.BN(amount))
+  }
+
+  toRpcArg(): { units: never; value: anchor.BN } {
+    return {
+      units: this.units as never,
+      value: this.value
+    }
   }
 }

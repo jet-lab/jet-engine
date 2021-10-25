@@ -1,38 +1,38 @@
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
-import * as anchor from "@project-serum/anchor";
-import * as BL from "@solana/buffer-layout";
-import { CreateReserveParams, JetReserve } from "./reserve";
-import { JetClient, DEX_ID, DEX_ID_DEVNET } from ".";
-import * as util from "./util";
+import { PublicKey, Keypair } from '@solana/web3.js'
+import { TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token'
+import * as anchor from '@project-serum/anchor'
+import * as BL from '@solana/buffer-layout'
+import { CreateReserveParams, JetReserve } from './reserve'
+import { JetClient, DEX_ID, DEX_ID_DEVNET } from '.'
+import * as util from './util'
 
-const MAX_RESERVES = 32;
+const MAX_RESERVES = 32
 
 const ReserveInfoStruct = BL.struct([
-  util.pubkeyField("reserve"),
-  BL.blob(80, "_UNUSED_0_"),
-  util.numberField("price"),
-  util.numberField("depositNoteExchangeRate"),
-  util.numberField("loanNoteExchangeRate"),
-  BL.blob(72, "_UNUSED_1_"),
-]);
+  util.pubkeyField('reserve'),
+  BL.blob(80, '_UNUSED_0_'),
+  util.numberField('price'),
+  util.numberField('depositNoteExchangeRate'),
+  util.numberField('loanNoteExchangeRate'),
+  BL.blob(72, '_UNUSED_1_')
+])
 
-const MarketReserveInfoList = BL.seq(ReserveInfoStruct, MAX_RESERVES);
+const MarketReserveInfoList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
 
 export interface JetMarketReserveInfo {
-  address: PublicKey;
-  price: anchor.BN;
-  depositNoteExchangeRate: anchor.BN;
-  loanNoteExchangeRate: anchor.BN;
+  address: PublicKey
+  price: anchor.BN
+  depositNoteExchangeRate: anchor.BN
+  loanNoteExchangeRate: anchor.BN
 }
 
 export interface JetMarketData {
-  quoteTokenMint: PublicKey;
-  quoteCurrency: string;
-  marketAuthority: PublicKey;
-  owner: PublicKey;
+  quoteTokenMint: PublicKey
+  quoteCurrency: string
+  marketAuthority: PublicKey
+  owner: PublicKey
 
-  reserves: JetMarketReserveInfo[];
+  reserves: JetMarketReserveInfo[]
 }
 
 /**
@@ -76,13 +76,11 @@ export class JetMarket implements JetMarketData {
     client: JetClient,
     address: PublicKey
   ): Promise<[any, JetMarketReserveInfo[]]> {
-    let data: any = await client.program.account.market.fetch(address);
-    let reserveInfoData = new Uint8Array(data.reserves);
-    let reserveInfoList = MarketReserveInfoList.decode(
-      reserveInfoData
-    ) as JetMarketReserveInfo[];
+    let data: any = await client.program.account.market.fetch(address)
+    let reserveInfoData = new Uint8Array(data.reserves)
+    let reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
-    return [data, reserveInfoList];
+    return [data, reserveInfoList]
   }
 
   /**
@@ -93,7 +91,7 @@ export class JetMarket implements JetMarketData {
    * @memberof JetMarket
    */
   static async load(client: JetClient, address: PublicKey): Promise<JetMarket> {
-    const [data, reserveInfoList] = await JetMarket.fetchData(client, address);
+    const [data, reserveInfoList] = await JetMarket.fetchData(client, address)
 
     return new JetMarket(
       client,
@@ -103,7 +101,7 @@ export class JetMarket implements JetMarketData {
       data.marketAuthority,
       data.owner,
       reserveInfoList
-    );
+    )
   }
 
   /**
@@ -111,16 +109,13 @@ export class JetMarket implements JetMarketData {
    * @memberof JetMarket
    */
   async refresh() {
-    const [data, reserveInfoList] = await JetMarket.fetchData(
-      this.client,
-      this.address
-    );
+    const [data, reserveInfoList] = await JetMarket.fetchData(this.client, this.address)
 
-    this.reserves = reserveInfoList;
-    this.owner = data.owner;
-    this.marketAuthority = data.marketAuthority;
-    this.quoteCurrency = data.quoteCurrency;
-    this.quoteTokenMint = data.quoteTokenMint;
+    this.reserves = reserveInfoList
+    this.owner = data.owner
+    this.marketAuthority = data.marketAuthority
+    this.quoteCurrency = data.quoteCurrency
+    this.quoteTokenMint = data.quoteTokenMint
   }
 
   /**
@@ -132,9 +127,9 @@ export class JetMarket implements JetMarketData {
     await this.client.program.rpc.setMarketFlags(flags, {
       accounts: {
         market: this.address,
-        owner: this.owner,
-      },
-    });
+        owner: this.owner
+      }
+    })
   }
 
   /**
@@ -144,17 +139,17 @@ export class JetMarket implements JetMarketData {
    * @memberof JetMarket
    */
   async createReserve(params: CreateReserveParams): Promise<JetReserve> {
-    let account = params.account;
+    let account = params.account
 
     if (account == undefined) {
-      account = Keypair.generate();
+      account = Keypair.generate()
     }
 
     const derivedAccounts = await JetReserve.deriveAccounts(
       this.client,
       account.publicKey,
       params.tokenMint
-    );
+    )
 
     const bumpSeeds = {
       vault: derivedAccounts.vault.bumpSeed,
@@ -163,11 +158,12 @@ export class JetMarket implements JetMarketData {
       dexSwapTokens: derivedAccounts.dexSwapTokens.bumpSeed,
 
       loanNoteMint: derivedAccounts.loanNoteMint.bumpSeed,
-      depositNoteMint: derivedAccounts.depositNoteMint.bumpSeed,
-    };
+      depositNoteMint: derivedAccounts.depositNoteMint.bumpSeed
+    }
 
-    const createReserveAccount =
-      await this.client.program.account.reserve.createInstruction(account);
+    const createReserveAccount = await this.client.program.account.reserve.createInstruction(
+      account
+    )
 
     // const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
 
@@ -194,15 +190,14 @@ export class JetMarket implements JetMarketData {
 
         tokenProgram: TOKEN_PROGRAM_ID,
         dexProgram: this.client.devnet ? DEX_ID_DEVNET : DEX_ID,
-        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram: anchor.web3.SystemProgram.programId
       },
       instructions: [createReserveAccount],
-      signers: [account],
-    });
+      signers: [account]
+    })
 
-    return JetReserve.load(this.client, account.publicKey, this);
+    return JetReserve.load(this.client, account.publicKey, this)
   }
 }
 
@@ -211,31 +206,31 @@ export interface CreateMarketParams {
    * The address that must sign to make future changes to the market,
    * such as modifying the available reserves (or their configuation)
    */
-  owner: PublicKey;
+  owner: PublicKey
 
   /**
    * The token mint for the currency being used to quote the value of
    * all other tokens stored in reserves.
    */
-  quoteCurrencyMint: PublicKey;
+  quoteCurrencyMint: PublicKey
 
   /**
    * The name of the currency used for quotes, this has to match the
    * name specified in any Pyth/oracle accounts.
    */
-  quoteCurrencyName: string;
+  quoteCurrencyName: string
 
   /**
    * The account to use for the market data.
    *
    * If not provided an account will be generated.
    */
-  account?: Keypair;
+  account?: Keypair
 }
 
 export enum MarketFlags {
   HaltBorrows = 1 << 0,
   HaltRepays = 1 << 1,
   HaltDeposits = 1 << 2,
-  HaltAll = HaltBorrows | HaltRepays | HaltDeposits,
+  HaltAll = HaltBorrows | HaltRepays | HaltDeposits
 }

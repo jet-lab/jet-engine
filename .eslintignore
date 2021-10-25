@@ -1,2 +1,4 @@
+src/idl/*
+
 lib/
 node_modules/

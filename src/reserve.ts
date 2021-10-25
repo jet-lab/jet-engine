@@ -1,103 +1,105 @@
-import * as anchor from "@project-serum/anchor";
-import { Market as SerumMarket } from "@project-serum/serum";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import * as anchor from '@project-serum/anchor'
+import { Market as SerumMarket } from '@project-serum/serum'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
   Connection,
   Keypair,
   PublicKey,
   Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
+  TransactionInstruction
+} from '@solana/web3.js'
 
-import { DEX_ID, DEX_ID_DEVNET } from ".";
-import { JetClient, DerivedAccount } from "./client";
-import { JetMarket } from "./market";
+import { DEX_ID, DEX_ID_DEVNET } from '.'
+import { JetClient, DerivedAccount } from './client'
+import { JetMarket } from './market'
 
 export interface ReserveConfig {
-  utilizationRate1: number;
-  utilizationRate2: number;
-  borrowRate0: number;
-  borrowRate1: number;
-  borrowRate2: number;
-  borrowRate3: number;
-  minCollateralRatio: number;
-  liquidationPremium: number;
-  manageFeeCollectionThreshold: anchor.BN;
-  manageFeeRate: number;
-  loanOriginationFee: number;
-  liquidationSlippage: number;
-  liquidationDexTradeMax: anchor.BN;
+  utilizationRate1: number
+  utilizationRate2: number
+  borrowRate0: number
+  borrowRate1: number
+  borrowRate2: number
+  borrowRate3: number
+  minCollateralRatio: number
+  liquidationPremium: number
+  manageFeeCollectionThreshold: anchor.BN
+  manageFeeRate: number
+  loanOriginationFee: number
+  liquidationSlippage: number
+  liquidationDexTradeMax: anchor.BN
+  reserved0: number
+  reserved1: number[]
 }
 
 export interface ReserveAccounts {
-  vault: DerivedAccount;
-  feeNoteVault: DerivedAccount;
-  dexSwapTokens: DerivedAccount;
-  dexOpenOrders: DerivedAccount;
+  vault: DerivedAccount
+  feeNoteVault: DerivedAccount
+  dexSwapTokens: DerivedAccount
+  dexOpenOrders: DerivedAccount
 
-  loanNoteMint: DerivedAccount;
-  depositNoteMint: DerivedAccount;
+  loanNoteMint: DerivedAccount
+  depositNoteMint: DerivedAccount
 }
 
 export interface CreateReserveParams {
   /**
    * The Serum market for the reserve.
    */
-  dexMarket: PublicKey;
+  dexMarket: PublicKey
 
   /**
    * The mint for the token to be stored in the reserve.
    */
-  tokenMint: PublicKey;
+  tokenMint: PublicKey
 
   /**
    * The Pyth account containing the price information for the reserve token.
    */
-  pythOraclePrice: PublicKey;
+  pythOraclePrice: PublicKey
 
   /**
    * The Pyth account containing the metadata about the reserve token.
    */
-  pythOracleProduct: PublicKey;
+  pythOracleProduct: PublicKey
 
   /**
    * The initial configuration for the reserve
    */
-  config: ReserveConfig;
+  config: ReserveConfig
 
   /**
    * The account to use for the reserve data.
    *
    * If not provided an account will be generated.
    */
-  account?: Keypair;
+  account?: Keypair
 }
 
 export interface ReserveData {
-  index: number;
-  market: PublicKey;
-  pythOraclePrice: PublicKey;
-  pythOracleProduct: PublicKey;
-  tokenMint: PublicKey;
-  depositNoteMint: PublicKey;
-  loanNoteMint: PublicKey;
-  vault: PublicKey;
-  feeNoteVault: PublicKey;
-  dexOpenOrders: PublicKey;
-  dexSwapTokens: PublicKey;
-  dexMarket: PublicKey;
+  index: number
+  market: PublicKey
+  pythOraclePrice: PublicKey
+  pythOracleProduct: PublicKey
+  tokenMint: PublicKey
+  depositNoteMint: PublicKey
+  loanNoteMint: PublicKey
+  vault: PublicKey
+  feeNoteVault: PublicKey
+  dexOpenOrders: PublicKey
+  dexSwapTokens: PublicKey
+  dexMarket: PublicKey
 }
 
 export interface ReserveDexMarketAccounts {
-  market: PublicKey;
-  openOrders: PublicKey;
-  requestQueue: PublicKey;
-  eventQueue: PublicKey;
-  bids: PublicKey;
-  asks: PublicKey;
-  coinVault: PublicKey;
-  pcVault: PublicKey;
-  vaultSigner: PublicKey;
+  market: PublicKey
+  openOrders: PublicKey
+  requestQueue: PublicKey
+  eventQueue: PublicKey
+  bids: PublicKey
+  asks: PublicKey
+  coinVault: PublicKey
+  pcVault: PublicKey
+  vaultSigner: PublicKey
 }
 
 /**
@@ -106,7 +108,7 @@ export interface ReserveDexMarketAccounts {
  * @class JetReserve
  */
 export class JetReserve {
-  private conn: Connection;
+  private conn: Connection
 
   /**
    * Creates an instance of JetReserve.
@@ -122,7 +124,7 @@ export class JetReserve {
     public address: PublicKey,
     public data: ReserveData
   ) {
-    this.conn = this.client.program.provider.connection;
+    this.conn = this.client.program.provider.connection
   }
 
   /**
@@ -131,8 +133,8 @@ export class JetReserve {
    * @memberof JetReserve
    */
   async refresh(): Promise<string> {
-    let tx = new Transaction().add(this.makeRefreshIx());
-    return await this.client.program.provider.send(tx);
+    let tx = new Transaction().add(this.makeRefreshIx())
+    return await this.client.program.provider.send(tx)
   }
 
   /**
@@ -151,9 +153,9 @@ export class JetReserve {
         depositNoteMint: this.data.depositNoteMint,
 
         pythOraclePrice: this.data.pythOraclePrice,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-    });
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
   }
 
   /**
@@ -164,7 +166,7 @@ export class JetReserve {
   async loadDexMarketAccounts(): Promise<ReserveDexMarketAccounts> {
     if (this.data.tokenMint.equals(this.market.quoteTokenMint)) {
       // The quote token doesn't have a DEX market
-      const defaultAccount = this.data.dexSwapTokens;
+      const defaultAccount = this.data.dexSwapTokens
       return {
         market: defaultAccount,
         openOrders: defaultAccount,
@@ -174,23 +176,18 @@ export class JetReserve {
         asks: defaultAccount,
         coinVault: defaultAccount,
         pcVault: defaultAccount,
-        vaultSigner: defaultAccount,
-      };
+        vaultSigner: defaultAccount
+      }
     }
 
-    const dexMarketData = await this.conn.getAccountInfo(this.data.dexMarket);
-    const dexMarket = await SerumMarket.getLayout(DEX_ID).decode(
-      dexMarketData?.data
-    );
+    const dexMarketData = await this.conn.getAccountInfo(this.data.dexMarket)
+    const dexMarket = await SerumMarket.getLayout(DEX_ID).decode(dexMarketData?.data)
 
-    const dexSignerNonce = dexMarket.vaultSignerNonce;
+    const dexSignerNonce = dexMarket.vaultSignerNonce
     const vaultSigner = await PublicKey.createProgramAddress(
-      [
-        dexMarket.ownAddress.toBuffer(),
-        dexSignerNonce.toArrayLike(Buffer, "le", 8),
-      ],
+      [dexMarket.ownAddress.toBuffer(), dexSignerNonce.toArrayLike(Buffer, 'le', 8)],
       this.client.devnet ? DEX_ID_DEVNET : DEX_ID
-    );
+    )
 
     return {
       market: dexMarket.ownAddress,
@@ -201,8 +198,8 @@ export class JetReserve {
       asks: dexMarket.asks,
       coinVault: dexMarket.baseVault,
       pcVault: dexMarket.quoteVault,
-      vaultSigner,
-    };
+      vaultSigner
+    }
   }
 
   /**
@@ -219,12 +216,10 @@ export class JetReserve {
     address: PublicKey,
     maybeMarket?: JetMarket
   ): Promise<JetReserve> {
-    const data = (await client.program.account.reserve.fetch(
-      address
-    )) as ReserveData;
-    const market = maybeMarket || (await JetMarket.load(client, data.market));
+    const data = (await client.program.account.reserve.fetch(address)) as ReserveData
+    const market = maybeMarket || (await JetMarket.load(client, data.market))
 
-    return new JetReserve(client, market, address, data);
+    return new JetReserve(client, market, address, data)
   }
 
   /**
@@ -241,27 +236,13 @@ export class JetReserve {
     tokenMint: PublicKey
   ): Promise<ReserveAccounts> {
     return {
-      vault: await client.findDerivedAccount(["vault", address]),
-      feeNoteVault: await client.findDerivedAccount(["fee-vault", address]),
-      dexSwapTokens: await client.findDerivedAccount([
-        "dex-swap-tokens",
-        address,
-      ]),
-      dexOpenOrders: await client.findDerivedAccount([
-        "dex-open-orders",
-        address,
-      ]),
+      vault: await client.findDerivedAccount(['vault', address]),
+      feeNoteVault: await client.findDerivedAccount(['fee-vault', address]),
+      dexSwapTokens: await client.findDerivedAccount(['dex-swap-tokens', address]),
+      dexOpenOrders: await client.findDerivedAccount(['dex-open-orders', address]),
 
-      loanNoteMint: await client.findDerivedAccount([
-        "loans",
-        address,
-        tokenMint,
-      ]),
-      depositNoteMint: await client.findDerivedAccount([
-        "deposits",
-        address,
-        tokenMint,
-      ]),
-    };
+      loanNoteMint: await client.findDerivedAccount(['loans', address, tokenMint]),
+      depositNoteMint: await client.findDerivedAccount(['deposits', address, tokenMint])
+    }
   }
 }
