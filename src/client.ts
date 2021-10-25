@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair } from "@solana/web3.js"
-import { Program, Provider } from "@project-serum/anchor"
+import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
+import { Program, Provider, ProgramAccount, IdlAccounts } from "@project-serum/anchor"
 import { Jet } from "./idl/jet"
 import IDL from "./idl/jet.json"
 import { CreateMarketParams, JetMarket } from "./market"
@@ -71,6 +71,42 @@ export class JetClient {
    */
   static async connect(provider: Provider, devnet?: boolean): Promise<JetClient> {
     return new JetClient(new Program<Jet>(IDL as any, JET_ID, provider), devnet)
+  }
+
+  /**
+   * Return all `Market` program accounts that have been created
+   * @param {GetProgramAccountsFilter[]} [filter]
+   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["market"]>[]>}
+   * @memberof JetClient
+   */
+  async allMarkets(
+    filter?: GetProgramAccountsFilter[]
+  ): Promise<ProgramAccount<IdlAccounts<Jet>["market"]>[]> {
+    return (this.program.account.market as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
+  }
+
+  /**
+   * Return all `Obligation` program accounts that have been created
+   * @param {GetProgramAccountsFilter[]} [filter]
+   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["obligation"]>[]>}
+   * @memberof JetClient
+   */
+  async allObligations(
+    filter?: GetProgramAccountsFilter[]
+  ): Promise<ProgramAccount<IdlAccounts<Jet>["obligation"]>[]> {
+    return (this.program.account.obligation as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
+  }
+
+  /**
+   * Return all `Reserve` program accounts that have been created
+   * @param {GetProgramAccountsFilter[]} [filter]
+   * @returns {Promise<ProgramAccount<IdlAccounts<Jet>["reserve"]>[]>}
+   * @memberof JetClient
+   */
+  async allReserves(
+    filter?: GetProgramAccountsFilter[]
+  ): Promise<ProgramAccount<IdlAccounts<Jet>["reserve"]>[]> {
+    return (this.program.account.reserve as any).all(filter) // FIXME: hack to fix strange typedef bug on idl accounts
   }
 
   /**
