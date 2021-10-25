@@ -1,5 +1,5 @@
 README.md
-src/jet.ts
+src/idl/*
 
 lib/
 node_modules/

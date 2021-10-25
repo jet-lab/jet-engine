@@ -1,6 +1,7 @@
 import { PublicKey, Keypair } from '@solana/web3.js'
 import { Program, Provider } from '@project-serum/anchor'
-import { Jet, IDL } from './jet'
+import { Jet } from './idl/jet'
+import IDL from './idl/jet.json'
 import { CreateMarketParams, JetMarket } from './market'
 import { JET_ID } from '.'
 
@@ -15,24 +16,19 @@ interface HasPublicKey {
 type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string
 
 /**
- * TODO:
+ * Utility class to store a calculated PDA and
+ * the bump nonce associated with it.
  * @export
  * @class DerivedAccount
  */
 export class DerivedAccount {
-  public address: PublicKey
-  public bumpSeed: number
-
   /**
    * Creates an instance of DerivedAccount.
    * @param {PublicKey} address
    * @param {number} bumpSeed
    * @memberof DerivedAccount
    */
-  constructor(address: PublicKey, bumpSeed: number) {
-    this.address = address
-    this.bumpSeed = bumpSeed
-  }
+  constructor(public address: PublicKey, public bumpSeed: number) {}
 }
 
 /**
@@ -57,11 +53,12 @@ export class JetClient {
    * @memberof JetClient
    */
   static async connect(provider: Provider, devnet?: boolean): Promise<JetClient> {
-    return new JetClient(new Program(IDL, JET_ID, provider), devnet)
+    return new JetClient(new Program<Jet>(IDL as any, JET_ID, provider), devnet)
   }
 
   /**
-   * Find a PDA
+   * Derive a PDA and associated bump nonce from
+   * the argued list of seeds.
    * @param {DerivedAccountSeed[]} seeds
    * @returns {Promise<DerivedAccount>}
    * @memberof JetClient

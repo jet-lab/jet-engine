@@ -141,6 +141,34 @@ export type Jet = {
       ]
     },
     {
+      "name": "updateReserveConfig",
+      "accounts": [
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newConfig",
+          "type": {
+            "defined": "ReserveConfig"
+          }
+        }
+      ]
+    },
+    {
       "name": "initDepositAccount",
       "accounts": [
         {
@@ -2009,6 +2037,34 @@ export const IDL: Jet = {
         },
         {
           "name": "config",
+          "type": {
+            "defined": "ReserveConfig"
+          }
+        }
+      ]
+    },
+    {
+      "name": "updateReserveConfig",
+      "accounts": [
+        {
+          "name": "market",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newConfig",
           "type": {
             "defined": "ReserveConfig"
           }
