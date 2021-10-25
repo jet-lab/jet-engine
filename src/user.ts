@@ -658,6 +658,10 @@ export class JetUser implements User {
     this._collateral = []
 
     for (const reserve of this.market.reserves) {
+      if (reserve.address.equals(PublicKey.default)) {
+        continue;
+      }
+
       await this.refreshReserve(reserve)
     }
   }
@@ -687,17 +691,18 @@ export class JetUser implements User {
     try {
       const info = await this.conn.getAccountInfo(account.address)
 
-      if (!info) {
-        throw Error(`failed to get account info for ${account.address}`) // FIXME:
+      if (info == null) {
+        return;
       }
 
       const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data)
 
       appendTo.push({
-        mint: tokenAccount.mint,
-        amount: tokenAccount.amount
+        mint: new PublicKey(tokenAccount.mint),
+        amount: new anchor.BN(tokenAccount.amount, undefined, "le"),
       })
     } catch (e) {
+      console.log(`error getting user account: ${e}`);
       // ignore error, which should mean it's an invalid/uninitialized account
     }
   }
