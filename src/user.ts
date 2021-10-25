@@ -129,7 +129,14 @@ export class JetUser implements User {
     tx.add(collateralReserve.makeRefreshIx())
 
     tx.add(
-      this.client.program.instruction.liquidateDex({
+      // Turning off type checks here, because liquidateDex does not exist in
+      // the IDL, because liquidateDex is handled in a special way here: 
+      // https://github.com/jet-lab/jet-v1/blob/65a19e49fb27bc95a5b543f9fec49b43d799a8cd/programs/jet/src/lib.rs
+      // And if it were a normal instruction, then a bug in rust would blow
+      // the stack while validating anchor constraints.
+      // 
+      // If liquidateDex ever appears in the IDL then please remove this 'as any' hack
+      (this.client.program.instruction as any).liquidateDex({
         accounts: {
           sourceMarket: collateralDexAccounts,
           targetMarket: loanDexAccounts,
