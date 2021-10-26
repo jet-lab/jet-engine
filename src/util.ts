@@ -19,6 +19,17 @@ import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
+export const enum StaticSeeds {
+  Collateral = "collateral",
+  Deposits = "deposits",
+  DexOpenOrders = "dex-open-orders",
+  DexSwapTokens = "dex-swap-tokens",
+  FeeVault = "fee-vault",
+  Loans = "loans",
+  Obligation = "obligation",
+  Vault = "vault"
+}
+
 /**
  * TODO:
  * @export

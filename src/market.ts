@@ -20,18 +20,18 @@ import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
 import * as BL from "@solana/buffer-layout"
 import { CreateReserveParams, JetReserve } from "./reserve"
-import { JetClient, DEX_ID, DEX_ID_DEVNET } from "."
-import * as util from "./util"
+import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation } from "."
+import { StaticSeeds, pubkeyField, numberField } from "./util"
 
 const MAX_RESERVES = 32
 
 const ReserveInfoStruct = BL.struct([
-  util.pubkeyField("address"),
+  pubkeyField("address"),
   BL.blob(80, "_UNUSED_0_"),
-  util.numberField("price"),
-  util.numberField("depositNoteExchangeRate"),
-  util.numberField("loanNoteExchangeRate"),
-  util.numberField("minCollateralRatio"),
+  numberField("price"),
+  numberField("depositNoteExchangeRate"),
+  numberField("loanNoteExchangeRate"),
+  numberField("minCollateralRatio"),
   BL.u16("liquidationBonus"),
   BL.blob(158, "_UNUSED_1_"),
   BL.blob(16, "_UNUSED_CACHE")
@@ -218,6 +218,33 @@ export class JetMarket implements JetMarketData {
     })
 
     return JetReserve.load(this.client, account.publicKey, this)
+  }
+
+  /**
+   * Fetch the `Obligation` account that is associated with
+   * the argued address or public key if it exists, otherwise
+   * will resolve to `null`.
+   * @param {anchor.Address} address
+   * @returns {(Promise<Obligation | null>)}
+   * @memberof JetClient
+   */
+  async getAssociatedObligation(address: anchor.Address): Promise<Obligation | null> {
+    return (this.client.program.account.obligation as any).fetchNullable(address)
+  }
+
+  /**
+   * Derives the program address and nonce bump for an
+   * `Obligation` account with the current market and
+   * argued borrower keys.
+   * @param {PublicKey} borrower
+   * @returns {Promise<[PublicKey, number]>}
+   * @memberof JetClient
+   */
+  async getAssociatedObligationAddress(borrower: PublicKey): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from(StaticSeeds.Obligation), this.address.toBytes(), borrower.toBytes()],
+      this.client.program.programId
+    )
   }
 }
 
