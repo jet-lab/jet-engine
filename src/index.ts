@@ -19,10 +19,11 @@ import { PublicKey } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
 import { u64 } from "@solana/spl-token"
 
-export { JetClient } from "./client"
-export { JetMarket, MarketFlags } from "./market"
-export { JetReserve, ReserveConfig } from "./reserve"
-export { JetUser } from "./user"
+export *from "./client"
+export * from "./market"
+export * from "./reserve"
+export * from "./user"
+export * from "./idl/jet"
 
 export const PLACEHOLDER_ACCOUNT = PublicKey.default
 
@@ -34,9 +35,9 @@ export const DEX_ID_DEVNET = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVE
 // FIXME: ???
 export const JET_ID = new PublicKey("JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU")
 
-type AmountUnitsTokens = { tokens: {} }
-type AmountUnitsDepositNotes = { depositNotes: {} }
-type AmountUnitsLoanNotes = { loanNotes: {} }
+type AmountUnitsTokens = { tokens: Record<string, never> }
+type AmountUnitsDepositNotes = { depositNotes: Record<string, never> }
+type AmountUnitsLoanNotes = { loanNotes: Record<string, never> }
 
 export type AmountUnits = AmountUnitsTokens | AmountUnitsDepositNotes | AmountUnitsLoanNotes
 

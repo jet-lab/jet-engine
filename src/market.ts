@@ -96,9 +96,9 @@ export class JetMarket implements JetMarketData {
     client: JetClient,
     address: PublicKey
   ): Promise<[any, JetMarketReserveInfo[]]> {
-    let data: any = await client.program.account.market.fetch(address)
-    let reserveInfoData = new Uint8Array(data.reserves)
-    let reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
+    const data: any = await client.program.account.market.fetch(address)
+    const reserveInfoData = new Uint8Array(data.reserves)
+    const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
     return [data, reserveInfoList]
   }

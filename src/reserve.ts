@@ -178,7 +178,7 @@ export class JetReserve {
   }
 
   async sendRefreshTx(): Promise<string> {
-    let tx = new Transaction().add(this.makeRefreshIx())
+    const tx = new Transaction().add(this.makeRefreshIx())
     return await this.client.program.provider.send(tx)
   }
 
