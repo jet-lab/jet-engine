@@ -2,9 +2,8 @@ name: Publish TypeDocs
 
 on:
   push:
-    branches: [master]
-    paths:
-      - src/**/*.ts
+    tags:
+      - "v*.*.*"
 
 jobs:
   publish:
