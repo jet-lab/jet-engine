@@ -19,7 +19,7 @@ import { PublicKey } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
 import { u64 } from "@solana/spl-token"
 
-export *from "./client"
+export * from "./client"
 export * from "./market"
 export * from "./reserve"
 export * from "./user"
