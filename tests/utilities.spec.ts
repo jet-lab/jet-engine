@@ -52,6 +52,36 @@ describe("DerivedAccount", () => {
   })
 })
 
+describe("NumberField BL.Layout", () => {
+  test("initializes correct span and property name", () => {
+    const num = new NumberField(8, "testU64")
+    expect(num.getSpan()).toStrictEqual(8)
+    expect(num.property).toStrictEqual("testU64")
+  })
+
+  test("u64Field abstraction produces a NumberField with span of 8", () => {
+    const num = u64Field("testU64")
+    expect(num.span).toStrictEqual(8)
+    expect(num.property).toStrictEqual("testU64")
+  })
+
+  test("properly decodes Uint8Array into BN", () => {
+    const num = u64Field("test")
+    const bn = new BN(5000)
+    const newBN = num.decode(new Uint8Array(bn.toBuffer()))
+    expect(newBN.toNumber()).toStrictEqual(bn.toNumber())
+  })
+
+  test("properly encodes BN into a Uint8Array", () => {
+    const num = u64Field("test")
+    const bn = new BN(5000)
+    const arr = new Uint8Array(bn.byteLength())
+    const x = num.encode(bn, arr)
+    expect(x).toStrictEqual(8)
+    expect(new BN(arr).toNumber()).toStrictEqual(bn.toNumber())
+  })
+})
+
 describe("PubkeyField BL.Layout", () => {
   test("initializes correct span and property name", () => {
     const pub = new PubkeyField("testKey")
@@ -64,18 +94,20 @@ describe("PubkeyField BL.Layout", () => {
     expect(pub.getSpan()).toStrictEqual(32)
     expect(pub.property).toStrictEqual("testKey")
   })
-})
 
-describe("NumberField BL.Layout", () => {
-  test("initializes correct span and property name", () => {
-    const num = new NumberField(8, "testU64")
-    expect(num.getSpan()).toStrictEqual(8)
-    expect(num.property).toStrictEqual("testU64")
+  test("properly decodes Uint8Array into PublicKey", () => {
+    const pub = pubkeyField("test")
+    const key = web3.PublicKey.default
+    const newKey = pub.decode(key.toBytes())
+    expect(newKey.equals(key)).toBeTruthy()
   })
 
-  test("u64Field abstraction produces a NumberField with span of 8", () => {
-    const num = u64Field("testU64")
-    expect(num.span).toStrictEqual(8)
-    expect(num.property).toStrictEqual("testU64")
+  test("properly encodes a PublicKey into Uint8Array", () => {
+    const pub = pubkeyField("test")
+    const key = web3.PublicKey.default
+    const arr = new Uint8Array(key.toBuffer().byteLength)
+    const x = pub.encode(key, arr)
+    expect(x).toStrictEqual(32)
+    expect(new web3.PublicKey(arr).equals(key)).toBeTruthy()
   })
 })

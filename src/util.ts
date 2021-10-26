@@ -54,9 +54,8 @@ export class NumberField extends BL.Layout {
    * @memberof NumberField
    */
   decode(b: Uint8Array, offset?: number): BN {
-    const start = offset == undefined ? 0 : offset
+    const start = offset ?? 0
     const data = b.slice(start, start + this.span)
-
     return new BN(data)
   }
 
@@ -69,9 +68,8 @@ export class NumberField extends BL.Layout {
    * @memberof NumberField
    */
   encode(src: BN, b: Uint8Array, offset?: number): number {
-    const start = offset == undefined ? 0 : offset
+    const start = offset ?? 0
     b.set(src.toArray(), start)
-
     return this.span
   }
 }
@@ -100,9 +98,8 @@ export class PubkeyField extends BL.Layout {
    * @memberof PubkeyField
    */
   decode(b: Uint8Array, offset?: number): PublicKey {
-    const start = offset == undefined ? 0 : offset
+    const start = offset ?? 0
     const data = b.slice(start, start + this.span)
-
     return new PublicKey(data)
   }
 
@@ -115,9 +112,8 @@ export class PubkeyField extends BL.Layout {
    * @memberof PubkeyField
    */
   encode(src: PublicKey, b: Uint8Array, offset?: number): number {
-    const start = offset == undefined ? 0 : offset
+    const start = offset ?? 0
     b.set(src.toBytes(), start)
-
     return this.span
   }
 }
