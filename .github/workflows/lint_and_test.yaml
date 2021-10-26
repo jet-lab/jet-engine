@@ -1,9 +1,11 @@
-name: Lint
+name: Lint and Test
 
 on:
   push:
     paths:
       - src/**/*.ts
+      - types/**/*.ts
+      - tests/**/*.ts
       - .eslint*
       - .prettier*
       - "*.json"
@@ -12,7 +14,7 @@ env:
   NODE_VERSION: 16
 
 jobs:
-  lint:
+  lint_and_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,4 +29,8 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # Add eslint and prettier fmt when stable
+      - name: Prettier Check
+        run: npm run fmt:check
+
+      - name: Jest
+        run: npm test

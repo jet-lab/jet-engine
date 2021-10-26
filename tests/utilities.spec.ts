@@ -18,6 +18,7 @@
 import { BN, web3 } from "@project-serum/anchor"
 import { TokenAmount } from "../src/user"
 import { DerivedAccount } from "../src/client"
+import { NumberField, pubkeyField, PubkeyField, u64Field } from "../src/util"
 
 describe("TokenAmount", () => {
   let t: TokenAmount
@@ -48,5 +49,33 @@ describe("DerivedAccount", () => {
 
   test("sets the correct bump seed", () => {
     expect(d.bumpSeed).toStrictEqual(200)
+  })
+})
+
+describe("PubkeyField BL.Layout", () => {
+  test("initializes correct span and property name", () => {
+    const pub = new PubkeyField("testKey")
+    expect(pub.getSpan()).toStrictEqual(32)
+    expect(pub.property).toStrictEqual("testKey")
+  })
+
+  test("pubkeyField abstraction produces an identical layout", () => {
+    const pub = pubkeyField("testKey")
+    expect(pub.getSpan()).toStrictEqual(32)
+    expect(pub.property).toStrictEqual("testKey")
+  })
+})
+
+describe("NumberField BL.Layout", () => {
+  test("initializes correct span and property name", () => {
+    const num = new NumberField(8, "testU64")
+    expect(num.getSpan()).toStrictEqual(8)
+    expect(num.property).toStrictEqual("testU64")
+  })
+
+  test("u64Field abstraction produces a NumberField with span of 8", () => {
+    const num = u64Field("testU64")
+    expect(num.span).toStrictEqual(8)
+    expect(num.property).toStrictEqual("testU64")
   })
 })

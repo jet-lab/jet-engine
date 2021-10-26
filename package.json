@@ -23,8 +23,8 @@
     "build": "tsc",
     "clean": "rm -rf lib/",
     "docs": "typedoc --excludePrivate --includeVersion src/index.ts",
-    "fmt:write": "prettier . --write",
-    "fmt:check": "prettier . --check",
+    "fmt:write": "prettier src/ tests/ types/ --write",
+    "fmt:check": "prettier src/ tests/ types/ --check",
     "lint": "eslint src/ --ext .ts",
     "prepublish": "npm run fmt:write; npm run build",
     "test": "jest"

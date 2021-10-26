@@ -2,5 +2,7 @@
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
-  rootDir: "tests"
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  verbose: true
 }

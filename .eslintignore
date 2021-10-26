@@ -1,4 +1,5 @@
 src/idl/*
 
+coverage/
 lib/
 node_modules/
