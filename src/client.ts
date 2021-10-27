@@ -106,6 +106,27 @@ export class JetClient {
   }
 
   /**
+   * Decodes a buffer of account data into a usable
+   * `Obligation` object.
+   * @param {Buffer} b
+   * @returns {Obligation}
+   * @memberof JetClient
+   */
+  decodeObligation(_b: Buffer): Obligation {
+    return {} as Obligation // FIXME:
+  }
+
+  /**
+   * Encodes the argued `Obligation` object into a `Buffer`.
+   * @param {Obligation} o
+   * @returns {Buffer}
+   * @memberof JetClient
+   */
+  encodeObligation(_o: Obligation): Buffer {
+    return Buffer.from("") // FIXME:
+  }
+
+  /**
    * Derive a PDA and associated bump nonce from
    * the argued list of seeds.
    * @param {DerivedAccountSeed[]} seeds
