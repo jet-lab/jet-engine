@@ -112,18 +112,18 @@ export class JetClient {
    * @returns {Obligation}
    * @memberof JetClient
    */
-  decodeObligation(_b: Buffer): Obligation {
-    return {} as Obligation // FIXME:
+  decodeObligation(b: Buffer): Obligation {
+    return this.program.coder.accounts.decode<Obligation>("Obligation", b)
   }
 
   /**
    * Encodes the argued `Obligation` object into a `Buffer`.
    * @param {Obligation} o
-   * @returns {Buffer}
+   * @returns {Promise<Buffer>}
    * @memberof JetClient
    */
-  encodeObligation(_o: Obligation): Buffer {
-    return Buffer.from("") // FIXME:
+  encodeObligation(o: Obligation): Promise<Buffer> {
+    return this.program.coder.accounts.encode<Obligation>("Obligation", o)
   }
 
   /**
