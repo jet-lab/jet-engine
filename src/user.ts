@@ -21,18 +21,20 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
-  TransactionInstruction
+  TransactionInstruction,
+  Commitment
 } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
-import { Amount, DEX_ID, DEX_ID_DEVNET } from "."
-import { DerivedAccount, JetClient } from "./client"
-import { JetMarket, JetMarketReserveInfo } from "./market"
 import {
   AccountLayout as TokenAccountLayout,
   AccountInfo as TokenAccount,
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token"
+import EventEmitter from "eventemitter3"
+import { DerivedAccount, JetClient } from "./client"
+import { JetMarket, JetMarketReserveInfo } from "./market"
 import { JetReserve } from "./reserve"
+import { Amount, DEX_ID, DEX_ID_DEVNET } from "."
 
 /**
  * TODO:
@@ -192,6 +194,7 @@ export class JetUser implements User {
    * @param {PublicKey} payerAccount
    * @param {PublicKey} receiverAccount
    * @param {Amount} amount
+   * @param {anchor.BN} minCollateral
    * @returns {Promise<string>}
    * @memberof JetUser
    */
@@ -200,36 +203,65 @@ export class JetUser implements User {
     collateralReserve: JetReserve,
     payerAccount: PublicKey,
     receiverAccount: PublicKey,
-    amount: Amount
+    amount: Amount,
+    minCollateral: anchor.BN
   ): Promise<string> {
     const tx = await this.makeLiquidateTx(
       loanReserve,
       collateralReserve,
       payerAccount,
       receiverAccount,
-      amount
+      amount,
+      minCollateral
     )
     return await this.client.program.provider.send(tx)
   }
 
   /**
    * TODO:
-   * @param {JetReserve} _loanReserve
-   * @param {JetReserve} _collateralReserve
-   * @param {PublicKey} _payerAccount
-   * @param {PublicKey} _receiverAccount
-   * @param {Amount} _amount
+   * @param {JetReserve} loanReserve
+   * @param {JetReserve} collateralReserve
+   * @param {PublicKey} payerAccount
+   * @param {PublicKey} receiverAccount
+   * @param {Amount} amount
+   * @param {anchor.BN} minCollateral
    * @returns {Promise<Transaction>}
    * @memberof JetUser
    */
   async makeLiquidateTx(
-    _loanReserve: JetReserve,
-    _collateralReserve: JetReserve,
-    _payerAccount: PublicKey,
-    _receiverAccount: PublicKey,
-    _amount: Amount
+    loanReserve: JetReserve,
+    collateralReserve: JetReserve,
+    payerAccount: PublicKey,
+    receiverAccount: PublicKey,
+    amount: Amount,
+    minCollateral: anchor.BN
   ): Promise<Transaction> {
-    throw new Error("not yet implemented")
+    const loanAccounts = await this.findReserveAccounts(loanReserve)
+    const collateralAccounts = await this.findReserveAccounts(collateralReserve)
+
+    const tx = new Transaction()
+    tx.add(loanReserve.makeRefreshIx())
+    tx.add(collateralReserve.makeRefreshIx())
+    tx.add(
+      this.client.program.instruction.liquidate(amount.toRpcArg(), minCollateral, {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
+          obligation: this.obligation,
+          reserve: loanReserve.address,
+          collateralReserve: collateralReserve.address,
+          vault: loanReserve.data.vault,
+          loanNoteMint: loanReserve.data.loanNoteMint,
+          loanAccount: loanAccounts.loan.address,
+          collateralAccount: collateralAccounts.collateral.address,
+          payerAccount: payerAccount,
+          receiverAccount: receiverAccount,
+          payer: payerAccount,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
+      })
+    )
+    return tx
   }
 
   /**
@@ -559,6 +591,39 @@ export class JetUser implements User {
     )
 
     return tx
+  }
+
+  /**
+   * Establish an event emitter subscription to the argued `Obligation`
+   * account on-chain which listens for the "change" event from the publisher.
+   * If no obligation address is provided, it defaults to the user instance's
+   * obligation that was set at instantiation.
+   * @param {anchor.Address} [address]
+   * @param {web3.Commitment} [commitment]
+   * @returns {(EventEmitter<string | symbol, any>)}
+   * @memberof JetClient
+   */
+  subscribeToObligation(
+    address?: anchor.Address,
+    commitment?: Commitment
+  ): EventEmitter<string | symbol, any> {
+    return this.client.program.account.obligation.subscribe(
+      address ?? this.obligation.address,
+      commitment
+    )
+  }
+
+  /**
+   * Unsubscribes from the argued `Obligation` account
+   * address on-chain. If no obligation address is provided,
+   * it defaults to the user instance's obligation that was
+   * set at instantiation.
+   * @param {anchor.Address} [address]
+   * @returns {Promise<void>}
+   * @memberof JetClient
+   */
+  async unsubscribeFromObligation(address?: anchor.Address): Promise<void> {
+    return this.client.program.account.obligation.unsubscribe(address ?? this.obligation.address)
   }
 
   /**

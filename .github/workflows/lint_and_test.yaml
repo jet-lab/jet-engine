@@ -32,5 +32,8 @@ jobs:
       - name: Prettier Check
         run: npm run fmt:check
 
+      - name: ESLint
+        run: npm run lint
+
       - name: Jest
         run: npm test

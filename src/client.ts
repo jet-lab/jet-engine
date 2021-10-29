@@ -16,8 +16,7 @@
  */
 
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
-import { Program, Provider, ProgramAccount, Address, web3 } from "@project-serum/anchor"
-import EventEmitter from "eventemitter3"
+import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
 import { Jet } from "./idl/jet"
 import IDL from "./idl/jet.json"
 import { CreateMarketParams, JetMarket } from "./market"
@@ -56,6 +55,8 @@ export class DerivedAccount {
  * @class JetClient
  */
 export class JetClient {
+  private static OBLIGATION_ACCOUNT_NAME = "Obligation"
+
   /**
    * Creates an instance of JetClient.
    * @param {Program<Jet>} program
@@ -72,7 +73,7 @@ export class JetClient {
    * @memberof JetClient
    */
   static async connect(provider: Provider, devnet?: boolean): Promise<JetClient> {
-    return new JetClient(new Program<Jet>(IDL as any, JET_ID, provider), devnet)
+    return new JetClient(new Program<Jet>(IDL as Jet, JET_ID, provider), devnet)
   }
 
   /**
@@ -113,7 +114,7 @@ export class JetClient {
    * @memberof JetClient
    */
   decodeObligation(b: Buffer): Obligation {
-    return this.program.coder.accounts.decode<Obligation>("Obligation", b)
+    return this.program.coder.accounts.decode<Obligation>(JetClient.OBLIGATION_ACCOUNT_NAME, b)
   }
 
   /**
@@ -123,7 +124,7 @@ export class JetClient {
    * @memberof JetClient
    */
   encodeObligation(o: Obligation): Promise<Buffer> {
-    return this.program.coder.accounts.encode<Obligation>("Obligation", o)
+    return this.program.coder.accounts.encode<Obligation>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
   }
 
   /**
@@ -179,31 +180,5 @@ export class JetClient {
     )
 
     return JetMarket.load(this, account.publicKey)
-  }
-
-  /**
-   * Establish an event emitter subscription to the argued `Obligation`
-   * account on-chain which listens for the "change" event from the publisher.
-   * @param {Address} address
-   * @param {web3.Commitment} [commitment]
-   * @returns {(EventEmitter<string | symbol, any>)}
-   * @memberof JetClient
-   */
-  subscribeToObligation(
-    address: Address,
-    commitment?: web3.Commitment
-  ): EventEmitter<string | symbol, any> {
-    return this.program.account.obligation.subscribe(address, commitment)
-  }
-
-  /**
-   * Unsubscribes from the argued `Obligation` account
-   * address on-chain.
-   * @param {Address} address
-   * @returns {Promise<void>}
-   * @memberof JetClient
-   */
-  async unsubscribeFromObligation(address: Address): Promise<void> {
-    return this.program.account.obligation.unsubscribe(address)
   }
 }

@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair, TransactionInstruction } from "@solana/web3.js"
+import { PublicKey, Keypair } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
 import * as BL from "@solana/buffer-layout"
 import { CreateReserveParams, JetReserve } from "./reserve"
-import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation, DerivedAccount, Amount } from "."
+import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation, DerivedAccount } from "."
 import { StaticSeeds, pubkeyField, numberField } from "./util"
 
 const MAX_RESERVES = 32
@@ -51,7 +51,6 @@ export interface JetMarketData {
   quoteCurrency: string
   marketAuthority: PublicKey
   owner: PublicKey
-
   reserves: JetMarketReserveInfo[]
 }
 
@@ -96,7 +95,7 @@ export class JetMarket implements JetMarketData {
     client: JetClient,
     address: PublicKey
   ): Promise<[any, JetMarketReserveInfo[]]> {
-    const data: any = await client.program.account.market.fetch(address)
+    const data = await client.program.account.market.fetch(address)
     const reserveInfoData = new Uint8Array(data.reserves)
     const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
@@ -247,50 +246,6 @@ export class JetMarket implements JetMarketData {
       borrower.toBytes()
     ])
   }
-
-  /**
-   * Create the `TransactionInstruction` for the market's
-   * `liquidate` instruction for the argued minimum and amount.
-   * @param {Amount} amount
-   * @param {anchor.BN} minCollateral
-   * @param {CreateLiquidateInstructionParams} params
-   * @returns {TransactionInstruction}
-   * @memberof JetMarket
-   */
-  createLiquidateInstruction(
-    amount: Amount,
-    minCollateral: anchor.BN,
-    params: CreateLiquidateInstructionParams
-  ): TransactionInstruction {
-    return this.client.program.instruction.liquidate(amount.toRpcArg(), minCollateral, {
-      accounts: {
-        market: this.address,
-        marketAuthority: this.marketAuthority,
-        obligation: params.obligation,
-        reserve: params.reserve.address,
-        collateralReserve: params.collateralReserve.address,
-        vault: params.reserve.data.vault,
-        loanNoteMint: params.reserve.data.loanNoteMint,
-        loanAccount: params.loanAccount,
-        collateralAccount: params.collateralAccount,
-        payerAccount: params.payerAccount,
-        receiverAccount: params.receiverAccount,
-        payer: params.payer,
-        tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
-  }
-}
-
-export interface CreateLiquidateInstructionParams {
-  reserve: JetReserve
-  collateralReserve: JetReserve
-  obligation: anchor.Address
-  loanAccount: anchor.Address
-  collateralAccount: anchor.Address
-  payerAccount: anchor.Address
-  receiverAccount: anchor.Address
-  payer: anchor.Address
 }
 
 export interface CreateMarketParams {
