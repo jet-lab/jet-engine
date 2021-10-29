@@ -192,11 +192,9 @@ export class JetReserve {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
-
         reserve: this.address,
         feeNoteVault: this.data.feeNoteVault,
         depositNoteMint: this.data.depositNoteMint,
-
         pythOraclePrice: this.data.pythOraclePrice,
         tokenProgram: TOKEN_PROGRAM_ID
       }
