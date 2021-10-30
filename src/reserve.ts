@@ -95,6 +95,7 @@ export interface CreateReserveParams {
 }
 
 export interface ReserveData {
+  address: PublicKey,
   index: number
   market: PublicKey
   pythOraclePrice: PublicKey
@@ -270,7 +271,10 @@ export class JetReserve {
     address: PublicKey,
     maybeMarket?: JetMarket
   ): Promise<JetReserve> {
-    const data = (await client.program.account.reserve.fetch(address)) as ReserveData
+    const data: ReserveData = {
+      ...await client.program.account.reserve.fetch(address),
+      address,
+    }
     const market = maybeMarket || (await JetMarket.load(client, data.market))
 
     return new JetReserve(client, market, address, data)
