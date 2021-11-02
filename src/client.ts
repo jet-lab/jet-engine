@@ -17,8 +17,7 @@
 
 import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js"
 import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
-import { Jet } from "./idl/jet"
-import IDL from "./idl/jet.json"
+import { Jet } from "./idl"
 import { Obligation } from "./types"
 import { JET_ID } from "."
 
@@ -72,7 +71,8 @@ export class JetClient {
    * @memberof JetClient
    */
   static async connect(provider: Provider, devnet?: boolean): Promise<JetClient> {
-    return new JetClient(new Program<Jet>(IDL as Jet, JET_ID, provider), devnet)
+    const idl = await Program.fetchIdl(JET_ID, provider)
+    return new JetClient(new Program<Jet>(idl as Jet, JET_ID, provider), devnet)
   }
 
   /**

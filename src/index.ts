@@ -23,7 +23,7 @@ export * from "./client"
 export * from "./market"
 export * from "./reserve"
 export * from "./user"
-export * from "./idl/jet"
+export * from "./idl"
 export * from "./types"
 
 export const PLACEHOLDER_ACCOUNT = PublicKey.default

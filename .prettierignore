@@ -1,5 +1,5 @@
 README.md
-src/idl/*
+src/idl.ts
 
 coverage/
 lib/
