@@ -28,11 +28,12 @@ $ yarn add @jet-lab/jet-engine
 ### Instantiate the Client
 
 ```ts
-import { JetClient, Jet } from '@jet-lab/jet-engine'
-import { Program } from '@project-serum/anchor'
+import { JetClient } from '@jet-lab/jet-engine'
+import { Provider, Wallet } from '@project-serum/anchor'
+import { clusterApiUrl, Connection, Keypair } from '@solana/web3.js'
 
-const program: Program<Jet> = new Program(/* ... */)
-const client = new JetClient(program, true)
+const provider = new Provider(new Connection(clusterApiUrl('devnet'), new Wallet(Keypair.generate()), {}))
+const client = await JetClient.connect(provider, true)
 ```
 
 <!-- TODO: -->
