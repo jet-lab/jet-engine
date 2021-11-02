@@ -36,9 +36,10 @@ export interface Obligation {
 export class JetObligation implements Obligation {
 
   constructor(
-    public positions: Record<number, Position>,
+    public positions: Position[],
     public depositedValue: BN,
     public collateralValue: BN,
+    public loanedValue: BN,
     public collateralRatio: number,
     public utilizationRate: number) {
   }
@@ -77,6 +78,8 @@ export class JetObligation implements Obligation {
     
     const collateralRatio = loanedValue.isZero() ? 0 : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
     const utilizationRate = depositedValue.isZero() ? 0 : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
+
+    return new JetObligation(positions as Position[], depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate);
   }
 
   private static toToken(noteAmount: TokenAmount, reserveData: ReserveData, exchangeRate: BN) {
