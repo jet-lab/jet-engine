@@ -29,7 +29,7 @@ import {
 } from "@solana/web3.js"
 import * as BL from "@solana/buffer-layout"
 
-import { DEX_ID, DEX_ID_DEVNET } from "."
+import { DEX_ID, DEX_ID_DEVNET, Reserve } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
 import { StaticSeeds, numberField, u64Field } from "./util"
@@ -200,7 +200,7 @@ export class JetReserve {
   async refresh(): Promise<void> {
     await this.market.refresh()
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    const reserve = await JetReserve.decode(this.client, this.market, this.data.address, data)
+    const reserve = JetReserve.decode(this.client, this.market, this.data.address, data)
     this.data = reserve.data
   }
 
@@ -214,14 +214,22 @@ export class JetReserve {
     client: JetClient,
     filters?: GetProgramAccountsFilter[]
   ): Promise<JetReserve[]> {
-    const reserveAccounts = await client.program.account.reserve.all(filters)
+    const reserveAccounts: anchor.ProgramAccount<Reserve>[] =
+      await client.program.account.reserve.all(filters)
+
     const uniqueMarketAddresses = [
       ...new Set(reserveAccounts.map(account => account.account.market.toBase58()))
     ]
+
     const marketPromises = uniqueMarketAddresses.map(marketAddress =>
       JetMarket.load(client, new PublicKey(marketAddress))
     )
-    const markets = await Promise.all(marketPromises)
+
+    const markets = (await Promise.allSettled(marketPromises)).reduce(
+      (acc, market) => (market.status === "fulfilled" ? [...acc, market.value] : acc),
+      [] as JetMarket[]
+    )
+
     const reservePromises = reserveAccounts.map(account =>
       JetReserve.decode(
         client,

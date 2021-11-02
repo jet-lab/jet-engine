@@ -119,7 +119,11 @@ export class JetMarket implements JetMarketData {
     client: JetClient,
     filters?: GetProgramAccountsFilter[]
   ): Promise<JetMarket[]> {
-    const accounts = await client.program.account.market.all(filters)
+    const accounts = await client.program.account.market.all([
+      ...(filters ?? []),
+      { dataSize: client.program.account.market.size }
+    ])
+
     return accounts.map(account => JetMarket.decode(client, account.publicKey, account.account))
   }
 
