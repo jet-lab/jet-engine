@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Prettier Check
-        run: npm run fmt:check
+        run: npm run fmt
 
       - name: ESLint
         run: npm run lint
