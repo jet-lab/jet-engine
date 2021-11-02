@@ -20,7 +20,9 @@ import { Market as SerumMarket } from "@project-serum/serum"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import {
   Connection,
+  GetProgramAccountsFilter,
   Keypair,
+  MemcmpFilter,
   PublicKey,
   Transaction,
   TransactionInstruction
@@ -30,7 +32,7 @@ import * as BL from "@solana/buffer-layout"
 import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import * as util from "./util"
+import { StaticSeeds, numberField, u64Field } from "./util"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -108,6 +110,7 @@ export interface ReserveData {
   dexOpenOrders: PublicKey
   dexSwapTokens: PublicKey
   dexMarket: PublicKey
+  state: ReserveStateData
 }
 
 export interface ReserveStateData {
@@ -118,6 +121,17 @@ export interface ReserveStateData {
   totalDepositNotes: anchor.BN
   totalLoanNotes: anchor.BN
 }
+
+const ReserveStateStruct = BL.struct([
+  u64Field("accruedUntil"),
+  numberField("outstandingDebt"),
+  numberField("uncollectedFees"),
+  u64Field("totalDeposits"),
+  numberField("totalDepositNotes"),
+  u64Field("totalLoanNotes"),
+  BL.blob(416 + 16, "_RESERVED_")
+])
+
 
 export interface ReserveDexMarketAccounts {
   market: PublicKey
@@ -157,25 +171,87 @@ export class JetReserve {
   constructor(
     private client: JetClient,
     private market: JetMarket,
-    public address: PublicKey,
     public data: ReserveData,
-    public state?: ReserveStateData
   ) {
     this.conn = this.client.program.provider.connection
   }
 
   /**
-   * TODO:
+   * Load a `Reserve` program account.
+   * @static
+   * @param {JetClient} client
+   * @param {PublicKey} address The reserve address
+   * @param {JetMarket} maybeMarket
+   * The `Market` program account associated with the reserve.
+   * If it is not provided it will also be loaded.
+   * @returns {Promise<JetReserve>}
+   * @memberof JetReserve
+   */
+   static async load(
+    client: JetClient,
+    address: PublicKey,
+    maybeMarket?: JetMarket
+  ): Promise<JetReserve> {
+    const data = await client.program.account.reserve.fetch(address)
+    const market = maybeMarket || (await JetMarket.load(client, data.market))
+    return this.decode(client, market, address, data)
+  }
+
+  /**
+   * Reloads this reserve and market.
    * @returns {Promise<string>}
    * @memberof JetReserve
    */
   async refresh(): Promise<void> {
     await this.market.refresh()
+    const data = await this.client.program.account.reserve.fetch(this.data.address)
+    const reserve = await JetReserve.decode(this.client, this.market, this.data.address, data);
+    this.data = reserve.data;
+  }
 
-    const data: any = await this.client.program.account.reserve.fetch(this.address)
-    const stateData = new Uint8Array(data.state)
-    this.state = ReserveStateStruct.decode(stateData) as ReserveStateData
-    this.data = data as ReserveData
+  /**
+   * Return all `Reserve` program accounts that have been created
+   * @param {GetProgramAccountsFilter[]} [filters]
+   * @returns {Promise<ProgramAccount<Reserve>[]>}
+   * @memberof JetClient
+   */
+  static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
+    const reserveAccounts = await client.program.account.reserve.all(filters);
+    const uniqueMarketAddresses = [...new Set(reserveAccounts.map(account => account.account.market.toBase58()))];
+    const marketPromises = uniqueMarketAddresses.map(marketAddress => JetMarket.load(client, new PublicKey(marketAddress)))
+    const markets = await Promise.all(marketPromises);
+    const reservePromises = reserveAccounts.map(account => JetReserve.decode(client, markets.find(market => market.address.equals(account.account.market)) as JetMarket, account.publicKey, account.account))
+    return await Promise.all(reservePromises);
+  }
+
+  /**
+   * Return all `Reserve` program accounts that are associated with the argued market.
+   * @param {GetProgramAccountsFilter[]} [filters]
+   * @returns {Promise<ProgramAccount<Reserve>[]>}
+   * @memberof JetClient
+   */
+  static async allReservesByMarket(client: JetClient, marketAddress: PublicKey): Promise<JetReserve[]> {
+    const filter: MemcmpFilter = {
+      memcmp: {
+        // The market field of the reserve account
+        // There is a hidden 8 byte discriminator field at the start of the reserve account
+        offset: 8 + 2 + 2 + 4,
+        // The value of the market pubkey
+        bytes: marketAddress.toBase58(),
+      }
+    }
+    return await this.allReserves(client, [filter]);
+  }
+
+  private static decode(client: JetClient, market: JetMarket, address: PublicKey, data: any): JetReserve {
+    const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData;
+    const reserve: ReserveData = {
+      ...data,
+      address,
+      state
+    }
+
+    return new JetReserve(client, market, reserve)
   }
 
   async sendRefreshTx(): Promise<string> {
@@ -193,7 +269,7 @@ export class JetReserve {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
-        reserve: this.address,
+        reserve: this.data.address,
         feeNoteVault: this.data.feeNoteVault,
         depositNoteMint: this.data.depositNoteMint,
         pythOraclePrice: this.data.pythOraclePrice,
@@ -258,29 +334,6 @@ export class JetReserve {
   }
 
   /**
-   * TODO:
-   * @static
-   * @param {JetClient} client
-   * @param {PublicKey} address
-   * @param {JetMarket} [maybeMarket]
-   * @returns {Promise<JetReserve>}
-   * @memberof JetReserve
-   */
-  static async load(
-    client: JetClient,
-    address: PublicKey,
-    maybeMarket?: JetMarket
-  ): Promise<JetReserve> {
-    const data: ReserveData = {
-      ...(await client.program.account.reserve.fetch(address)),
-      address
-    }
-    const market = maybeMarket || (await JetMarket.load(client, data.market))
-
-    return new JetReserve(client, market, address, data)
-  }
-
-  /**
    * Derive all the associated accounts for a reserve.
    * @param {JetClient} client The client to use for the request
    * @param {PublicKey} address The reserve address to derive the accounts for.
@@ -294,23 +347,13 @@ export class JetReserve {
     tokenMint: PublicKey
   ): Promise<ReserveAccounts> {
     return {
-      vault: await client.findDerivedAccount(["vault", address]),
-      feeNoteVault: await client.findDerivedAccount(["fee-vault", address]),
-      dexSwapTokens: await client.findDerivedAccount(["dex-swap-tokens", address]),
-      dexOpenOrders: await client.findDerivedAccount(["dex-open-orders", address]),
+      vault: await client.findDerivedAccount([StaticSeeds.Vault, address]),
+      feeNoteVault: await client.findDerivedAccount([StaticSeeds.FeeVault, address]),
+      dexSwapTokens: await client.findDerivedAccount([StaticSeeds.DexSwapTokens, address]),
+      dexOpenOrders: await client.findDerivedAccount([StaticSeeds.DexOpenOrders, address]),
 
-      loanNoteMint: await client.findDerivedAccount(["loans", address, tokenMint]),
-      depositNoteMint: await client.findDerivedAccount(["deposits", address, tokenMint])
+      loanNoteMint: await client.findDerivedAccount([StaticSeeds.Loans, address, tokenMint]),
+      depositNoteMint: await client.findDerivedAccount([StaticSeeds.Deposits, address, tokenMint])
     }
   }
 }
-
-const ReserveStateStruct = BL.struct([
-  util.u64Field("accruedUntil"),
-  util.numberField("outstandingDebt"),
-  util.numberField("uncollectedFees"),
-  util.u64Field("totalDeposits"),
-  util.numberField("totalDepositNotes"),
-  util.u64Field("totalLoanNotes"),
-  BL.blob(416 + 16, "_RESERVED_")
-])

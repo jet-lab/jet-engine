@@ -30,11 +30,12 @@ export const PLACEHOLDER_ACCOUNT = PublicKey.default
 
 // FIXME: this is probably different on devnet
 export const DEX_ID = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
 export const DEX_ID_DEVNET = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 
 // FIXME: ???
 export const JET_ID = new PublicKey("JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU")
+export const JET_MARKET_ADDRESS = new PublicKey("9oiXzad28vLhT2TkFoVRRRcwYKrSF7E3XPUJpwcarCAo")
+export const JET_MARKET_ADDRESS_DEVNET = new PublicKey("2mt2XQS6kKgkE2MPR9fFoWDv5ZYYNXkVGxgg9c9jMPRU")
 
 type AmountUnitsTokens = { tokens: Record<string, never> }
 type AmountUnitsDepositNotes = { depositNotes: Record<string, never> }

@@ -15,12 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
+import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js"
 import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
 import { Jet } from "./idl/jet"
 import IDL from "./idl/jet.json"
-import { CreateMarketParams, JetMarket } from "./market"
-import { Market, Obligation, Reserve } from "./types"
+import { Obligation } from "./types"
 import { JET_ID } from "."
 
 interface ToBytes {
@@ -77,33 +76,13 @@ export class JetClient {
   }
 
   /**
-   * Return all `Market` program accounts that have been created
-   * @param {GetProgramAccountsFilter[]} [filter]
-   * @returns {Promise<ProgramAccount<Market>[]>}
-   * @memberof JetClient
-   */
-  async allMarkets(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Market>[]> {
-    return this.program.account.market.all(filter)
-  }
-
-  /**
    * Return all `Obligation` program accounts that have been created
-   * @param {GetProgramAccountsFilter[]} [filter]
+   * @param {GetProgramAccountsFilter[]} [filters]
    * @returns {Promise<ProgramAccount<Obligation>[]>}
    * @memberof JetClient
    */
-  async allObligations(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Obligation>[]> {
-    return (this.program.account.obligation as any).all(filter)
-  }
-
-  /**
-   * Return all `Reserve` program accounts that have been created
-   * @param {GetProgramAccountsFilter[]} [filter]
-   * @returns {Promise<ProgramAccount<Reserve>[]>}
-   * @memberof JetClient
-   */
-  async allReserves(filter?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Reserve>[]> {
-    return (this.program.account.reserve as any).all(filter)
+  async allObligations(filters?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Obligation>[]> {
+    return (this.program.account.obligation as any).all(filters)
   }
 
   /**
@@ -151,34 +130,5 @@ export class JetClient {
       this.program.programId
     )
     return new DerivedAccount(address, bumpSeed)
-  }
-
-  /**
-   * TODO:
-   * @param {CreateMarketParams} params
-   * @returns {Promise<JetMarket>}
-   * @memberof JetClient
-   */
-  async createMarket(params: CreateMarketParams): Promise<JetMarket> {
-    let account = params.account
-
-    if (account == undefined) {
-      account = Keypair.generate()
-    }
-
-    await this.program.rpc.initMarket(
-      params.owner,
-      params.quoteCurrencyName,
-      params.quoteCurrencyMint,
-      {
-        accounts: {
-          market: account.publicKey
-        },
-        signers: [account],
-        instructions: [await this.program.account.market.createInstruction(account)]
-      }
-    )
-
-    return JetMarket.load(this, account.publicKey)
   }
 }

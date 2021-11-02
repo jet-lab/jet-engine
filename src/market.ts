@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, Keypair } from "@solana/web3.js"
+import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
 import * as BL from "@solana/buffer-layout"
@@ -47,6 +47,7 @@ export interface JetMarketReserveInfo {
 }
 
 export interface JetMarketData {
+  address: PublicKey
   quoteTokenMint: PublicKey
   quoteCurrency: string
   marketAuthority: PublicKey
@@ -83,26 +84,6 @@ export class JetMarket implements JetMarketData {
   ) {}
 
   /**
-   * TODO:
-   * @private
-   * @static
-   * @param {JetClient} client
-   * @param {PublicKey} address
-   * @returns {Promise<[any, JetMarketReserveInfo[]]>}
-   * @memberof JetMarket
-   */
-  private static async fetchData(
-    client: JetClient,
-    address: PublicKey
-  ): Promise<[any, JetMarketReserveInfo[]]> {
-    const data = await client.program.account.market.fetch(address)
-    const reserveInfoData = new Uint8Array(data.reserves)
-    const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
-
-    return [data, reserveInfoList]
-  }
-
-  /**
    * Load the market account data from the network.
    * @param {JetClient} client The program client
    * @param {PublicKey} address The address of the market.
@@ -110,7 +91,41 @@ export class JetMarket implements JetMarketData {
    * @memberof JetMarket
    */
   static async load(client: JetClient, address: PublicKey): Promise<JetMarket> {
-    const [data, reserveInfoList] = await JetMarket.fetchData(client, address)
+    const data = await client.program.account.market.fetch(address)
+    return this.decode(client, address, data);
+  }
+
+  /**
+   * Get the latest market account data from the network.
+   * @memberof JetMarket
+   */
+  async refresh() {
+    const market = await JetMarket.load(this.client, this.address)
+
+    this.reserves = market.reserves
+    this.owner = market.owner
+    this.marketAuthority = market.marketAuthority
+    this.quoteCurrency = market.quoteCurrency
+    this.quoteTokenMint = market.quoteTokenMint
+  }
+
+  /**
+   * Return all `Market` program accounts that have been created
+   * @param {GetProgramAccountsFilter[]} [filters]
+   * @returns {Promise<ProgramAccount<Market>[]>}
+   * @memberof JetClient
+   */
+   static async allMarkets(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetMarket[]> {
+    const accounts = await client.program.account.market.all(filters)
+    return accounts.map(account => JetMarket.decode(client, account.publicKey, account.account));
+  }
+
+  /**
+   * Creates an instance of JetMarket from an anchor-decoded account. 
+   */
+   private static decode(client: JetClient, address: PublicKey, data: any) {
+    const reserveInfoData = new Uint8Array(data.reserves)
+    const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
     return new JetMarket(
       client,
@@ -121,20 +136,6 @@ export class JetMarket implements JetMarketData {
       data.owner,
       reserveInfoList
     )
-  }
-
-  /**
-   * Get the latest market account data from the network.
-   * @memberof JetMarket
-   */
-  async refresh() {
-    const [data, reserveInfoList] = await JetMarket.fetchData(this.client, this.address)
-
-    this.reserves = reserveInfoList
-    this.owner = data.owner
-    this.marketAuthority = data.marketAuthority
-    this.quoteCurrency = data.quoteCurrency
-    this.quoteTokenMint = data.quoteTokenMint
   }
 
   /**
@@ -149,6 +150,35 @@ export class JetMarket implements JetMarketData {
         owner: this.owner
       }
     })
+  }
+
+  /**
+   * TODO:
+   * @param {CreateMarketParams} params
+   * @returns {Promise<JetMarket>}
+   * @memberof JetClient
+   */
+  async createMarket(params: CreateMarketParams): Promise<JetMarket> {
+    let account = params.account
+
+    if (account == undefined) {
+      account = Keypair.generate()
+    }
+
+    await this.client.program.rpc.initMarket(
+      params.owner,
+      params.quoteCurrencyName,
+      params.quoteCurrencyMint,
+      {
+        accounts: {
+          market: account.publicKey
+        },
+        signers: [account],
+        instructions: [await this.client.program.account.market.createInstruction(account)]
+      }
+    )
+
+    return JetMarket.load(this.client, account.publicKey)
   }
 
   /**
@@ -184,7 +214,7 @@ export class JetMarket implements JetMarketData {
       account
     )
 
-    // const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
+    const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
 
     await this.client.program.rpc.initReserve(bumpSeeds, params.config, {
       accounts: {
@@ -208,7 +238,7 @@ export class JetMarket implements JetMarketData {
         tokenMint: params.tokenMint,
 
         tokenProgram: TOKEN_PROGRAM_ID,
-        dexProgram: this.client.devnet ? DEX_ID_DEVNET : DEX_ID,
+        dexProgram,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         systemProgram: anchor.web3.SystemProgram.programId
       },

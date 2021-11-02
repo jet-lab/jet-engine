@@ -155,11 +155,11 @@ export class JetUser implements User {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
         obligation: this.obligation.address,
-        loanReserve: loanReserve.address,
+        loanReserve: loanReserve.data.address,
         loanReserveVault: loanReserve.data.vault,
         loanNoteMint: loanReserve.data.loanNoteMint,
         loanAccount: loan.address,
-        collateralReserve: collateralReserve.address,
+        collateralReserve: collateralReserve.data.address,
         collateralReserveVault: collateralReserve.data.vault,
         depositNoteMint: collateralReserve.data.depositNoteMint,
         collateralAccount: collateral.address,
@@ -261,8 +261,8 @@ export class JetUser implements User {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
         obligation: this.obligation,
-        reserve: loanReserve.address,
-        collateralReserve: collateralReserve.address,
+        reserve: loanReserve.data.address,
+        collateralReserve: collateralReserve.data.address,
         vault: loanReserve.data.vault,
         loanNoteMint: loanReserve.data.loanNoteMint,
         loanAccount: loan.address,
@@ -348,7 +348,7 @@ export class JetUser implements User {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
         payer: this.address,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         vault: reserve.data.vault,
         obligation: this.obligation.address,
         loanNoteMint: reserve.data.loanNoteMint,
@@ -414,7 +414,7 @@ export class JetUser implements User {
         marketAuthority: this.market.marketAuthority,
         owner: this.address,
         obligation: this.obligation.address,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         collateralAccount: collateral.address,
         depositAccount: deposits.address,
         tokenProgram: TOKEN_PROGRAM_ID
@@ -477,7 +477,7 @@ export class JetUser implements User {
         withdrawAccount: tokenAccount,
         depositAccount: deposits.address,
         depositor: this.address,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         vault: reserve.data.vault,
         depositNoteMint: reserve.data.depositNoteMint,
         tokenProgram: TOKEN_PROGRAM_ID
@@ -540,7 +540,7 @@ export class JetUser implements User {
         depositSource: tokenAccount,
         depositAccount: deposits.address,
         depositor: this.address,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         vault: reserve.data.vault,
         depositNoteMint: reserve.data.depositNoteMint,
         tokenProgram: TOKEN_PROGRAM_ID
@@ -613,7 +613,7 @@ export class JetUser implements User {
         depositAccount: deposits.address,
         collateralAccount: collateral.address,
         owner: this.address,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         tokenProgram: TOKEN_PROGRAM_ID
       }
     })
@@ -682,7 +682,7 @@ export class JetUser implements User {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         obligation: this.obligation.address,
         vault: reserve.data.vault,
         loanNoteMint: reserve.data.loanNoteMint,
@@ -770,7 +770,7 @@ export class JetUser implements User {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         depositNoteMint: reserve.data.depositNoteMint,
         depositor: this.address,
         depositAccount: account.address,
@@ -798,7 +798,7 @@ export class JetUser implements User {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
 
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         depositNoteMint: reserve.data.depositNoteMint,
         owner: this.address,
         obligation: this.obligation.address,
@@ -828,7 +828,7 @@ export class JetUser implements User {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
 
-        reserve: reserve.address,
+        reserve: reserve.data.address,
         loanNoteMint: reserve.data.loanNoteMint,
         owner: this.address,
         obligation: this.obligation.address,
@@ -931,20 +931,23 @@ export class JetUser implements User {
   private async findReserveAccounts(
     reserve: JetMarketReserveInfo | JetReserve
   ): Promise<UserReserveAccounts> {
+    const reserveAddress = (reserve as any).address
+      ?? (reserve as any).data.address;
+      
     const deposits = await this.client.findDerivedAccount([
       "deposits",
-      reserve.address,
+      (reserve as any).address,
       this.address
     ])
     const loan = await this.client.findDerivedAccount([
       "loan",
-      reserve.address,
+      reserveAddress,
       this.obligation.address,
       this.address
     ])
     const collateral = await this.client.findDerivedAccount([
       "collateral",
-      reserve.address,
+      reserveAddress,
       this.obligation.address,
       this.address
     ])

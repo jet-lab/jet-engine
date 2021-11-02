@@ -42,8 +42,8 @@ export type Reserve = {
   dexSwapTokens: PublicKey
   dexOpenOrders: PublicKey
   dexMarket: PublicKey
-  reserved0: number[]
-  reserved1: number[]
+  reserved0: number | number[]
+  reserved1: number | number[]
   config: ReserveConfig
   state: number[]
 }
