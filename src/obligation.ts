@@ -74,12 +74,23 @@ export class JetObligation implements Obligation {
       collateralValue = collateralValue.add(positions[i].collateralBalance.amount.muln(prices[i]))
       loanedValue = loanedValue.add(positions[i].loanBalance.amount.muln(prices[i]))
     }
-    
-    // Utilization Rate
-    const collateralRatio = loanedValue.isZero() ? 0 : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
-    const utilizationRate = depositedValue.isZero() ? 0 : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
 
-    return new JetObligation(positions as Position[], depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate);
+    // Utilization Rate
+    const collateralRatio = loanedValue.isZero()
+      ? 0
+      : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
+    const utilizationRate = depositedValue.isZero()
+      ? 0
+      : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
+
+    return new JetObligation(
+      positions as Position[],
+      depositedValue,
+      collateralValue,
+      loanedValue,
+      collateralRatio,
+      utilizationRate
+    )
   }
 
   private static toToken(noteAmount: TokenAmount, reserveData: ReserveData, exchangeRate: BN) {

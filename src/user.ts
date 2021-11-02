@@ -931,9 +931,8 @@ export class JetUser implements User {
   private async findReserveAccounts(
     reserve: JetMarketReserveInfo | JetReserve
   ): Promise<UserReserveAccounts> {
-    const reserveAddress = (reserve as any).address
-      ?? (reserve as any).data.address;
-      
+    const reserveAddress = (reserve as any).address ?? (reserve as any).data.address
+
     const deposits = await this.client.findDerivedAccount([
       "deposits",
       (reserve as any).address,
