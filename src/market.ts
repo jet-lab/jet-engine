@@ -92,7 +92,7 @@ export class JetMarket implements JetMarketData {
    */
   static async load(client: JetClient, address: PublicKey): Promise<JetMarket> {
     const data = await client.program.account.market.fetch(address)
-    return this.decode(client, address, data);
+    return this.decode(client, address, data)
   }
 
   /**
@@ -115,15 +115,18 @@ export class JetMarket implements JetMarketData {
    * @returns {Promise<ProgramAccount<Market>[]>}
    * @memberof JetClient
    */
-   static async allMarkets(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetMarket[]> {
+  static async allMarkets(
+    client: JetClient,
+    filters?: GetProgramAccountsFilter[]
+  ): Promise<JetMarket[]> {
     const accounts = await client.program.account.market.all(filters)
-    return accounts.map(account => JetMarket.decode(client, account.publicKey, account.account));
+    return accounts.map(account => JetMarket.decode(client, account.publicKey, account.account))
   }
 
   /**
-   * Creates an instance of JetMarket from an anchor-decoded account. 
+   * Creates an instance of JetMarket from an anchor-decoded account.
    */
-   private static decode(client: JetClient, address: PublicKey, data: any) {
+  private static decode(client: JetClient, address: PublicKey, data: any) {
     const reserveInfoData = new Uint8Array(data.reserves)
     const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
@@ -214,7 +217,7 @@ export class JetMarket implements JetMarketData {
       account
     )
 
-    const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID;
+    const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID
 
     await this.client.program.rpc.initReserve(bumpSeeds, params.config, {
       accounts: {

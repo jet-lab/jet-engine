@@ -132,7 +132,6 @@ const ReserveStateStruct = BL.struct([
   BL.blob(416 + 16, "_RESERVED_")
 ])
 
-
 export interface ReserveDexMarketAccounts {
   market: PublicKey
   openOrders: PublicKey
@@ -168,11 +167,7 @@ export class JetReserve {
    * @param {ReserveData} data
    * @memberof JetReserve
    */
-  constructor(
-    private client: JetClient,
-    private market: JetMarket,
-    public data: ReserveData,
-  ) {
+  constructor(private client: JetClient, private market: JetMarket, public data: ReserveData) {
     this.conn = this.client.program.provider.connection
   }
 
@@ -187,7 +182,7 @@ export class JetReserve {
    * @returns {Promise<JetReserve>}
    * @memberof JetReserve
    */
-   static async load(
+  static async load(
     client: JetClient,
     address: PublicKey,
     maybeMarket?: JetMarket
@@ -205,8 +200,8 @@ export class JetReserve {
   async refresh(): Promise<void> {
     await this.market.refresh()
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    const reserve = await JetReserve.decode(this.client, this.market, this.data.address, data);
-    this.data = reserve.data;
+    const reserve = await JetReserve.decode(this.client, this.market, this.data.address, data)
+    this.data = reserve.data
   }
 
   /**
@@ -215,13 +210,27 @@ export class JetReserve {
    * @returns {Promise<ProgramAccount<Reserve>[]>}
    * @memberof JetClient
    */
-  static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
-    const reserveAccounts = await client.program.account.reserve.all(filters);
-    const uniqueMarketAddresses = [...new Set(reserveAccounts.map(account => account.account.market.toBase58()))];
-    const marketPromises = uniqueMarketAddresses.map(marketAddress => JetMarket.load(client, new PublicKey(marketAddress)))
-    const markets = await Promise.all(marketPromises);
-    const reservePromises = reserveAccounts.map(account => JetReserve.decode(client, markets.find(market => market.address.equals(account.account.market)) as JetMarket, account.publicKey, account.account))
-    return await Promise.all(reservePromises);
+  static async allReserves(
+    client: JetClient,
+    filters?: GetProgramAccountsFilter[]
+  ): Promise<JetReserve[]> {
+    const reserveAccounts = await client.program.account.reserve.all(filters)
+    const uniqueMarketAddresses = [
+      ...new Set(reserveAccounts.map(account => account.account.market.toBase58()))
+    ]
+    const marketPromises = uniqueMarketAddresses.map(marketAddress =>
+      JetMarket.load(client, new PublicKey(marketAddress))
+    )
+    const markets = await Promise.all(marketPromises)
+    const reservePromises = reserveAccounts.map(account =>
+      JetReserve.decode(
+        client,
+        markets.find(market => market.address.equals(account.account.market)) as JetMarket,
+        account.publicKey,
+        account.account
+      )
+    )
+    return await Promise.all(reservePromises)
   }
 
   /**
@@ -230,21 +239,29 @@ export class JetReserve {
    * @returns {Promise<ProgramAccount<Reserve>[]>}
    * @memberof JetClient
    */
-  static async allReservesByMarket(client: JetClient, marketAddress: PublicKey): Promise<JetReserve[]> {
+  static async allReservesByMarket(
+    client: JetClient,
+    marketAddress: PublicKey
+  ): Promise<JetReserve[]> {
     const filter: MemcmpFilter = {
       memcmp: {
         // The market field of the reserve account
         // There is a hidden 8 byte discriminator field at the start of the reserve account
         offset: 8 + 2 + 2 + 4,
         // The value of the market pubkey
-        bytes: marketAddress.toBase58(),
+        bytes: marketAddress.toBase58()
       }
     }
-    return await this.allReserves(client, [filter]);
+    return await this.allReserves(client, [filter])
   }
 
-  private static decode(client: JetClient, market: JetMarket, address: PublicKey, data: any): JetReserve {
-    const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData;
+  private static decode(
+    client: JetClient,
+    market: JetMarket,
+    address: PublicKey,
+    data: any
+  ): JetReserve {
+    const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
     const reserve: ReserveData = {
       ...data,
       address,

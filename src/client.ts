@@ -81,7 +81,9 @@ export class JetClient {
    * @returns {Promise<ProgramAccount<Obligation>[]>}
    * @memberof JetClient
    */
-  async allObligations(filters?: GetProgramAccountsFilter[]): Promise<ProgramAccount<Obligation>[]> {
+  async allObligations(
+    filters?: GetProgramAccountsFilter[]
+  ): Promise<ProgramAccount<Obligation>[]> {
     return (this.program.account.obligation as any).all(filters)
   }
 
