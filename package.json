@@ -27,7 +27,7 @@
     "fmt:fix": "prettier src/ tests/ types/ --write",
     "lint": "eslint src/ --ext .ts",
     "test": "jest",
-    "pre-commit": "npm run fmt:fix && npm run lint",
+    "precommit": "npm run fmt:fix && npm run lint",
     "prepare": "husky install"
   },
   "dependencies": {
