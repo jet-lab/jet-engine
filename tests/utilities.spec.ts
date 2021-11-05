@@ -19,6 +19,39 @@ import { BN, web3 } from "@project-serum/anchor"
 import { TokenAmount } from "../src/user"
 import { DerivedAccount } from "../src/client"
 import { NumberField, pubkeyField, PubkeyField, u64Field } from "../src/util"
+import { Amount } from "../src"
+
+describe("Amount", () => {
+  test("properly instantiates", () => {
+    const a = new Amount({ tokens: {} }, new BN(1))
+    expect(a.units).toEqual({ tokens: {} })
+    expect(a.value.toNumber()).toEqual(1)
+  })
+
+  test("can be transformed into an RPC call argument", () => {
+    const a = new Amount({ tokens: {} }, new BN(1)).toRpcArg()
+    expect(a.units).toEqual({ tokens: {} })
+    expect(a.value.toNumber()).toEqual(1)
+  })
+
+  test("can be instantiated used the static tokens function", () => {
+    const a = Amount.tokens(1)
+    expect(a.units).toEqual({ tokens: {} })
+    expect(a.value.toNumber()).toEqual(1)
+  })
+
+  test("can be instantiated used the static depositNotes function", () => {
+    const a = Amount.depositNotes(1)
+    expect(a.units).toEqual({ depositNotes: {} })
+    expect(a.value.toNumber()).toEqual(1)
+  })
+
+  test("can be instantiated used the static loanNotes function", () => {
+    const a = Amount.loanNotes(1)
+    expect(a.units).toEqual({ loanNotes: {} })
+    expect(a.value.toNumber()).toEqual(1)
+  })
+})
 
 describe("TokenAmount", () => {
   let t: TokenAmount

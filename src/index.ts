@@ -92,6 +92,12 @@ export class Amount {
     return new Amount({ loanNotes: {} }, new anchor.BN(amount))
   }
 
+  /**
+   * Converts the class instance into an object that can
+   * be used as an argument for Solana instruction calls.
+   * @returns {{ units: never; value: anchor.BN }}
+   * @memberof Amount
+   */
   toRpcArg(): { units: never; value: anchor.BN } {
     return {
       units: this.units as never,

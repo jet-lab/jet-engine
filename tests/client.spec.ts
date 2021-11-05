@@ -16,7 +16,7 @@
  */
 
 import { Provider, Wallet } from "@project-serum/anchor"
-import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js"
+import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js"
 import { JetMarket, JetReserve } from "../src"
 import { JetClient } from "../src/client"
 
@@ -27,6 +27,34 @@ describe("JetClient", () => {
     const wallet = Keypair.generate()
     const provider = new Provider(new Connection(clusterApiUrl("devnet")), new Wallet(wallet), {})
     client = await JetClient.connect(provider, true)
+  })
+
+  describe("can calculate derived account addresses and bump nonces", () => {
+    test("using buffer seeds", async () => {
+      const derived = await client.findDerivedAccount([Buffer.from("test")])
+      expect(derived.address.toBytes()).toHaveLength(32)
+      expect(derived.bumpSeed).toBeLessThan(256)
+    })
+
+    test("using string seeds", async () => {
+      const derived = await client.findDerivedAccount(["test"])
+      expect(derived.address.toBytes()).toHaveLength(32)
+      expect(derived.bumpSeed).toBeLessThan(256)
+    })
+
+    test("using public key seeds", async () => {
+      const derived = await client.findDerivedAccount([
+        new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+      ])
+      expect(derived.address.toBytes()).toHaveLength(32)
+      expect(derived.bumpSeed).toBeLessThan(256)
+    })
+
+    test("using keypair seeds", async () => {
+      const derived = await client.findDerivedAccount([Keypair.generate()])
+      expect(derived.address.toBytes()).toHaveLength(32)
+      expect(derived.bumpSeed).toBeLessThan(256)
+    })
   })
 
   test("can fetch all markets", async () => {
