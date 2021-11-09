@@ -27,12 +27,13 @@ import {
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js"
-import * as BL from "@solana/buffer-layout"
 
-import { DEX_ID, DEX_ID_DEVNET, Reserve } from "."
+import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import { StaticSeeds, numberField, u64Field } from "./util"
+import { StaticSeeds } from "./util"
+import { ReserveStateStruct } from "./layout"
+import type { ReserveAccount } from "./types"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -122,16 +123,6 @@ export interface ReserveStateData {
   totalLoanNotes: anchor.BN
 }
 
-const ReserveStateStruct = BL.struct([
-  u64Field("accruedUntil"),
-  numberField("outstandingDebt"),
-  numberField("uncollectedFees"),
-  u64Field("totalDeposits"),
-  numberField("totalDepositNotes"),
-  u64Field("totalLoanNotes"),
-  BL.blob(416 + 16, "_RESERVED_")
-])
-
 export interface ReserveDexMarketAccounts {
   market: PublicKey
   openOrders: PublicKey
@@ -182,11 +173,7 @@ export class JetReserve {
    * @returns {Promise<JetReserve>}
    * @memberof JetReserve
    */
-  static async load(
-    client: JetClient,
-    address: PublicKey,
-    maybeMarket?: JetMarket
-  ): Promise<JetReserve> {
+  static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
     const data = await client.program.account.reserve.fetch(address)
     const market = maybeMarket || (await JetMarket.load(client, data.market))
     return this.decode(client, market, address, data)
@@ -210,16 +197,10 @@ export class JetReserve {
    * @returns {Promise<ProgramAccount<Reserve>[]>}
    * @memberof JetClient
    */
-  static async allReserves(
-    client: JetClient,
-    filters?: GetProgramAccountsFilter[]
-  ): Promise<JetReserve[]> {
-    const reserveAccounts: anchor.ProgramAccount<Reserve>[] =
-      await client.program.account.reserve.all(filters)
+  static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
+    const reserveAccounts: anchor.ProgramAccount<ReserveAccount>[] = await client.program.account.reserve.all(filters)
 
-    const uniqueMarketAddresses = [
-      ...new Set(reserveAccounts.map(account => account.account.market.toBase58()))
-    ]
+    const uniqueMarketAddresses = [...new Set(reserveAccounts.map(account => account.account.market.toBase58()))]
 
     const marketPromises = uniqueMarketAddresses.map(marketAddress =>
       JetMarket.load(client, new PublicKey(marketAddress))
@@ -247,10 +228,7 @@ export class JetReserve {
    * @returns {Promise<ProgramAccount<Reserve>[]>}
    * @memberof JetClient
    */
-  static async allReservesByMarket(
-    client: JetClient,
-    marketAddress: PublicKey
-  ): Promise<JetReserve[]> {
+  static async allReservesByMarket(client: JetClient, marketAddress: PublicKey): Promise<JetReserve[]> {
     const filter: MemcmpFilter = {
       memcmp: {
         // The market field of the reserve account
@@ -263,12 +241,7 @@ export class JetReserve {
     return await this.allReserves(client, [filter])
   }
 
-  private static decode(
-    client: JetClient,
-    market: JetMarket,
-    address: PublicKey,
-    data: any
-  ): JetReserve {
+  private static decode(client: JetClient, market: JetMarket, address: PublicKey, data: any): JetReserve {
     const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
     const reserve: ReserveData = {
       ...data,
@@ -366,11 +339,7 @@ export class JetReserve {
    * @returns {Promise<ReserveAccounts>}
    * @memberof JetReserve
    */
-  static async deriveAccounts(
-    client: JetClient,
-    address: PublicKey,
-    tokenMint: PublicKey
-  ): Promise<ReserveAccounts> {
+  static async deriveAccounts(client: JetClient, address: PublicKey, tokenMint: PublicKey): Promise<ReserveAccounts> {
     return {
       vault: await client.findDerivedAccount([StaticSeeds.Vault, address]),
       feeNoteVault: await client.findDerivedAccount([StaticSeeds.FeeVault, address]),

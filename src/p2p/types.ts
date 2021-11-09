@@ -18,25 +18,12 @@
 import { PublicKey } from "@solana/web3.js"
 
 export type AcceptOfferAccounts = Record<
-  | "owner"
-  | "borrower"
-  | "lease"
-  | "listing"
-  | "offer"
-  | "ownerAssetAccount"
-  | "ownerFeeAccount"
-  | "feeEscrow",
+  "owner" | "borrower" | "lease" | "listing" | "offer" | "ownerAssetAccount" | "ownerFeeAccount" | "feeEscrow",
   PublicKey
 >
 
 export type CancelOfferAccounts = Record<
-  | "borrower"
-  | "listing"
-  | "offer"
-  | "collateralEscrow"
-  | "feeEscrow"
-  | "collateralDestination"
-  | "feeDestination",
+  "borrower" | "listing" | "offer" | "collateralEscrow" | "feeEscrow" | "collateralDestination" | "feeDestination",
   PublicKey
 >
 
@@ -53,13 +40,7 @@ export type EndLeaseAccounts = Record<
 >
 
 export type ForecloseAccounts = Record<
-  | "owner"
-  | "borrower"
-  | "lease"
-  | "listing"
-  | "offer"
-  | "collateralEscrow"
-  | "ownerCollateralAccount",
+  "owner" | "borrower" | "lease" | "listing" | "offer" | "collateralEscrow" | "ownerCollateralAccount",
   PublicKey
 >
 

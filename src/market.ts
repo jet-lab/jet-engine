@@ -18,26 +18,11 @@
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
-import * as BL from "@solana/buffer-layout"
+import { JetClient, DEX_ID, DEX_ID_DEVNET, DerivedAccount } from "."
 import { CreateReserveParams, JetReserve } from "./reserve"
-import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation, DerivedAccount } from "."
-import { StaticSeeds, pubkeyField, numberField } from "./util"
-
-const MAX_RESERVES = 32
-
-const ReserveInfoStruct = BL.struct([
-  pubkeyField("address"),
-  BL.blob(80, "_UNUSED_0_"),
-  numberField("price"),
-  numberField("depositNoteExchangeRate"),
-  numberField("loanNoteExchangeRate"),
-  numberField("minCollateralRatio"),
-  BL.u16("liquidationBonus"),
-  BL.blob(158, "_UNUSED_1_"),
-  BL.blob(16, "_UNUSED_CACHE")
-])
-
-const MarketReserveInfoList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
+import { parsePosition, StaticSeeds } from "./util"
+import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
+import type { ObligationAccount } from "./types"
 
 export interface JetMarketReserveInfo {
   address: PublicKey
@@ -115,10 +100,7 @@ export class JetMarket implements JetMarketData {
    * @returns {Promise<ProgramAccount<Market>[]>}
    * @memberof JetClient
    */
-  static async allMarkets(
-    client: JetClient,
-    filters?: GetProgramAccountsFilter[]
-  ): Promise<JetMarket[]> {
+  static async allMarkets(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetMarket[]> {
     const accounts = await client.program.account.market.all([
       ...(filters ?? []),
       { dataSize: client.program.account.market.size }
@@ -132,7 +114,7 @@ export class JetMarket implements JetMarketData {
    */
   private static decode(client: JetClient, address: PublicKey, data: any) {
     const reserveInfoData = new Uint8Array(data.reserves)
-    const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
+    const reserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
     return new JetMarket(
       client,
@@ -172,18 +154,13 @@ export class JetMarket implements JetMarketData {
       account = Keypair.generate()
     }
 
-    await this.client.program.rpc.initMarket(
-      params.owner,
-      params.quoteCurrencyName,
-      params.quoteCurrencyMint,
-      {
-        accounts: {
-          market: account.publicKey
-        },
-        signers: [account],
-        instructions: [await this.client.program.account.market.createInstruction(account)]
-      }
-    )
+    await this.client.program.rpc.initMarket(params.owner, params.quoteCurrencyName, params.quoteCurrencyMint, {
+      accounts: {
+        market: account.publicKey
+      },
+      signers: [account],
+      instructions: [await this.client.program.account.market.createInstruction(account)]
+    })
 
     return JetMarket.load(this.client, account.publicKey)
   }
@@ -201,11 +178,7 @@ export class JetMarket implements JetMarketData {
       account = Keypair.generate()
     }
 
-    const derivedAccounts = await JetReserve.deriveAccounts(
-      this.client,
-      account.publicKey,
-      params.tokenMint
-    )
+    const derivedAccounts = await JetReserve.deriveAccounts(this.client, account.publicKey, params.tokenMint)
 
     const bumpSeeds = {
       vault: derivedAccounts.vault.bumpSeed,
@@ -217,9 +190,7 @@ export class JetMarket implements JetMarketData {
       depositNoteMint: derivedAccounts.depositNoteMint.bumpSeed
     }
 
-    const createReserveAccount = await this.client.program.account.reserve.createInstruction(
-      account
-    )
+    const createReserveAccount = await this.client.program.account.reserve.createInstruction(account)
 
     const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID
 
@@ -261,11 +232,14 @@ export class JetMarket implements JetMarketData {
    * the argued address or public key if it exists, otherwise
    * will resolve to `null`.
    * @param {DerivedAccount} address
-   * @returns {(Promise<Obligation | null>)}
+   * @returns {(Promise<ObligationAccount | null>)}
    * @memberof JetClient
    */
-  async getAssociatedObligation(account: DerivedAccount): Promise<Obligation | null> {
-    return (this.client.program.account.obligation as any).fetchNullable(account.address)
+  async getAssociatedObligation(account: DerivedAccount): Promise<ObligationAccount | null> {
+    const o = (this.client.program.account.obligation as any).fetchNullable(account.address)
+    o.loans = PositionInfoStructList.decode(Buffer.from(o.loans as any as number[])).map(parsePosition)
+    o.collateral = PositionInfoStructList.decode(Buffer.from(o.collateral as any as number[])).map(parsePosition)
+    return o
   }
 
   /**

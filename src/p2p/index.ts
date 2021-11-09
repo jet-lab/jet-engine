@@ -17,13 +17,7 @@
 
 import { BN, Program, Provider } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import {
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  Transaction,
-  TransactionInstruction
-} from "@solana/web3.js"
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js"
 import type {
   AcceptOfferAccounts,
   CancelOfferAccounts,
@@ -183,11 +177,7 @@ export class Client {
       accounts.collateralMint
     )
 
-    const [feeKey, feeBump] = await this.deriveFeeEscrowAddress(
-      accounts.listing,
-      offerKey,
-      accounts.feeMint
-    )
+    const [feeKey, feeBump] = await this.deriveFeeEscrowAddress(accounts.listing, offerKey, accounts.feeMint)
 
     const tx = new Transaction()
     tx.add(
@@ -222,12 +212,7 @@ export class Client {
     collateralMint: PublicKey
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
-      [
-        Buffer.from(StaticSeed.CollateralEscrow),
-        listing.toBytes(),
-        offer.toBytes(),
-        collateralMint.toBytes()
-      ],
+      [Buffer.from(StaticSeed.CollateralEscrow), listing.toBytes(), offer.toBytes(), collateralMint.toBytes()],
       this._program.programId
     )
   }
@@ -242,11 +227,7 @@ export class Client {
    * @returns {Promise<[PublicKey, number]>}
    * @memberof Client
    */
-  deriveFeeEscrowAddress(
-    listing: PublicKey,
-    offer: PublicKey,
-    feeMint: PublicKey
-  ): Promise<[PublicKey, number]> {
+  deriveFeeEscrowAddress(listing: PublicKey, offer: PublicKey, feeMint: PublicKey): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [Buffer.from(StaticSeed.FeeEscrow), listing.toBytes(), offer.toBytes(), feeMint.toBytes()],
       this._program.programId
@@ -277,10 +258,7 @@ export class Client {
    * @returns {TransactionInstruction}
    * @memberof Client
    */
-  private _buildAcceptOfferInstruction(
-    bump: number,
-    accounts: AcceptOfferAccounts
-  ): TransactionInstruction {
+  private _buildAcceptOfferInstruction(bump: number, accounts: AcceptOfferAccounts): TransactionInstruction {
     return this._program.instruction.acceptOffer(bump, {
       accounts: {
         ...accounts,

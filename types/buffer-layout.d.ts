@@ -50,19 +50,11 @@ declare module "buffer-layout" {
   export function f64(property?: string): Layout<number>
   export function f64be(property?: string): Layout<number>
 
-  export function struct<T>(
-    fields: Layout<any>[],
-    property?: string,
-    decodePrefixes?: boolean
-  ): Layout<T>
+  export function struct<T>(fields: Layout<any>[], property?: string, decodePrefixes?: boolean): Layout<T>
 
   export function bits(word: Layout<number>, msb?: boolean, property?: string): any
 
-  export function seq<T>(
-    elementLayout: Layout<T>,
-    count: number | Layout<number>,
-    property?: string
-  ): Layout<T[]>
+  export function seq<T>(elementLayout: Layout<T>, count: number | Layout<number>, property?: string): Layout<T[]>
 
   export function union(discr: Layout<any>, defaultLayout?: any, property?: string): any
 
