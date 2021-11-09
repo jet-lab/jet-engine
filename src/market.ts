@@ -18,10 +18,11 @@
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
-import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation, DerivedAccount } from "."
+import { JetClient, DEX_ID, DEX_ID_DEVNET, DerivedAccount } from "."
 import { CreateReserveParams, JetReserve } from "./reserve"
-import { StaticSeeds } from "./util"
-import { MarketReserveInfoList } from "./layout"
+import { parsePosition, StaticSeeds } from "./util"
+import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
+import type { ObligationAccount } from "./types"
 
 export interface JetMarketReserveInfo {
   address: PublicKey
@@ -113,7 +114,7 @@ export class JetMarket implements JetMarketData {
    */
   private static decode(client: JetClient, address: PublicKey, data: any) {
     const reserveInfoData = new Uint8Array(data.reserves)
-    const reserveInfoList = MarketReserveInfoList.decode(reserveInfoData) as JetMarketReserveInfo[]
+    const reserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData) as JetMarketReserveInfo[]
 
     return new JetMarket(
       client,
@@ -231,11 +232,14 @@ export class JetMarket implements JetMarketData {
    * the argued address or public key if it exists, otherwise
    * will resolve to `null`.
    * @param {DerivedAccount} address
-   * @returns {(Promise<Obligation | null>)}
+   * @returns {(Promise<ObligationAccount | null>)}
    * @memberof JetClient
    */
-  async getAssociatedObligation(account: DerivedAccount): Promise<Obligation | null> {
-    return (this.client.program.account.obligation as any).fetchNullable(account.address)
+  async getAssociatedObligation(account: DerivedAccount): Promise<ObligationAccount | null> {
+    const o = (this.client.program.account.obligation as any).fetchNullable(account.address)
+    o.loans = PositionInfoStructList.decode(Buffer.from(o.loans as any as number[])).map(parsePosition)
+    o.collateral = PositionInfoStructList.decode(Buffer.from(o.collateral as any as number[])).map(parsePosition)
+    return o
   }
 
   /**

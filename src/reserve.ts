@@ -28,11 +28,12 @@ import {
   TransactionInstruction
 } from "@solana/web3.js"
 
-import { DEX_ID, DEX_ID_DEVNET, Reserve } from "."
+import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
 import { StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
+import type { ReserveAccount } from "./types"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -197,7 +198,7 @@ export class JetReserve {
    * @memberof JetClient
    */
   static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
-    const reserveAccounts: anchor.ProgramAccount<Reserve>[] = await client.program.account.reserve.all(filters)
+    const reserveAccounts: anchor.ProgramAccount<ReserveAccount>[] = await client.program.account.reserve.all(filters)
 
     const uniqueMarketAddresses = [...new Set(reserveAccounts.map(account => account.account.market.toBase58()))]
 

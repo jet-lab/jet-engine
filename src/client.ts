@@ -16,11 +16,12 @@
  */
 
 import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js"
-import { Program, Provider, ProgramAccount, BN } from "@project-serum/anchor"
+import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
 import { Jet } from "./idl"
-import { ObligationAccount, ObligationPositionStruct } from "./types"
+import { ObligationAccount } from "./types"
 import { JET_ID } from "."
-import { PositionInfoList } from "./layout"
+import { PositionInfoStructList } from "./layout"
+import { parsePosition } from "./util"
 
 interface ToBytes {
   toBytes(): Uint8Array
@@ -95,18 +96,8 @@ export class JetClient {
    */
   decodeObligation(b: Buffer): ObligationAccount {
     const o = this.program.coder.accounts.decode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, b)
-
-    const parsePosition = (position: any): ObligationPositionStruct => ({
-      account: new PublicKey(position.account),
-      amount: new BN(position.amount),
-      side: position.side,
-      reserveIndex: position.reserveIndex,
-      _reserved: []
-    })
-
-    o.loans = PositionInfoList.decode(Buffer.from(o.loans as any as number[])).map(parsePosition)
-    o.collateral = PositionInfoList.decode(Buffer.from(o.collateral as any as number[])).map(parsePosition)
-
+    o.loans = PositionInfoStructList.decode(Buffer.from(o.loans as any as number[])).map(parsePosition)
+    o.collateral = PositionInfoStructList.decode(Buffer.from(o.collateral as any as number[])).map(parsePosition)
     return o
   }
 

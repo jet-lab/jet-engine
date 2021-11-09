@@ -18,6 +18,7 @@
 import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
+import type { ObligationPositionStruct } from "./types"
 
 export enum StaticSeeds {
   Collateral = "collateral",
@@ -29,6 +30,14 @@ export enum StaticSeeds {
   Obligation = "obligation",
   Vault = "vault"
 }
+
+export const parsePosition = (position: any): ObligationPositionStruct => ({
+  account: new PublicKey(position.account),
+  amount: new BN(position.amount),
+  side: position.side,
+  reserveIndex: position.reserveIndex,
+  _reserved: []
+})
 
 /**
  * TODO:

@@ -20,7 +20,7 @@ import { numberField, i64Field, u64Field, pubkeyField } from "./util"
 
 export const MAX_RESERVES = 32
 
-export const ReserveStateLayout = BL.struct([
+export const ReserveStateStruct = BL.struct([
   i64Field("accruedUntil"),
   numberField("outstandingDebt"),
   numberField("uncollectedFees"),
@@ -47,9 +47,9 @@ export const ReserveInfoStruct = BL.struct([
   BL.blob(7, "_UNUSED_1_")
 ])
 
-export const MarketReserveInfoList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
+export const MarketReserveInfoStructList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
 
-export const PositionInfo = BL.struct([
+export const PositionInfoStruct = BL.struct([
   pubkeyField("account"),
   numberField("amount"),
   BL.u32("side"),
@@ -57,4 +57,4 @@ export const PositionInfo = BL.struct([
   BL.blob(66, "_reserved")
 ])
 
-export const PositionInfoList = BL.seq(PositionInfo, 16, "positions")
+export const PositionInfoStructList = BL.seq(PositionInfoStruct, 16, "positions")
