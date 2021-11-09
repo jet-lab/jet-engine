@@ -99,10 +99,7 @@ export class JetMarket implements JetMarketData {
    * @returns {Promise<ProgramAccount<Market>[]>}
    * @memberof JetClient
    */
-  static async allMarkets(
-    client: JetClient,
-    filters?: GetProgramAccountsFilter[]
-  ): Promise<JetMarket[]> {
+  static async allMarkets(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetMarket[]> {
     const accounts = await client.program.account.market.all([
       ...(filters ?? []),
       { dataSize: client.program.account.market.size }
@@ -156,18 +153,13 @@ export class JetMarket implements JetMarketData {
       account = Keypair.generate()
     }
 
-    await this.client.program.rpc.initMarket(
-      params.owner,
-      params.quoteCurrencyName,
-      params.quoteCurrencyMint,
-      {
-        accounts: {
-          market: account.publicKey
-        },
-        signers: [account],
-        instructions: [await this.client.program.account.market.createInstruction(account)]
-      }
-    )
+    await this.client.program.rpc.initMarket(params.owner, params.quoteCurrencyName, params.quoteCurrencyMint, {
+      accounts: {
+        market: account.publicKey
+      },
+      signers: [account],
+      instructions: [await this.client.program.account.market.createInstruction(account)]
+    })
 
     return JetMarket.load(this.client, account.publicKey)
   }
@@ -185,11 +177,7 @@ export class JetMarket implements JetMarketData {
       account = Keypair.generate()
     }
 
-    const derivedAccounts = await JetReserve.deriveAccounts(
-      this.client,
-      account.publicKey,
-      params.tokenMint
-    )
+    const derivedAccounts = await JetReserve.deriveAccounts(this.client, account.publicKey, params.tokenMint)
 
     const bumpSeeds = {
       vault: derivedAccounts.vault.bumpSeed,
@@ -201,9 +189,7 @@ export class JetMarket implements JetMarketData {
       depositNoteMint: derivedAccounts.depositNoteMint.bumpSeed
     }
 
-    const createReserveAccount = await this.client.program.account.reserve.createInstruction(
-      account
-    )
+    const createReserveAccount = await this.client.program.account.reserve.createInstruction(account)
 
     const dexProgram = this.client.devnet ? DEX_ID_DEVNET : DEX_ID
 

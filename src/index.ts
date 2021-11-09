@@ -36,9 +36,7 @@ export const DEX_ID_DEVNET = new PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVE
 // FIXME: ???
 export const JET_ID = new PublicKey("JPv1rCqrhagNNmJVM5J1he7msQ5ybtvE1nNuHpDHMNU")
 export const JET_MARKET_ADDRESS = new PublicKey("9oiXzad28vLhT2TkFoVRRRcwYKrSF7E3XPUJpwcarCAo")
-export const JET_MARKET_ADDRESS_DEVNET = new PublicKey(
-  "2mt2XQS6kKgkE2MPR9fFoWDv5ZYYNXkVGxgg9c9jMPRU"
-)
+export const JET_MARKET_ADDRESS_DEVNET = new PublicKey("2mt2XQS6kKgkE2MPR9fFoWDv5ZYYNXkVGxgg9c9jMPRU")
 
 type AmountUnitsTokens = { tokens: Record<string, never> }
 type AmountUnitsDepositNotes = { depositNotes: Record<string, never> }

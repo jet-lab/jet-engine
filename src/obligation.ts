@@ -33,7 +33,23 @@ export interface Obligation {
   utilizationRate: number
 }
 
+/**
+ * TODO:
+ * @export
+ * @class JetObligation
+ * @implements {Obligation}
+ */
 export class JetObligation implements Obligation {
+  /**
+   * Creates an instance of JetObligation.
+   * @param {Position[]} positions
+   * @param {BN} depositedValue
+   * @param {BN} collateralValue
+   * @param {BN} loanedValue
+   * @param {number} collateralRatio
+   * @param {number} utilizationRate
+   * @memberof JetObligation
+   */
   constructor(
     public positions: Position[],
     public depositedValue: BN,
@@ -43,6 +59,16 @@ export class JetObligation implements Obligation {
     public utilizationRate: number
   ) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {JetMarketData} market
+   * @param {User} user
+   * @param {ReserveData[]} reserveData
+   * @param {number[]} prices
+   * @returns
+   * @memberof JetObligation
+   */
   static create(market: JetMarketData, user: User, reserveData: ReserveData[], prices: number[]) {
     const deposits = user.deposits()
     const collateral = user.deposits()
@@ -76,12 +102,8 @@ export class JetObligation implements Obligation {
     }
 
     // Utilization Rate
-    const collateralRatio = loanedValue.isZero()
-      ? 0
-      : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
-    const utilizationRate = depositedValue.isZero()
-      ? 0
-      : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
+    const collateralRatio = loanedValue.isZero() ? 0 : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
+    const utilizationRate = depositedValue.isZero() ? 0 : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
 
     return new JetObligation(
       positions as Position[],
@@ -93,10 +115,32 @@ export class JetObligation implements Obligation {
     )
   }
 
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {TokenAmount} noteAmount
+   * @param {ReserveData} reserveData
+   * @param {BN} exchangeRate
+   * @returns
+   * @memberof JetObligation
+   */
   private static toToken(noteAmount: TokenAmount, reserveData: ReserveData, exchangeRate: BN) {
     return new TokenAmount(reserveData.tokenMint, noteAmount.amount.mul(exchangeRate))
   }
 
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {TokenAmount} deposit
+   * @param {TokenAmount} collateral
+   * @param {TokenAmount} loan
+   * @param {ReserveData} reserve
+   * @param {JetMarketReserveInfo} reserveCache
+   * @returns {Balances}
+   * @memberof JetObligation
+   */
   private static toTokens(
     deposit: TokenAmount,
     collateral: TokenAmount,

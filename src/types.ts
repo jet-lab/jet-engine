@@ -2,7 +2,7 @@ import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { ReserveConfig } from "./reserve"
 
-export type Market = {
+export type MarketAccount = {
   version: number
   quoteExponent: number
   quoteCurrency: number[]
@@ -16,18 +16,26 @@ export type Market = {
   reserves: number[]
 }
 
-export type Obligation = {
+export type ObligationAccount = {
   version: number
-  reserved0: number
-  reserved1: number[]
+  _reserved0: number
   market: PublicKey
   owner: PublicKey
+  _reserved1: number[]
   cached: number[]
-  collateral: number[]
-  loans: number[]
+  collateral: ObligationPositionStruct[]
+  loans: ObligationPositionStruct[]
 }
 
-export type Reserve = {
+export type ObligationPositionStruct = {
+  account: PublicKey
+  amount: BN
+  side: number
+  reserveIndex: number
+  _reserved: number[]
+}
+
+export type ReserveAccount = {
   version: number
   index: number
   exponent: number

@@ -16,10 +16,11 @@
  */
 
 import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js"
-import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
+import { Program, Provider, ProgramAccount, BN } from "@project-serum/anchor"
 import { Jet } from "./idl"
-import { Obligation } from "./types"
+import { ObligationAccount, ObligationPositionStruct } from "./types"
 import { JET_ID } from "."
+import { PositionInfoList } from "./layout"
 
 interface ToBytes {
   toBytes(): Uint8Array
@@ -81,9 +82,7 @@ export class JetClient {
    * @returns {Promise<ProgramAccount<Obligation>[]>}
    * @memberof JetClient
    */
-  async allObligations(
-    filters?: GetProgramAccountsFilter[]
-  ): Promise<ProgramAccount<Obligation>[]> {
+  async allObligations(filters?: GetProgramAccountsFilter[]): Promise<ProgramAccount<ObligationAccount>[]> {
     return (this.program.account.obligation as any).all(filters)
   }
 
@@ -91,21 +90,34 @@ export class JetClient {
    * Decodes a buffer of account data into a usable
    * `Obligation` object.
    * @param {Buffer} b
-   * @returns {Obligation}
+   * @returns {ObligationAccount}
    * @memberof JetClient
    */
-  decodeObligation(b: Buffer): Obligation {
-    return this.program.coder.accounts.decode<Obligation>(JetClient.OBLIGATION_ACCOUNT_NAME, b)
+  decodeObligation(b: Buffer): ObligationAccount {
+    const o = this.program.coder.accounts.decode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, b)
+
+    const parsePosition = (position: any): ObligationPositionStruct => ({
+      account: new PublicKey(position.account),
+      amount: new BN(position.amount),
+      side: position.side,
+      reserveIndex: position.reserveIndex,
+      _reserved: []
+    })
+
+    o.loans = PositionInfoList.decode(Buffer.from(o.loans as any as number[])).map(parsePosition)
+    o.collateral = PositionInfoList.decode(Buffer.from(o.collateral as any as number[])).map(parsePosition)
+
+    return o
   }
 
   /**
    * Encodes the argued `Obligation` object into a `Buffer`.
-   * @param {Obligation} o
+   * @param {ObligationAccount} o
    * @returns {Promise<Buffer>}
    * @memberof JetClient
    */
-  encodeObligation(o: Obligation): Promise<Buffer> {
-    return this.program.coder.accounts.encode<Obligation>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
+  encodeObligation(o: ObligationAccount): Promise<Buffer> {
+    return this.program.coder.accounts.encode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
   }
 
   /**
@@ -127,10 +139,7 @@ export class JetClient {
         return s
       }
     })
-    const [address, bumpSeed] = await PublicKey.findProgramAddress(
-      seedBytes,
-      this.program.programId
-    )
+    const [address, bumpSeed] = await PublicKey.findProgramAddress(seedBytes, this.program.programId)
     return new DerivedAccount(address, bumpSeed)
   }
 }

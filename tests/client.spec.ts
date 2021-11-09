@@ -43,9 +43,7 @@ describe("JetClient", () => {
     })
 
     test("using public key seeds", async () => {
-      const derived = await client.findDerivedAccount([
-        new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-      ])
+      const derived = await client.findDerivedAccount([new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")])
       expect(derived.address.toBytes()).toHaveLength(32)
       expect(derived.bumpSeed).toBeLessThan(256)
     })
