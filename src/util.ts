@@ -77,6 +77,52 @@ export class NumberField extends BL.Layout {
 /**
  * TODO:
  * @export
+ * @class SignedNumberField
+ * @extends {BL.Layout}
+ */
+export class SignedNumberField extends BL.Layout {
+  /**
+   * Creates an instance of SignedNumberField.
+   * @param {number} span
+   * @param {string} [property]
+   * @memberof SignedNumberField
+   */
+  constructor(span: number, property?: string) {
+    super(span, property)
+  }
+
+  /**
+   * TODO:
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {BN}
+   * @memberof SignedNumberField
+   */
+  decode(b: Uint8Array, offset?: number): BN {
+    const start = offset == undefined ? 0 : offset
+    const data = b.slice(start, start + this.span)
+    return new BN(data, undefined, "le").fromTwos(this.span * 8)
+  }
+
+  /**
+   * TODO:
+   * @param {BN} src
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {number}
+   * @memberof SignedNumberField
+   */
+  encode(src: BN, b: Uint8Array, offset?: number): number {
+    const start = offset == undefined ? 0 : offset
+    b.set(src.toTwos(this.span * 8).toArray("le"), start)
+
+    return this.span
+  }
+}
+
+/**
+ * TODO:
+ * @export
  * @class PubkeyField
  * @extends {BL.Layout}
  */
@@ -135,6 +181,16 @@ export function numberField(property?: string): NumberField {
  */
 export function u64Field(property?: string): NumberField {
   return new NumberField(8, property)
+}
+
+/**
+ * Returns a signed number field that is 8 bytes wide
+ * @export
+ * @param {string} [property]
+ * @returns {SignedNumberField}
+ */
+export function i64Field(property?: string): SignedNumberField {
+  return new SignedNumberField(8, property)
 }
 
 /**

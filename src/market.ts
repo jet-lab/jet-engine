@@ -18,26 +18,10 @@
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
-import * as BL from "@solana/buffer-layout"
-import { CreateReserveParams, JetReserve } from "./reserve"
 import { JetClient, DEX_ID, DEX_ID_DEVNET, Obligation, DerivedAccount } from "."
-import { StaticSeeds, pubkeyField, numberField } from "./util"
-
-const MAX_RESERVES = 32
-
-const ReserveInfoStruct = BL.struct([
-  pubkeyField("address"),
-  BL.blob(80, "_UNUSED_0_"),
-  numberField("price"),
-  numberField("depositNoteExchangeRate"),
-  numberField("loanNoteExchangeRate"),
-  numberField("minCollateralRatio"),
-  BL.u16("liquidationBonus"),
-  BL.blob(158, "_UNUSED_1_"),
-  BL.blob(16, "_UNUSED_CACHE")
-])
-
-const MarketReserveInfoList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
+import { CreateReserveParams, JetReserve } from "./reserve"
+import { StaticSeeds } from "./util"
+import { MarketReserveInfoList } from "./layout"
 
 export interface JetMarketReserveInfo {
   address: PublicKey

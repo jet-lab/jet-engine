@@ -27,12 +27,12 @@ import {
   Transaction,
   TransactionInstruction
 } from "@solana/web3.js"
-import * as BL from "@solana/buffer-layout"
 
 import { DEX_ID, DEX_ID_DEVNET, Reserve } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import { StaticSeeds, numberField, u64Field } from "./util"
+import { StaticSeeds } from "./util"
+import { ReserveStateStruct } from "./layout"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -121,16 +121,6 @@ export interface ReserveStateData {
   totalDepositNotes: anchor.BN
   totalLoanNotes: anchor.BN
 }
-
-const ReserveStateStruct = BL.struct([
-  u64Field("accruedUntil"),
-  numberField("outstandingDebt"),
-  numberField("uncollectedFees"),
-  u64Field("totalDeposits"),
-  numberField("totalDepositNotes"),
-  u64Field("totalLoanNotes"),
-  BL.blob(416 + 16, "_RESERVED_")
-])
 
 export interface ReserveDexMarketAccounts {
   market: PublicKey
