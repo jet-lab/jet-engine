@@ -12,6 +12,7 @@
     "noUnusedParameters": true,
     "strict": true,
     "resolveJsonModule": true,
+    "downlevelIteration": true,
     "typeRoots": ["node_modules/@types", "types"]
   },
   "include": ["types/**/*", "src/**/*"]
