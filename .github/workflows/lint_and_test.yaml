@@ -1,14 +1,11 @@
 name: Lint and Test
 
 on:
+  pull_request:
+    types: [opened, reopened]
+    branches: [master]
   push:
-    paths:
-      - src/**/*.ts
-      - types/**/*.ts
-      - tests/**/*.ts
-      - .eslint*
-      - .prettier*
-      - "*.json"
+    branches: ['*']
 
 env:
   NODE_VERSION: 16
