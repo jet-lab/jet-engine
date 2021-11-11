@@ -32,7 +32,7 @@ import { JetClient } from '@jet-lab/jet-engine'
 import { Provider, Wallet } from '@project-serum/anchor'
 import { clusterApiUrl, Connection, Keypair } from '@solana/web3.js'
 
-const provider = new Provider(new Connection(clusterApiUrl('devnet'), new Wallet(Keypair.generate()), {}))
+const provider = new Provider(new Connection(clusterApiUrl('devnet')), new Wallet(Keypair.generate()), {})
 const client = await JetClient.connect(provider, true)
 ```
 
