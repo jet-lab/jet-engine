@@ -34,6 +34,7 @@ import { JetMarket } from "./market"
 import { StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
+import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -158,7 +159,13 @@ export class JetReserve {
    * @param {ReserveData} data
    * @memberof JetReserve
    */
-  constructor(private client: JetClient, private market: JetMarket, public data: ReserveData) {
+  constructor(
+    private client: JetClient,
+    private market: JetMarket,
+    public data: ReserveData,
+    public price: PriceData,
+    public product: ProductData
+  ) {
     this.conn = this.client.program.provider.connection
   }
 
@@ -176,7 +183,11 @@ export class JetReserve {
   static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
     const data = await client.program.account.reserve.fetch(address)
     const market = maybeMarket || (await JetMarket.load(client, data.market))
-    return this.decode(client, market, address, data)
+    const reserveData = this.decodeReserveData(address, data)
+
+    const { price, product } = await JetReserve.loadPythOracle(client, reserveData)
+
+    return new JetReserve(client, market, reserveData, price, product)
   }
 
   /**
@@ -187,8 +198,25 @@ export class JetReserve {
   async refresh(): Promise<void> {
     await this.market.refresh()
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    const reserve = JetReserve.decode(this.client, this.market, this.data.address, data)
-    this.data = reserve.data
+    this.data = JetReserve.decodeReserveData(this.data.address, data)
+    const { price, product } = await JetReserve.loadPythOracle(this.client, this.data)
+    this.price = price
+    this.product = product
+  }
+
+  static async loadPythOracle(client: JetClient, data: ReserveData) {
+    const [priceInfo, productInfo] = await client.program.provider.connection.getMultipleAccountsInfo([
+      data.pythOraclePrice,
+      data.pythOracleProduct
+    ])
+    if (!priceInfo) {
+      throw new Error("Invalid pyth oracle price")
+    } else if (!productInfo) {
+      throw new Error("Invalid pyth oracle product")
+    }
+    const price = parsePriceData(priceInfo.data)
+    const product = parseProductData(productInfo.data)
+    return { price, product }
   }
 
   /**
@@ -211,15 +239,19 @@ export class JetReserve {
       [] as JetMarket[]
     )
 
-    const reservePromises = reserveAccounts.map(account =>
-      JetReserve.decode(
-        client,
-        markets.find(market => market.address.equals(account.account.market)) as JetMarket,
-        account.publicKey,
-        account.account
-      )
-    )
-    return await Promise.all(reservePromises)
+    const datas = reserveAccounts.map(account => {
+      return JetReserve.decodeReserveData(account.publicKey, account.account)
+    })
+
+    const pythOraclePromises = datas.map(data => JetReserve.loadPythOracle(client, data))
+    const pythOracles = await Promise.all(pythOraclePromises)
+
+    const reserves = datas.map((data, i) => {
+      const market = markets.find(market => market.address.equals(data.market)) as JetMarket
+      const pythOracle = pythOracles[i]
+      return new JetReserve(client, market, data, pythOracle.price, pythOracle.product)
+    })
+    return reserves
   }
 
   /**
@@ -241,7 +273,7 @@ export class JetReserve {
     return await this.allReserves(client, [filter])
   }
 
-  private static decode(client: JetClient, market: JetMarket, address: PublicKey, data: any): JetReserve {
+  private static decodeReserveData(address: PublicKey, data: any) {
     const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
     const reserve: ReserveData = {
       ...data,
@@ -249,7 +281,7 @@ export class JetReserve {
       state
     }
 
-    return new JetReserve(client, market, reserve)
+    return reserve
   }
 
   async sendRefreshTx(): Promise<string> {
