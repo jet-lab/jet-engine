@@ -1,5 +1,5 @@
-import { PublicKey } from "@solana/web3.js";
-import { GovClient } from ".";
+import { PublicKey } from "@solana/web3.js"
+import { GovClient } from "."
 
 export interface GovRealmData {
   address: PublicKey
@@ -18,7 +18,7 @@ export class GovRealm implements GovRealmData {
     public owner: PublicKey,
     public authority: PublicKey,
     public vault: PublicKey
-  ) { }
+  ) {}
 
   static async load(client: GovClient, address: PublicKey): Promise<GovRealm> {
     const data = await client.program.account.realm.fetch(address)
@@ -35,12 +35,6 @@ export class GovRealm implements GovRealmData {
   }
 
   private static decode(client: GovClient, address: PublicKey, data: any) {
-    return new GovRealm(
-      client,
-      address,
-      data.owner,
-      data.authority,
-      data.vault,
-    )
+    return new GovRealm(client, address, data.owner, data.authority, data.vault)
   }
 }

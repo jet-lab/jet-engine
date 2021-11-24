@@ -1,6 +1,6 @@
-import { PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
-import { GovClient } from ".";
+import { PublicKey } from "@solana/web3.js"
+import BN from "bn.js"
+import { GovClient } from "."
 
 export interface GovProposalData {
   realm: PublicKey
@@ -37,7 +37,7 @@ export class GovProposal implements GovProposalData {
     public content: ProposalContent,
     public lifecycle: ProposalLifecycle,
     public count: VoteCount
-  ) { }
+  ) {}
 
   static async load(client: GovClient, address: PublicKey): Promise<GovProposal> {
     const data = await client.program.account.proposal.fetch(address)
