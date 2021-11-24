@@ -25,6 +25,7 @@ export * from "./reserve"
 export * from "./user"
 export * from "./idl"
 export * from "./types"
+export * as gov from "./gov"
 // FIXME: export * as p2p from "./p2p"
 
 export const PLACEHOLDER_ACCOUNT = PublicKey.default

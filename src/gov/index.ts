@@ -1,6 +1,10 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
+export * from "./proposal"
+export * from "./realm"
+export * from "./voter"
+
 const JET_GOV_PROGRAM_ID = new PublicKey("5TBwvU5xoA13fzmZgWVgFBUmBz1YCdiq2AshDZpPn3AL") // FIXME: deploy program
 
 export const StaticSeed = {

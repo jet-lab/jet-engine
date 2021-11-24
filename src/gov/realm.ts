@@ -26,12 +26,12 @@ export class GovRealm implements GovRealmData {
   }
 
   async refresh() {
-    const proposal = await GovRealm.load(this.client, this.address)
+    const realm = await GovRealm.load(this.client, this.address)
 
-    this.address = proposal.address
-    this.owner = proposal.owner
-    this.authority = proposal.authority
-    this.vault = proposal.vault
+    this.address = realm.address
+    this.owner = realm.owner
+    this.authority = realm.authority
+    this.vault = realm.vault
   }
 
   private static decode(client: GovClient, address: PublicKey, data: any) {
