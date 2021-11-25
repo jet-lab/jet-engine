@@ -1,9 +1,8 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import BN from "bn.js"
-import { GovClient, GovRealm, GovProposal, StaticSeed, VoteCount } from "."
+import { GovClient, GovRealm, StaticSeed, VoteCount } from "."
 import { Amount } from "../."
-
 
 export interface GovVoterData {
   address: PublicKey
@@ -83,13 +82,13 @@ export class GovVoteRecord implements GovVoteRecordData {
   }
 
   // TODO: init_voter.rs
-   /**
+  /**
    * Create the populated transaction instruction for `initVoter`.
    * @param {GovVoter} initVoter
    * @returns {TransactionInstruction}
    * @memberof GovVoteRecord
    */
-  async createVoterIx(initVoter: GovVoter ): Promise<TransactionInstruction> {
+  async createVoterIx(initVoter: GovVoter): Promise<TransactionInstruction> {
     // TODO: Fix me - how to get derive voter account?
     // const deriveVoter = await initVoter.load(this.client, initVoter.address)
 
@@ -100,13 +99,13 @@ export class GovVoteRecord implements GovVoteRecordData {
         // TODO: Fix me - how to get derive voter account?
         // voter: deriveVoter.address,
         payer: initVoter.owner,
-        systemProgram: SystemProgram.programId,
+        systemProgram: SystemProgram.programId
       }
     })
   }
 
   // TODO: deposit.rs
-   /**
+  /**
    * Create the populated transaction instruction for `deposit`.
    * @param {GovProposal} proposal
    * @param {GovVoter} voter
@@ -123,13 +122,13 @@ export class GovVoteRecord implements GovVoteRecordData {
         vault: realm.vault,
         // TODO: Fix me - what is the token account that contains the token to deposit? wallet?
         // tokenAccount: ??,
-        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID
       }
     })
-  } 
-  
+  }
+
   // TODO: withdraw.rs
-   /**
+  /**
    * Create the populated transaction instruction for `withdraw`.
    * @param {GovRealm} realm
    * @param {GovVoter} voter
@@ -138,7 +137,7 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @memberof GovVoter
    */
   withdrawIx(realm: GovRealm, voter: GovVoter, amount: Amount): TransactionInstruction {
-    return this.client.program.instruction.withdraw(StaticSeed.RealmAuthority, amount.toRpcArg(),{
+    return this.client.program.instruction.withdraw(StaticSeed.RealmAuthority, amount.toRpcArg(), {
       accounts: {
         // TODO: Double check - is voter address realm? use GovVoter or GovRealm?
         realm: realm.address,
@@ -147,13 +146,13 @@ export class GovVoteRecord implements GovVoteRecordData {
         vault: realm.vault,
         // TODO: Fix me - what is the token account that contains the token to deposit? wallet?
         // tokenAccount: ??,
-        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID
       }
     })
-  } 
-  
+  }
+
   // TODO: vote.rs
-   /**
+  /**
    * Create the populated transaction instruction for `vote`.
    * @param {GovRealm} realm
    * @param {GovVoter} voter
@@ -170,11 +169,11 @@ export class GovVoteRecord implements GovVoteRecordData {
         voter: voter.address,
         proposal: voteRecord.proposal,
         voteRecord: voteRecord.address,
-        systemProgram: SystemProgram.programId,
+        systemProgram: SystemProgram.programId
       }
     })
-  } 
-  
+  }
+
   // TODO: change_vote.rs
   /**
    * Create the populated transaction instruction for `changeVote`.
@@ -183,15 +182,15 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @returns {TransactionInstruction}
    * @memberof GovVoter
    */
-   changeVoteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, vote: VoteCount): TransactionInstruction {
+  changeVoteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, vote: VoteCount): TransactionInstruction {
     return this.client.program.instruction.changeVote(vote, {
       accounts: {
         realm: realm.address,
         owner: voter.owner,
         voter: voter.address,
         proposal: voteRecord.proposal,
-        voteRecord: voteRecord.address,
+        voteRecord: voteRecord.address
       }
     })
-  }  
+  }
 }

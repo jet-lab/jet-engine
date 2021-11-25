@@ -40,7 +40,7 @@ export class GovRealm implements GovRealmData {
   }
 
   // TODO: init_realm.rs
-   /**
+  /**
    * Create the populated transaction instruction for `initRealm`.
    * @param {GovRealm} realm
    * @param {PublicKey} governanceTokenMint
@@ -48,7 +48,7 @@ export class GovRealm implements GovRealmData {
    * @memberof GovRealm
    */
   createRealmIx(realm: GovRealm, governanceTokenMint: PublicKey): TransactionInstruction {
-    return this.client.program.instruction.initRealm(StaticSeed.RealmAuthority, StaticSeed.Vault,{
+    return this.client.program.instruction.initRealm(StaticSeed.RealmAuthority, StaticSeed.Vault, {
       accounts: {
         realm: realm.address,
         owner: realm.owner,
@@ -63,4 +63,3 @@ export class GovRealm implements GovRealmData {
     })
   }
 }
-
