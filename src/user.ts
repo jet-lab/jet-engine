@@ -47,7 +47,7 @@ export class TokenAmount {
   constructor(public mint: PublicKey, public amount: anchor.BN) {}
 }
 
-export interface User {
+export interface JetUserData {
   address: PublicKey
 
   deposits(): TokenAmount[]
@@ -64,9 +64,9 @@ export interface User {
  * TODO:
  * @export
  * @class JetUser
- * @implements {User}
+ * @implements {JetUserData}
  */
-export class JetUser implements User {
+export class JetUser implements JetUserData {
   private _deposits: TokenAmount[] = []
   private _collateral: TokenAmount[] = []
   private _loans: TokenAmount[] = []

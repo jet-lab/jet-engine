@@ -113,6 +113,9 @@ export interface ReserveData {
   dexSwapTokens: PublicKey
   dexMarket: PublicKey
   state: ReserveStateData
+
+  priceData: PriceData
+  productData: ProductData
 }
 
 export interface ReserveStateData {
@@ -159,13 +162,7 @@ export class JetReserve {
    * @param {ReserveData} data
    * @memberof JetReserve
    */
-  constructor(
-    private client: JetClient,
-    private market: JetMarket,
-    public data: ReserveData,
-    public price: PriceData,
-    public product: ProductData
-  ) {
+  constructor(private client: JetClient, private market: JetMarket, public data: ReserveData) {
     this.conn = this.client.program.provider.connection
   }
 
@@ -182,12 +179,13 @@ export class JetReserve {
    */
   static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
     const data = await client.program.account.reserve.fetch(address)
-    const market = maybeMarket || (await JetMarket.load(client, data.market))
-    const reserveData = this.decodeReserveData(address, data)
+    const [market, pythOracle] = await Promise.all([
+      maybeMarket || JetMarket.load(client, data.market),
+      JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct)
+    ])
+    const reserveData = this.decodeReserveData(address, data, pythOracle.priceData, pythOracle.productData)
 
-    const { price, product } = await JetReserve.loadPythOracle(client, reserveData)
-
-    return new JetReserve(client, market, reserveData, price, product)
+    return new JetReserve(client, market, reserveData)
   }
 
   /**
@@ -196,27 +194,27 @@ export class JetReserve {
    * @memberof JetReserve
    */
   async refresh(): Promise<void> {
-    await this.market.refresh()
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    this.data = JetReserve.decodeReserveData(this.data.address, data)
-    const { price, product } = await JetReserve.loadPythOracle(this.client, this.data)
-    this.price = price
-    this.product = product
+    const [, pythOracle] = await Promise.all([
+      this.market.refresh(),
+      JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct)
+    ])
+    this.data = JetReserve.decodeReserveData(this.data.address, data, pythOracle.priceData, pythOracle.productData)
   }
 
-  static async loadPythOracle(client: JetClient, data: ReserveData) {
+  static async loadPythOracle(client: JetClient, pythOraclePrice: PublicKey, pythOracleProduct: PublicKey) {
     const [priceInfo, productInfo] = await client.program.provider.connection.getMultipleAccountsInfo([
-      data.pythOraclePrice,
-      data.pythOracleProduct
+      pythOraclePrice,
+      pythOracleProduct
     ])
     if (!priceInfo) {
       throw new Error("Invalid pyth oracle price")
     } else if (!productInfo) {
       throw new Error("Invalid pyth oracle product")
     }
-    const price = parsePriceData(priceInfo.data)
-    const product = parseProductData(productInfo.data)
-    return { price, product }
+    const priceData = parsePriceData(priceInfo.data)
+    const productData = parseProductData(productInfo.data)
+    return { priceData, productData }
   }
 
   /**
@@ -226,9 +224,9 @@ export class JetReserve {
    * @memberof JetClient
    */
   static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
-    const reserveAccounts: anchor.ProgramAccount<ReserveAccount>[] = await client.program.account.reserve.all(filters)
+    const reserveInfos: anchor.ProgramAccount<ReserveAccount>[] = await client.program.account.reserve.all(filters)
 
-    const uniqueMarketAddresses = [...new Set(reserveAccounts.map(account => account.account.market.toBase58()))]
+    const uniqueMarketAddresses = [...new Set(reserveInfos.map(account => account.account.market.toBase58()))]
 
     const marketPromises = uniqueMarketAddresses.map(marketAddress =>
       JetMarket.load(client, new PublicKey(marketAddress))
@@ -239,18 +237,23 @@ export class JetReserve {
       [] as JetMarket[]
     )
 
-    const datas = reserveAccounts.map(account => {
-      return JetReserve.decodeReserveData(account.publicKey, account.account)
-    })
-
-    const pythOraclePromises = datas.map(data => JetReserve.loadPythOracle(client, data))
+    const pythOraclePromises = reserveInfos.map(reserveInfo =>
+      JetReserve.loadPythOracle(client, reserveInfo.account.pythOraclePrice, reserveInfo.account.pythOracleProduct)
+    )
     const pythOracles = await Promise.all(pythOraclePromises)
 
-    const reserves = datas.map((data, i) => {
-      const market = markets.find(market => market.address.equals(data.market)) as JetMarket
+    const reserves = reserveInfos.map((info, i) => {
       const pythOracle = pythOracles[i]
-      return new JetReserve(client, market, data, pythOracle.price, pythOracle.product)
+      const data = JetReserve.decodeReserveData(
+        info.publicKey,
+        info.account,
+        pythOracle.priceData,
+        pythOracle.productData
+      )
+      const market = markets.find(market => market.address.equals(info.account.market)) as JetMarket
+      return new JetReserve(client, market, data)
     })
+
     return reserves
   }
 
@@ -273,12 +276,14 @@ export class JetReserve {
     return await this.allReserves(client, [filter])
   }
 
-  private static decodeReserveData(address: PublicKey, data: any) {
+  private static decodeReserveData(address: PublicKey, data: any, priceData: PriceData, productData: ProductData) {
     const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
     const reserve: ReserveData = {
       ...data,
       address,
-      state
+      state,
+      priceData,
+      productData
     }
 
     return reserve

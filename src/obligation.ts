@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
 import { JetMarketData, JetMarketReserveInfo, ReserveData } from "."
-import { TokenAmount, User } from "./user"
+import { TokenAmount, JetUserData } from "./user"
 
 interface Balances {
   depositNotes: TokenAmount
@@ -63,18 +63,23 @@ export class JetObligation implements Obligation {
    * TODO:
    * @static
    * @param {JetMarketData} market
-   * @param {User} user
+   * @param {JetUserData} user
    * @param {ReserveData[]} reserveData
    * @param {number[]} prices
    * @returns
    * @memberof JetObligation
    */
-  static create(market: JetMarketData, user: User, reserveData: ReserveData[], prices: number[]) {
+  static create(market: JetMarketData, user: JetUserData, reserveData: ReserveData[]) {
     const deposits = user.deposits()
     const collateral = user.deposits()
     const loans = user.loans()
 
     const positions: Balances[] = []
+
+    // Sum of Deposited and borrowed
+    const depositedValue = new BN(0)
+    const collateralValue = new BN(0)
+    const loanedValue = new BN(0)
 
     // Token balances
     for (let i = 0; i < market.reserves.length; i++) {
@@ -88,17 +93,15 @@ export class JetObligation implements Obligation {
         throw new Error("market reserves do not match reserve list.")
       }
 
-      positions[i] = this.toTokens(deposits[i], collateral[i], loans[i], reserve, reserveCache)
-    }
+      const position = this.toTokens(deposits[i], collateral[i], loans[i], reserve, reserveCache)
+      const price = reserve.priceData.price
+      if (price != undefined) {
+        depositedValue.iadd(positions[i].depositBalance.amount.muln(price))
+        collateralValue.iadd(positions[i].collateralBalance.amount.muln(price))
+        loanedValue.iadd(positions[i].loanBalance.amount.muln(price))
+      }
 
-    // Total Deposited and borrowed
-    let depositedValue = new BN(0)
-    let collateralValue = new BN(0)
-    let loanedValue = new BN(0)
-    for (const i in positions) {
-      depositedValue = depositedValue.add(positions[i].depositBalance.amount.muln(prices[i]))
-      collateralValue = collateralValue.add(positions[i].collateralBalance.amount.muln(prices[i]))
-      loanedValue = loanedValue.add(positions[i].loanBalance.amount.muln(prices[i]))
+      positions[i] = position
     }
 
     // Utilization Rate
