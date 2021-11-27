@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
-import { JetMarketData, JetMarketReserveInfo, ReserveData } from "."
+import { JetClient, JetMarket, JetMarketData, JetMarketReserveInfo, JetReserve, JetUser, ReserveData } from "."
 import { TokenAmount, JetUserData } from "./user"
 
 interface Balances {
@@ -58,6 +58,19 @@ export class JetObligation implements Obligation {
     public collateralRatio: number,
     public utilizationRate: number
   ) {}
+
+  static async load(client: JetClient, marketAddress: PublicKey, userAddress: PublicKey) {
+    const market = await JetMarket.load(client, marketAddress)
+    const [user, reserves] = await Promise.all([
+      JetUser.load(client, market, userAddress),
+      JetReserve.loadMultiple(client, market)
+    ])
+    return this.create(
+      market,
+      user,
+      reserves.map(reserve => reserve.data)
+    )
+  }
 
   /**
    * TODO:

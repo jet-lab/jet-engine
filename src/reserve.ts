@@ -22,7 +22,6 @@ import {
   Connection,
   GetProgramAccountsFilter,
   Keypair,
-  MemcmpFilter,
   PublicKey,
   Transaction,
   TransactionInstruction
@@ -189,6 +188,43 @@ export class JetReserve {
   }
 
   /**
+   * Return all `Reserve` program accounts that are associated with the argued market.
+   * @param client The client to fetch data
+   * @param market The market that contains all reserves
+   * @returns
+   */
+  static async loadMultiple(client: JetClient, market: JetMarket) {
+    const reserveAddresses = market.reserves
+      .map(marketReserve => marketReserve.address)
+      .filter(reserveAddress => !reserveAddress.equals(PublicKey.default))
+    const reserveInfos = (await client.program.account.reserve.fetchMultiple(reserveAddresses)) as ReserveAccount[]
+
+    const nullReserveIndex = reserveInfos.findIndex(info => info == null)
+    if (nullReserveIndex !== -1) {
+      throw new Error(`Jet Reserve at address ${reserveAddresses[nullReserveIndex]} is invalid.`)
+    }
+
+    const pythOracles = await Promise.all(
+      reserveInfos.map(reserveInfo =>
+        JetReserve.loadPythOracle(client, reserveInfo.pythOraclePrice, reserveInfo.pythOracleProduct)
+      )
+    )
+
+    const reserves = reserveInfos.map((reserveInfo, i) => {
+      const pythOracle = pythOracles[i]
+      const data = JetReserve.decodeReserveData(
+        reserveAddresses[i],
+        reserveInfo,
+        pythOracle.priceData,
+        pythOracle.productData
+      )
+      return new JetReserve(client, market, data)
+    })
+
+    return reserves
+  }
+
+  /**
    * Reloads this reserve and market.
    * @returns {Promise<string>}
    * @memberof JetReserve
@@ -255,25 +291,6 @@ export class JetReserve {
     })
 
     return reserves
-  }
-
-  /**
-   * Return all `Reserve` program accounts that are associated with the argued market.
-   * @param {GetProgramAccountsFilter[]} [filters]
-   * @returns {Promise<ProgramAccount<Reserve>[]>}
-   * @memberof JetClient
-   */
-  static async allReservesByMarket(client: JetClient, marketAddress: PublicKey): Promise<JetReserve[]> {
-    const filter: MemcmpFilter = {
-      memcmp: {
-        // The market field of the reserve account
-        // There is a hidden 8 byte discriminator field at the start of the reserve account
-        offset: 8 + 2 + 2 + 4,
-        // The value of the market pubkey
-        bytes: marketAddress.toBase58()
-      }
-    }
-    return await this.allReserves(client, [filter])
   }
 
   private static decodeReserveData(address: PublicKey, data: any, priceData: PriceData, productData: ProductData) {
