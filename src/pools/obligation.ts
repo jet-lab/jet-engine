@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2021 JET PROTOCOL HOLDINGS, LLC.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
 import { JetClient, JetMarket, JetMarketData, JetMarketReserveInfo, JetReserve, JetUser, ReserveData } from "."
@@ -99,10 +116,10 @@ export class JetObligation implements Obligation {
       const reserveCache = market.reserves[i]
       const reserve = reserveData[i]
 
-      if (reserveCache.address.equals(PublicKey.default)) {
+      if (reserveCache.reserve.equals(PublicKey.default)) {
         continue
       }
-      if (!reserveCache.address.equals(reserve.address)) {
+      if (!reserveCache.reserve.equals(reserve.address)) {
         throw new Error("market reserves do not match reserve list.")
       }
 

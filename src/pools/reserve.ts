@@ -195,7 +195,7 @@ export class JetReserve {
    */
   static async loadMultiple(client: JetClient, market: JetMarket) {
     const reserveAddresses = market.reserves
-      .map(marketReserve => marketReserve.address)
+      .map(marketReserve => marketReserve.reserve)
       .filter(reserveAddress => !reserveAddress.equals(PublicKey.default))
     const reserveInfos = (await client.program.account.reserve.fetchMultiple(reserveAddresses)) as ReserveAccount[]
 
