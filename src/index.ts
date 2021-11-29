@@ -15,6 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * as pools from "./pools"
-export * as governance from "./gov"
-// FIXME: export * as p2p from "./p2p"
+export * from "./pools"
+export * from "./gov"
+// FIXME: export * from "./p2p"
