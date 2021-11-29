@@ -4,5 +4,6 @@ module.exports = {
   testEnvironment: "node",
   collectCoverage: true,
   coverageDirectory: "coverage",
-  verbose: true
+  verbose: true,
+  testTimeout: 20 * 1000
 }

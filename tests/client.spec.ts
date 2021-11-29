@@ -17,8 +17,7 @@
 
 import { Provider, Wallet } from "@project-serum/anchor"
 import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js"
-import { JetMarket, JetReserve } from "../src"
-import { JetClient } from "../src/client"
+import { JetMarket, JetReserve, JetClient } from "../src"
 
 describe("JetClient", () => {
   let client: JetClient
