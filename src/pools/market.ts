@@ -25,10 +25,14 @@ import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
 
 export interface JetMarketReserveInfo {
-  address: PublicKey
+  reserve: PublicKey
   price: anchor.BN
   depositNoteExchangeRate: anchor.BN
   loanNoteExchangeRate: anchor.BN
+  minCollateralRatio: anchor.BN
+  liquidationBonus: anchor.BN
+  lastUpdated: anchor.BN
+  invalidated: anchor.BN
 }
 
 export interface JetMarketData {

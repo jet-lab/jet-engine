@@ -1,7 +1,24 @@
+/*
+ * Copyright (C) 2021 JET PROTOCOL HOLDINGS, LLC.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
-import { JetMarketData, JetMarketReserveInfo, ReserveData } from "."
-import { TokenAmount, User } from "./user"
+import { JetClient, JetMarket, JetMarketData, JetMarketReserveInfo, JetReserve, JetUser, ReserveData } from "."
+import { TokenAmount, JetUserData } from "./user"
 
 interface Balances {
   depositNotes: TokenAmount
@@ -59,46 +76,62 @@ export class JetObligation implements Obligation {
     public utilizationRate: number
   ) {}
 
+  static async load(client: JetClient, marketAddress: PublicKey, userAddress: PublicKey) {
+    const market = await JetMarket.load(client, marketAddress)
+    const [user, reserves] = await Promise.all([
+      JetUser.load(client, market, userAddress),
+      JetReserve.loadMultiple(client, market)
+    ])
+    return this.create(
+      market,
+      user,
+      reserves.map(reserve => reserve.data)
+    )
+  }
+
   /**
    * TODO:
    * @static
    * @param {JetMarketData} market
-   * @param {User} user
+   * @param {JetUserData} user
    * @param {ReserveData[]} reserveData
    * @param {number[]} prices
    * @returns
    * @memberof JetObligation
    */
-  static create(market: JetMarketData, user: User, reserveData: ReserveData[], prices: number[]) {
+  static create(market: JetMarketData, user: JetUserData, reserveData: ReserveData[]) {
     const deposits = user.deposits()
     const collateral = user.deposits()
     const loans = user.loans()
 
     const positions: Balances[] = []
 
+    // Sum of Deposited and borrowed
+    const depositedValue = new BN(0)
+    const collateralValue = new BN(0)
+    const loanedValue = new BN(0)
+
     // Token balances
     for (let i = 0; i < market.reserves.length; i++) {
       const reserveCache = market.reserves[i]
       const reserve = reserveData[i]
 
-      if (reserveCache.address.equals(PublicKey.default)) {
+      if (reserveCache.reserve.equals(PublicKey.default)) {
         continue
       }
-      if (!reserveCache.address.equals(reserve.address)) {
+      if (!reserveCache.reserve.equals(reserve.address)) {
         throw new Error("market reserves do not match reserve list.")
       }
 
-      positions[i] = this.toTokens(deposits[i], collateral[i], loans[i], reserve, reserveCache)
-    }
+      const position = this.toTokens(deposits[i], collateral[i], loans[i], reserve, reserveCache)
+      const price = reserve.priceData.price
+      if (price != undefined) {
+        depositedValue.iadd(positions[i].depositBalance.amount.muln(price))
+        collateralValue.iadd(positions[i].collateralBalance.amount.muln(price))
+        loanedValue.iadd(positions[i].loanBalance.amount.muln(price))
+      }
 
-    // Total Deposited and borrowed
-    let depositedValue = new BN(0)
-    let collateralValue = new BN(0)
-    let loanedValue = new BN(0)
-    for (const i in positions) {
-      depositedValue = depositedValue.add(positions[i].depositBalance.amount.muln(prices[i]))
-      collateralValue = collateralValue.add(positions[i].collateralBalance.amount.muln(prices[i]))
-      loanedValue = loanedValue.add(positions[i].loanBalance.amount.muln(prices[i]))
+      positions[i] = position
     }
 
     // Utilization Rate
