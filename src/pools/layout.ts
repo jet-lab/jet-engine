@@ -44,7 +44,7 @@ export const ReserveInfoStruct = BL.struct([
   BL.blob(158, "_UNUSED_1_"),
   u64Field("lastUpdated"),
   BL.u8("invalidated"),
-  BL.blob(7, "_UNUSED_1_")
+  BL.blob(7, "_UNUSED_2_")
 ])
 
 export const MarketReserveInfoStructList = BL.seq(ReserveInfoStruct, MAX_RESERVES)

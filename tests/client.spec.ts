@@ -16,7 +16,7 @@
  */
 
 import { Provider, Wallet } from "@project-serum/anchor"
-import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js"
+import { clusterApiUrl, Connection, Keypair, MemcmpFilter, PublicKey } from "@solana/web3.js"
 import { JetMarket, JetReserve, JetClient } from "../src"
 
 describe("JetClient", () => {
@@ -59,8 +59,15 @@ describe("JetClient", () => {
     expect(markets.length).toBeGreaterThan(0)
   })
 
-  test("can fetch all obligations", async () => {
-    const obligations = await client.allObligations()
+  test("can fetch all obligations using filter", async () => {
+    const ownerFilter: MemcmpFilter = {
+      memcmp: {
+        bytes: new PublicKey("Ayr9Kuhw32F4VB5JhqX3C6dfWwHrsKzBoyEGhjDvXtn2").toBase58(),
+        // The 'owner' field
+        offset: 8 + 4 + 4 + 32
+      }
+    }
+    const obligations = await client.allObligations([ownerFilter])
     expect(obligations.length).toBeGreaterThan(0)
   })
 
