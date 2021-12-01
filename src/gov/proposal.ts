@@ -1,6 +1,6 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovClient, GovVoter, GovVoteRecord } from "."
+import { GovClient, GovVoteRecord } from "."
 
 export interface GovProposalData {
   realm: PublicKey
@@ -17,11 +17,21 @@ export interface ProposalContent {
 }
 
 export interface ProposalLifecycle {
-  activate?: BN
-  finalize?: BN
+  activate?: Time
+  finalize?: Time
 }
 
-// TODO: Ask questions - should this be here or voter?
+export interface ProposalEvent {
+  activate: Record<string, never>
+  finalize: Record<string, never>
+}
+
+type TimeNow = { now: Record<string, never> }
+type TimeAt = { at: {value: BN} }
+type TimeNever = { never: Record<string, never> }
+
+export type Time = TimeNow | TimeAt | TimeNever
+
 export interface VoteCount {
   yes: BN
   no: BN
@@ -70,106 +80,82 @@ export class GovProposal implements GovProposalData {
     )
   }
 
-  // TODO: propose.rs
+  // TODO: make_proposal.rs - checked
+  // CREATE ME - static method for accessing the proposal address
+  // Try: pass in proposal as a public key, the proposal data owner should have this key pair, client, `this` keyword and whatever that's needed
   /**
-   * Creates the populated transaction instruction for a `proposal`.
-   * @param {GovProposalData} proposalData
+   * Creates the populated transaction instruction for a `initProposal`.
+   * @param {GovProposal} proposalData
    * @param {ProposalContent} content
    * @param {ProposalLifecycle} lifecycle
    * @returns {TransactionInstruction}
    * @memberof GovProposal
    */
-  makeProposalIx(
-    proposalData: GovProposalData,
+  initProposalIx(
+    proposalData: GovProposal,
     content: ProposalContent,
     lifecycle: ProposalLifecycle
   ): TransactionInstruction {
-    return this.client.program.instruction.propose(
+    return this.client.program.instruction.initProposal(
       content.name,
       content.description,
       lifecycle.activate,
       lifecycle.finalize,
       {
         accounts: {
-          realm: proposalData.realm,
           owner: proposalData.owner,
-          // TODO: Double check - how to load the proposal program?
-          proposal: this.address,
-          payer: proposalData.owner,
+          realm: proposalData.realm,
+          proposal: proposalData.address,
           systemProgram: SystemProgram.programId
         }
       }
-    )
-  }
-
-  // TODO: edit_draft.rs
-  /**
-   * Creates the populated transaction instruction for a `editProposal`.
-   * @param {GovProposalData} proposalData
-   * @param {GovVoter} voter
-   * @param {ProposalContent} content
-   * @returns {TransactionInstruction}
-   * @memberof GovProposal
-   */
-  editProposalIx(proposalData: GovProposalData, voter: GovVoter, content: ProposalContent): TransactionInstruction {
-    return this.client.program.instruction.editDraft(content.name, content.description, {
-      accounts: {
-        realm: proposalData.realm,
-        owner: proposalData.owner,
-        // TODO: Double check -  how to load the proposal, voter program?
-        proposal: this.address,
-        voter: voter.address
+      )
+    }
+    
+    // TODO: edit_proposal.rs - checked
+    /**
+     * Creates the populated transaction instruction for a `editProposal`.
+     * @param {GovProposal} proposalData
+     * @param {GovVoteRecord} voteRecord
+     * @param {ProposalContent} content
+     * @returns {TransactionInstruction}
+     * @memberof GovProposal
+     */
+    editProposalIx(proposalData: GovProposal, voteRecord: GovVoteRecord, content: ProposalContent): TransactionInstruction {
+      return this.client.program.instruction.editProposal(content.name, content.description, {
+        accounts: {
+          owner: proposalData.owner,
+          realm: proposalData.realm,
+          voter: voteRecord.owner,
+          proposal: proposalData.address,
+        }
+      })
+    }
+    
+    // TODO: transition_proposal.rs - checked
+    /**
+     * Creates the populated transaction instruction for a `transitionProposal`.
+     * @param {GovProposalData} proposalData
+     * @param {GovVoteRecord} voteRecord
+     * @param {ProposalLifecycle} event
+     * @param {Time} when
+     * @returns {TransactionInstruction}
+     * @memberof GovProposal
+     */
+    transitionProposalIx(
+      proposalData: GovProposalData,
+      voteRecord: GovVoteRecord,
+      event: ProposalLifecycle,
+      when: Time
+      ): TransactionInstruction {
+        return this.client.program.instruction.transitionProposal(event, when, {
+          accounts: {
+            owner: proposalData.owner,
+            realm: proposalData.realm,
+            voter: voteRecord.owner,
+            proposal: voteRecord.proposal,
+          }
+        })
       }
-    })
-  }
-
-  // TODO: rescind.rs
-  /**
-   * Creates the populated transaction instruction for a `rescind`.
-   * @param {GovProposalData} proposalData
-   * @param {GovVoter} voter
-   * @param {GovVoteRecord} voteRecord
-   * @returns {TransactionInstruction}
-   * @memberof GovProposal
-   */
-  rescindProposalIx(proposalData: GovProposalData, voter: GovVoter, voteRecord: GovVoteRecord): TransactionInstruction {
-    return this.client.program.instruction.rescind({
-      accounts: {
-        realm: proposalData.realm,
-        owner: proposalData.owner,
-        // TODO: Double check -  how to load the proposal, voter, voteRecord program?
-        proposal: this.address,
-        voter: voter.address,
-        voteRecord: voteRecord.address
-      }
-    })
-  }
-
-  // TODO: transition_proposal.rs
-  /**
-   * Creates the populated transaction instruction for a `transitionProposal`.
-   * @param {GovProposalData} proposalData
-   * @param {GovVoter} voter
-   * @param {GovVoteRecord} voteRecord
-   * @param {ProposalLifecycle} lifecycle
-   * @returns {TransactionInstruction}
-   * @memberof GovProposal
-   */
-  transitionProposalIx(
-    proposalData: GovProposalData,
-    voter: GovVoter,
-    voteRecord: GovVoteRecord,
-    lifecycle: ProposalLifecycle
-  ): TransactionInstruction {
-    return this.client.program.instruction.transitionProposal(lifecycle, proposalData.createdTimestamp, {
-      accounts: {
-        realm: proposalData.realm,
-        owner: proposalData.owner,
-        // TODO: Double check -  how to load the proposal, voter, voteRecord program?
-        proposal: this.address,
-        voter: voter.address,
-        voteRecord: voteRecord.address
-      }
-    })
-  }
-}
+    }
+    

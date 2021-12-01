@@ -1,6 +1,6 @@
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { GovClient, StaticSeed } from "."
+import { GovClient } from "."
 
 export interface GovRealmData {
   address: PublicKey
@@ -39,22 +39,22 @@ export class GovRealm implements GovRealmData {
     return new GovRealm(client, address, data.owner, data.authority, data.vault)
   }
 
-  // TODO: init_realm.rs
+  // TODO: init_realm.rs - checked
   /**
    * Create the populated transaction instruction for `initRealm`.
    * @param {GovRealm} realm
    * @param {PublicKey} governanceTokenMint
+   * @param {{ authority: number; vault: number }} bumpSeeds
    * @returns {TransactionInstruction}
    * @memberof GovRealm
    */
-  createRealmIx(realm: GovRealm, governanceTokenMint: PublicKey): TransactionInstruction {
-    return this.client.program.instruction.initRealm(StaticSeed.RealmAuthority, StaticSeed.Vault, {
+  createRealmIx(realm: GovRealm, governanceTokenMint: PublicKey, bumpSeeds: { authority: number; vault: number }): TransactionInstruction {
+    return this.client.program.instruction.initRealm(bumpSeeds, {
       accounts: {
         realm: realm.address,
         owner: realm.owner,
         authority: realm.authority,
-        vault: realm.vault,
-        payer: realm.owner,
+        vault: realm.vault,  
         governanceTokenMint: governanceTokenMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
