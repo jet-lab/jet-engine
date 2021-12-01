@@ -35,5 +35,6 @@ import { clusterApiUrl, Connection, Keypair } from '@solana/web3.js'
 const provider = new Provider(new Connection(clusterApiUrl('devnet')), new Wallet(Keypair.generate()), {})
 const client = await JetClient.connect(provider, true)
 ```
+## Examples
 
-<!-- TODO: -->
+> [Fetching a position](https://github.com/jet-lab/jet-engine/blob/master/examples/user_position.ts)

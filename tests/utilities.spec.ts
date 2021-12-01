@@ -100,7 +100,7 @@ describe("NumberField BL.Layout", () => {
   test("properly decodes Uint8Array into BN", () => {
     const num = u64Field("test")
     const bn = new BN(5000)
-    const newBN = num.decode(new Uint8Array(bn.toBuffer()))
+    const newBN = num.decode(new Uint8Array(bn.toBuffer("le")))
     expect(newBN.toNumber()).toStrictEqual(bn.toNumber())
   })
 
@@ -110,7 +110,7 @@ describe("NumberField BL.Layout", () => {
     const arr = new Uint8Array(bn.byteLength())
     const x = num.encode(bn, arr)
     expect(x).toStrictEqual(8)
-    expect(new BN(arr).toNumber()).toStrictEqual(bn.toNumber())
+    expect(new BN(arr, undefined, "le").toNumber()).toStrictEqual(bn.toNumber())
   })
 })
 

@@ -34,6 +34,7 @@ import { StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
 import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
+import { BN } from "@project-serum/anchor"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -112,6 +113,12 @@ export interface ReserveData {
   dexSwapTokens: PublicKey
   dexMarket: PublicKey
   state: ReserveStateData
+  config: ReserveConfig
+
+  marketSize: BN
+  ccRate: number
+  borrowApr: number
+  depositApy: number
 
   priceData: PriceData
   productData: ProductData
@@ -303,6 +310,14 @@ export class JetReserve {
       productData
     }
 
+    // // Derive market reserve values
+    // reserve.marketSize = reserve.outstandingDebt.add(reserve.availableLiquidity);
+    // reserve.utilizationRate = reserve.marketSize.isZero() ? 0
+    //     : reserve.outstandingDebt.uiAmountFloat / reserve.marketSize.uiAmountFloat;
+    // const ccRate = getCcRate(reserve.config, reserve.utilizationRate);
+    // reserve.borrowRate = getBorrowRate(ccRate, reserve.config.manageFeeRate);
+    // reserve.depositRate = getDepositRate(ccRate, reserve.utilizationRate);
+
     return reserve
   }
 
@@ -404,4 +419,51 @@ export class JetReserve {
       depositNoteMint: await client.findDerivedAccount([StaticSeeds.Deposits, address, tokenMint])
     }
   }
+
+  // /** Linear interpolation between (x0, y0) and (x1, y1) */
+  // private static interpolate = (x: number, x0: number, x1: number, y0: number, y1: number): number => {
+  //   console.assert(x >= x0);
+  //   console.assert(x <= x1);
+
+  //   return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
+  // }
+
+  // /** Continuous Compounding Rate */
+  // private static getCcRate = (reserveConfig: ReserveConfig, utilRate: number): number => {
+  //   const basisPointFactor = 10000;
+  //   const util1 = reserveConfig.utilizationRate1 / basisPointFactor;
+  //   const util2 = reserveConfig.utilizationRate2 / basisPointFactor;
+  //   const borrow0 = reserveConfig.borrowRate0 / basisPointFactor;
+  //   const borrow1 = reserveConfig.borrowRate1 / basisPointFactor;
+  //   const borrow2 = reserveConfig.borrowRate2 / basisPointFactor;
+  //   const borrow3 = reserveConfig.borrowRate3 / basisPointFactor;
+
+  //   if (utilRate <= util1) {
+  //     return JetReserve.interpolate(utilRate, 0, util1, borrow0, borrow1);
+  //   } else if (utilRate <= util2) {
+  //     return JetReserve.interpolate(utilRate, util1, util2, borrow1, borrow2);
+  //   } else {
+  //     return JetReserve.interpolate(utilRate, util2, 1, borrow2, borrow3);
+  //   }
+  // };
+
+  // /** Borrow rate
+  // */
+  // private static getBorrowRate = (ccRate: number, fee: number): number => {
+  //   const basisPointFactor = 10000;
+  //   fee = fee / basisPointFactor;
+  //   const secondsPerYear: number = 365 * 24 * 60 * 60;
+  //   const rt = ccRate / secondsPerYear;
+
+  //   return Math.log1p((1 + fee) * Math.expm1(rt)) * secondsPerYear;
+  // };
+
+  // /** Deposit rate
+  // */
+  // private static getDepositRate = (ccRate: number, utilRatio: number): number => {
+  //   const secondsPerYear: number = 365 * 24 * 60 * 60;
+  //   const rt = ccRate / secondsPerYear;
+
+  //   return Math.log1p(Math.expm1(rt)) * secondsPerYear * utilRatio;
+  // };
 }

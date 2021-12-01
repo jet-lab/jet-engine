@@ -888,7 +888,7 @@ export class JetUser implements JetUserData {
   private async findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): Promise<UserReserveAccounts> {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = await this.client.findDerivedAccount(["deposits", (reserve as any).address, this.address])
+    const deposits = await this.client.findDerivedAccount(["deposits", reserveAddress, this.address])
     const loan = await this.client.findDerivedAccount(["loan", reserveAddress, this.obligation.address, this.address])
     const collateral = await this.client.findDerivedAccount([
       "collateral",
