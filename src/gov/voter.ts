@@ -100,7 +100,7 @@ export class GovVoteRecord implements GovVoteRecordData {
       }
     })
   }
-  
+
   // TODO: deposit_token.rs - checked
   /**
    * Create the populated transaction instruction for `depositToken`.
@@ -123,7 +123,7 @@ export class GovVoteRecord implements GovVoteRecordData {
       }
     })
   }
-  
+
   // TODO: withdraw_token.rs - checked
   /**
    * Create the populated transaction instruction for `withdrawToken`.
@@ -135,7 +135,13 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @returns {TransactionInstruction}
    * @memberof GovVoter
    */
-  withdrawTokenIx(realm: GovRealm, voter: GovVoter, tokenAccount: PublicKey, bump: number, amount: Amount): TransactionInstruction {
+  withdrawTokenIx(
+    realm: GovRealm,
+    voter: GovVoter,
+    tokenAccount: PublicKey,
+    bump: number,
+    amount: Amount
+  ): TransactionInstruction {
     return this.client.program.instruction.withdrawToken(bump, amount.toRpcArg(), {
       accounts: {
         owner: voter.owner,
@@ -148,7 +154,7 @@ export class GovVoteRecord implements GovVoteRecordData {
       }
     })
   }
-  
+
   // TODO: cast_vote.rs - checked
   /**
    * Create the populated transaction instruction for `castVote`.
@@ -160,7 +166,13 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @returns {TransactionInstruction}
    * @memberof GovVoter
    */
-  voteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, bump: number, vote: VoteCount): TransactionInstruction {
+  voteIx(
+    realm: GovRealm,
+    voter: GovVoter,
+    voteRecord: GovVoteRecord,
+    bump: number,
+    vote: VoteCount
+  ): TransactionInstruction {
     return this.client.program.instruction.castVote(bump, vote, {
       accounts: {
         owner: voter.owner,
@@ -172,7 +184,7 @@ export class GovVoteRecord implements GovVoteRecordData {
       }
     })
   }
-  
+
   // TODO: change_vote.rs - checked
   /**
    * Create the populated transaction instruction for `changeVote`.
@@ -195,8 +207,7 @@ export class GovVoteRecord implements GovVoteRecordData {
       }
     })
   }
-  
-  
+
   // TODO: rescind_vote.rs - checked
   /**
    * Creates the populated transaction instruction for a `rescindVote`.

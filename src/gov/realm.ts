@@ -48,13 +48,17 @@ export class GovRealm implements GovRealmData {
    * @returns {TransactionInstruction}
    * @memberof GovRealm
    */
-  createRealmIx(realm: GovRealm, governanceTokenMint: PublicKey, bumpSeeds: { authority: number; vault: number }): TransactionInstruction {
+  createRealmIx(
+    realm: GovRealm,
+    governanceTokenMint: PublicKey,
+    bumpSeeds: { authority: number; vault: number }
+  ): TransactionInstruction {
     return this.client.program.instruction.initRealm(bumpSeeds, {
       accounts: {
         realm: realm.address,
         owner: realm.owner,
         authority: realm.authority,
-        vault: realm.vault,  
+        vault: realm.vault,
         governanceTokenMint: governanceTokenMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

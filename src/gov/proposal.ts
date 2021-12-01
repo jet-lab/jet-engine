@@ -27,7 +27,7 @@ export interface ProposalEvent {
 }
 
 type TimeNow = { now: Record<string, never> }
-type TimeAt = { at: {value: BN} }
+type TimeAt = { at: { value: BN } }
 type TimeNever = { never: Record<string, never> }
 
 export type Time = TimeNow | TimeAt | TimeNever
@@ -109,53 +109,56 @@ export class GovProposal implements GovProposalData {
           systemProgram: SystemProgram.programId
         }
       }
-      )
-    }
-    
-    // TODO: edit_proposal.rs - checked
-    /**
-     * Creates the populated transaction instruction for a `editProposal`.
-     * @param {GovProposal} proposalData
-     * @param {GovVoteRecord} voteRecord
-     * @param {ProposalContent} content
-     * @returns {TransactionInstruction}
-     * @memberof GovProposal
-     */
-    editProposalIx(proposalData: GovProposal, voteRecord: GovVoteRecord, content: ProposalContent): TransactionInstruction {
-      return this.client.program.instruction.editProposal(content.name, content.description, {
-        accounts: {
-          owner: proposalData.owner,
-          realm: proposalData.realm,
-          voter: voteRecord.owner,
-          proposal: proposalData.address,
-        }
-      })
-    }
-    
-    // TODO: transition_proposal.rs - checked
-    /**
-     * Creates the populated transaction instruction for a `transitionProposal`.
-     * @param {GovProposalData} proposalData
-     * @param {GovVoteRecord} voteRecord
-     * @param {ProposalLifecycle} event
-     * @param {Time} when
-     * @returns {TransactionInstruction}
-     * @memberof GovProposal
-     */
-    transitionProposalIx(
-      proposalData: GovProposalData,
-      voteRecord: GovVoteRecord,
-      event: ProposalLifecycle,
-      when: Time
-      ): TransactionInstruction {
-        return this.client.program.instruction.transitionProposal(event, when, {
-          accounts: {
-            owner: proposalData.owner,
-            realm: proposalData.realm,
-            voter: voteRecord.owner,
-            proposal: voteRecord.proposal,
-          }
-        })
+    )
+  }
+
+  // TODO: edit_proposal.rs - checked
+  /**
+   * Creates the populated transaction instruction for a `editProposal`.
+   * @param {GovProposal} proposalData
+   * @param {GovVoteRecord} voteRecord
+   * @param {ProposalContent} content
+   * @returns {TransactionInstruction}
+   * @memberof GovProposal
+   */
+  editProposalIx(
+    proposalData: GovProposal,
+    voteRecord: GovVoteRecord,
+    content: ProposalContent
+  ): TransactionInstruction {
+    return this.client.program.instruction.editProposal(content.name, content.description, {
+      accounts: {
+        owner: proposalData.owner,
+        realm: proposalData.realm,
+        voter: voteRecord.owner,
+        proposal: proposalData.address
       }
-    }
-    
+    })
+  }
+
+  // TODO: transition_proposal.rs - checked
+  /**
+   * Creates the populated transaction instruction for a `transitionProposal`.
+   * @param {GovProposalData} proposalData
+   * @param {GovVoteRecord} voteRecord
+   * @param {ProposalLifecycle} event
+   * @param {Time} when
+   * @returns {TransactionInstruction}
+   * @memberof GovProposal
+   */
+  transitionProposalIx(
+    proposalData: GovProposalData,
+    voteRecord: GovVoteRecord,
+    event: ProposalLifecycle,
+    when: Time
+  ): TransactionInstruction {
+    return this.client.program.instruction.transitionProposal(event, when, {
+      accounts: {
+        owner: proposalData.owner,
+        realm: proposalData.realm,
+        voter: voteRecord.owner,
+        proposal: voteRecord.proposal
+      }
+    })
+  }
+}
