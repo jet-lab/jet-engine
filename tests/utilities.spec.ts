@@ -16,9 +16,8 @@
  */
 
 import { BN, web3 } from "@project-serum/anchor"
-import { TokenAmount } from "../src/user"
-import { DerivedAccount } from "../src/client"
-import { NumberField, pubkeyField, PubkeyField, u64Field } from "../src/util"
+import { TokenAmount, DerivedAccount } from "../src"
+import { NumberField, pubkeyField, PubkeyField, u64Field } from "../src/pools/util"
 import { Amount } from "../src"
 
 describe("Amount", () => {
