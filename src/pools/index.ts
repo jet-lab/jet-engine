@@ -20,11 +20,12 @@ import * as anchor from "@project-serum/anchor"
 import { u64 } from "@solana/spl-token"
 
 export * from "./client"
-export * from "./market"
-export * from "./reserve"
-export * from "./user"
 export * from "./idl"
+export * from "./market"
+export * from "./obligation"
+export * from "./reserve"
 export * from "./types"
+export * from "./user"
 
 export const PLACEHOLDER_ACCOUNT = PublicKey.default
 

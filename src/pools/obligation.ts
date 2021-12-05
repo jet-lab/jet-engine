@@ -17,35 +17,38 @@
 
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
-import { JetClient, JetMarket, JetMarketData, JetMarketReserveInfo, JetReserve, JetUser, ReserveData } from "."
+import { JetClient, JetMarket, JetMarketData, JetReserve, JetUser, ReserveData } from "."
 import { TokenAmount, JetUserData } from "./user"
 
 interface Balances {
-  depositNotes: TokenAmount
-  depositBalance: TokenAmount
-  collateralBalance: TokenAmount
-  collateralNotes: TokenAmount
-  loanNotes: TokenAmount
-  loanBalance: TokenAmount
+  reserve: ReserveData
+  depositNotes?: TokenAmount
+  depositBalance: BN
+  collateralNotes?: TokenAmount
+  collateralBalance: BN
+  loanNotes?: TokenAmount
+  loanBalance: BN
 }
 
 export type Position = {
-  depositNotes: TokenAmount
-  depositBalance: TokenAmount
-  collateralBalance: TokenAmount
-  collateralNotes: TokenAmount
-  loanNotes: TokenAmount
-  loanBalance: TokenAmount
-  maxDepositAmount: TokenAmount
-  maxWithdrawAmount: TokenAmount
-  maxBorrowAmount: TokenAmount
-  maxRepayAmount: TokenAmount
+  reserve: ReserveData
+  depositNotes?: TokenAmount
+  depositBalance: BN
+  collateralNotes?: TokenAmount
+  collateralBalance: BN
+  loanNotes?: TokenAmount
+  loanBalance: BN
+  // FIXME: calculate these fields
+  // maxDepositAmount: TokenAmount
+  // maxWithdrawAmount: TokenAmount
+  // maxBorrowAmount: TokenAmount
+  // maxRepayAmount: TokenAmount
 }
 
 export interface Obligation {
   positions: Record<number, Position>
-  depositedValue: BN
-  collateralValue: BN
+  depositedValue: number
+  collateralValue: number
   collateralRatio: number
   utilizationRate: number
 }
@@ -69,9 +72,9 @@ export class JetObligation implements Obligation {
    */
   constructor(
     public positions: Position[],
-    public depositedValue: BN,
-    public collateralValue: BN,
-    public loanedValue: BN,
+    public depositedValue: number,
+    public collateralValue: number,
+    public loanedValue: number,
     public collateralRatio: number,
     public utilizationRate: number
   ) {}
@@ -101,15 +104,15 @@ export class JetObligation implements Obligation {
    */
   static create(market: JetMarketData, user: JetUserData, reserveData: ReserveData[]) {
     const deposits = user.deposits()
-    const collateral = user.deposits()
+    const collateral = user.collateral()
     const loans = user.loans()
 
-    const positions: Balances[] = []
+    const balances: Balances[] = []
 
     // Sum of Deposited and borrowed
-    const depositedValue = new BN(0)
-    const collateralValue = new BN(0)
-    const loanedValue = new BN(0)
+    let depositedValue = 0
+    let collateralValue = 0
+    let loanedValue = 0
 
     // Token balances
     for (let i = 0; i < market.reserves.length; i++) {
@@ -122,72 +125,41 @@ export class JetObligation implements Obligation {
       if (!reserveCache.reserve.equals(reserve.address)) {
         throw new Error("market reserves do not match reserve list.")
       }
+      const depositNotes = deposits.find(deposit => deposit.mint.equals(reserve.depositNoteMint))
+      const collateralNotes = collateral.find(collateral => collateral.mint.equals(reserve.depositNoteMint))
+      const loanNotes = loans.find(loan => loan.mint.equals(reserve.loanNoteMint))
 
-      const position = this.toTokens(deposits[i], collateral[i], loans[i], reserve, reserveCache)
-      const price = reserve.priceData.price
-      if (price != undefined) {
-        depositedValue.iadd(positions[i].depositBalance.amount.muln(price))
-        collateralValue.iadd(positions[i].collateralBalance.amount.muln(price))
-        loanedValue.iadd(positions[i].loanBalance.amount.muln(price))
+      const balance: Balances = {
+        reserve: reserve,
+        depositNotes,
+        depositBalance: depositNotes?.amount.mul(reserveCache.depositNoteExchangeRate).div(new BN(1e15)) ?? new BN(0),
+        collateralNotes: collateralNotes,
+        collateralBalance:
+          collateralNotes?.amount.mul(reserveCache.depositNoteExchangeRate).div(new BN(1e15)) ?? new BN(0),
+        loanNotes: loanNotes,
+        loanBalance: loanNotes?.amount.mul(reserveCache.loanNoteExchangeRate).div(new BN(1e15)) ?? new BN(0)
       }
 
-      positions[i] = position
+      const price = reserve.priceData.price
+      if (price != undefined) {
+        if (balance.depositBalance) {
+          depositedValue += parseFloat(balance.depositBalance.muln(price).toString())
+        }
+        if (balance.collateralBalance) {
+          collateralValue += parseFloat(balance.collateralBalance.muln(price).toString())
+        }
+        if (balance.loanBalance) {
+          loanedValue += parseFloat(balance.loanBalance.muln(price).toString())
+        }
+      }
+
+      balances[i] = balance
     }
 
     // Utilization Rate
-    const collateralRatio = loanedValue.isZero() ? 0 : parseFloat(depositedValue.div(loanedValue).toString()) / 1e15
-    const utilizationRate = depositedValue.isZero() ? 0 : parseFloat(loanedValue.div(depositedValue).toString()) / 1e15
+    const collateralRatio = loanedValue === 0 ? 0 : depositedValue / loanedValue
+    const utilizationRate = depositedValue === 0 ? 0 : loanedValue / depositedValue
 
-    return new JetObligation(
-      positions as Position[],
-      depositedValue,
-      collateralValue,
-      loanedValue,
-      collateralRatio,
-      utilizationRate
-    )
-  }
-
-  /**
-   * TODO:
-   * @private
-   * @static
-   * @param {TokenAmount} noteAmount
-   * @param {ReserveData} reserveData
-   * @param {BN} exchangeRate
-   * @returns
-   * @memberof JetObligation
-   */
-  private static toToken(noteAmount: TokenAmount, reserveData: ReserveData, exchangeRate: BN) {
-    return new TokenAmount(reserveData.tokenMint, noteAmount.amount.mul(exchangeRate))
-  }
-
-  /**
-   * TODO:
-   * @private
-   * @static
-   * @param {TokenAmount} deposit
-   * @param {TokenAmount} collateral
-   * @param {TokenAmount} loan
-   * @param {ReserveData} reserve
-   * @param {JetMarketReserveInfo} reserveCache
-   * @returns {Balances}
-   * @memberof JetObligation
-   */
-  private static toTokens(
-    deposit: TokenAmount,
-    collateral: TokenAmount,
-    loan: TokenAmount,
-    reserve: ReserveData,
-    reserveCache: JetMarketReserveInfo
-  ): Balances {
-    return {
-      depositNotes: deposit,
-      depositBalance: this.toToken(deposit, reserve, reserveCache.depositNoteExchangeRate),
-      collateralNotes: collateral,
-      collateralBalance: this.toToken(collateral, reserve, reserveCache.depositNoteExchangeRate),
-      loanNotes: loan,
-      loanBalance: this.toToken(loan, reserve, reserveCache.loanNoteExchangeRate)
-    }
+    return new JetObligation(balances, depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate)
   }
 }

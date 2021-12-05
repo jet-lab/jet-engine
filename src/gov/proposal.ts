@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey } from "@solana/web3.js"
+import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovClient } from "."
+import { GovClient, GovVoteRecord } from "."
 
 export interface GovProposalData {
   realm: PublicKey
@@ -34,9 +34,20 @@ export interface ProposalContent {
 }
 
 export interface ProposalLifecycle {
-  activate?: BN
-  finalize?: BN
+  activate?: Time
+  finalize?: Time
 }
+
+export interface ProposalEvent {
+  activate: Record<string, never>
+  finalize: Record<string, never>
+}
+
+type TimeNow = { now: Record<string, never> }
+type TimeAt = { at: { value: BN } }
+type TimeNever = { never: Record<string, never> }
+
+export type Time = TimeNow | TimeAt | TimeNever
 
 export interface VoteCount {
   yes: BN
@@ -84,5 +95,87 @@ export class GovProposal implements GovProposalData {
       data.lifecycle,
       data.count
     )
+  }
+
+  // TODO: make_proposal.rs - checked
+  // CREATE ME - static method for accessing the proposal address
+  // Try: pass in proposal as a public key, the proposal data owner should have this key pair, client, `this` keyword and whatever that's needed
+  /**
+   * Creates the populated transaction instruction for a `initProposal`.
+   * @param {GovProposal} proposalData
+   * @param {ProposalContent} content
+   * @param {ProposalLifecycle} lifecycle
+   * @returns {TransactionInstruction}
+   * @memberof GovProposal
+   */
+  initProposalIx(
+    proposalData: GovProposal,
+    content: ProposalContent,
+    lifecycle: ProposalLifecycle
+  ): TransactionInstruction {
+    return this.client.program.instruction.initProposal(
+      content.name,
+      content.description,
+      lifecycle.activate,
+      lifecycle.finalize,
+      {
+        accounts: {
+          owner: proposalData.owner,
+          realm: proposalData.realm,
+          proposal: proposalData.address,
+          systemProgram: SystemProgram.programId
+        }
+      }
+    )
+  }
+
+  // TODO: edit_proposal.rs - checked
+  /**
+   * Creates the populated transaction instruction for a `editProposal`.
+   * @param {GovProposal} proposalData
+   * @param {GovVoteRecord} voteRecord
+   * @param {ProposalContent} content
+   * @returns {TransactionInstruction}
+   * @memberof GovProposal
+   */
+  editProposalIx(
+    proposalData: GovProposal,
+    voteRecord: GovVoteRecord,
+    content: ProposalContent
+  ): TransactionInstruction {
+    return this.client.program.instruction.editProposal(content.name, content.description, {
+      accounts: {
+        owner: proposalData.owner,
+        realm: proposalData.realm,
+        voter: voteRecord.owner,
+        proposal: proposalData.address
+      }
+    })
+  }
+
+  // TODO: transition_proposal.rs - checked
+  /**
+   * Creates the populated transaction instruction for a `transitionProposal`.
+   * @param {GovProposalData} proposalData
+   * @param {GovVoteRecord} voteRecord
+   * @param {ProposalLifecycle} event
+   * @param {Time} when
+   * @returns {TransactionInstruction}
+   * @memberof GovProposal
+   */
+  transitionProposalIx(
+    proposalData: GovProposalData,
+    voteRecord: GovVoteRecord,
+    event: ProposalLifecycle,
+    when: Time
+  ): TransactionInstruction {
+    return this.client.program.instruction.transitionProposal(event, when, {
+      accounts: {
+        owner: proposalData.owner,
+        realm: proposalData.realm,
+        voter: voteRecord.owner,
+        proposal: voteRecord.proposal
+      }
+    })
   }
 }

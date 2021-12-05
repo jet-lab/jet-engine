@@ -65,7 +65,7 @@ export class NumberField extends BL.Layout {
   decode(b: Uint8Array, offset?: number): BN {
     const start = offset ?? 0
     const data = b.slice(start, start + this.span)
-    return new BN(data)
+    return new BN(data, undefined, "le")
   }
 
   /**
@@ -78,7 +78,7 @@ export class NumberField extends BL.Layout {
    */
   encode(src: BN, b: Uint8Array, offset?: number): number {
     const start = offset ?? 0
-    b.set(src.toArray(), start)
+    b.set(src.toArray("le"), start)
     return this.span
   }
 }

@@ -30,9 +30,9 @@ export interface JetMarketReserveInfo {
   depositNoteExchangeRate: anchor.BN
   loanNoteExchangeRate: anchor.BN
   minCollateralRatio: anchor.BN
-  liquidationBonus: anchor.BN
+  liquidationBonus: number
   lastUpdated: anchor.BN
-  invalidated: anchor.BN
+  invalidated: number
 }
 
 export interface JetMarketData {
