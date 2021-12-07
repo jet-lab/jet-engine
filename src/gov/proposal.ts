@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
 import { GovClient, GovRealm, GovVoteRecord } from "."
 import { Time, ProposalAccount } from "./types"
@@ -75,7 +75,7 @@ export class GovProposal implements GovProposalData {
    * @param realm The realm that contains all proposals
    * @returns
    */
-  // TODO: question -- currently can't access multiple proposals, 
+  // TODO: question -- currently can't access multiple proposals,
   // TODO: possible solution - if realm account struct stores proposals[], then we can loadMultiple like following
   // static async loadMultiple(client: GovClient, realm: GovRealm) {
   //   const proposalAddresses = realm.proposals
@@ -120,9 +120,25 @@ export class GovProposal implements GovProposalData {
     )
   }
 
-  // TODO: make_proposal.rs - tx
+  // TODO: init_proposal.rs - tx
   // CREATE ME - static method for accessing the proposal address
   // Try: pass in proposal as a public key, the proposal data owner should have this key pair, client, `this` keyword and whatever that's needed
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovProposal
+   */
+  async initProposal(
+    proposalData: GovProposal,
+    content: ProposalContent,
+    lifecycle: ProposalLifecycle): Promise<string> {
+    // TODO: fixme
+    const tx = await this.initProposalTx(proposalData, content, lifecycle)
+    return await this.client.program.provider.send(tx)
+  }
+  
   /**
    * Creates the populated transaction instruction for a `initProposal`.
    * @param {GovProposal} proposalData
@@ -152,7 +168,46 @@ export class GovProposal implements GovProposalData {
     )
   }
 
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovProposal
+   */
+ async initProposalTx(proposalData: GovProposal, content: ProposalContent, lifecycle: ProposalLifecycle): Promise<Transaction> {
+  // TODO: fixme
+  // set const to get data needed to initialize proposal
+  // const name = content.name // await data
+  // etc
+
+  const tx = new Transaction()
+  // fill in data
+  //tx.add()
+  // tx.add()
+  tx.add(this.initProposalIx(
+    proposalData,
+    content,
+    lifecycle))
+  return tx
+}
+
   // TODO: edit_proposal.rs - tx
+    /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovProposal
+   */
+     async editProposal(
+      proposalData: GovProposal,
+      voteRecord: GovVoteRecord,
+      content: ProposalContent): Promise<string> {
+      // TODO: fixme
+      const tx = await this.editProposalTx(proposalData, voteRecord, content)
+      return await this.client.program.provider.send(tx)
+    }
   /**
    * Creates the populated transaction instruction for a `editProposal`.
    * @param {GovProposal} proposalData
@@ -176,7 +231,46 @@ export class GovProposal implements GovProposalData {
     })
   }
 
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovProposal
+   */
+  async editProposalTx(proposalData: GovProposal, voteRecord: GovVoteRecord, content: ProposalContent): Promise<Transaction> {
+  // TODO: fixme
+  // set const to get data needed 
+  // const name = content.name // await data
+  // etc
+
+  const tx = new Transaction()
+  // fill in data
+  //tx.add()
+  // tx.add()
+  tx.add(this.editProposalIx(
+    proposalData, voteRecord, content))
+  return tx
+}
+
   // TODO: transition_proposal.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovProposal
+   */
+  async transitionProposal(
+    proposalData: GovProposalData,
+    voteRecord: GovVoteRecord,
+    event: ProposalLifecycle,
+    when: Time): Promise<string> {
+  // TODO: fixme
+  const tx = await this.transitionProposalTx(proposalData, voteRecord, event, when)
+  return await this.client.program.provider.send(tx)
+}
+
   /**
    * Creates the populated transaction instruction for a `transitionProposal`.
    * @param {GovProposalData} proposalData
@@ -200,5 +294,26 @@ export class GovProposal implements GovProposalData {
         proposal: voteRecord.proposal
       }
     })
+  }
+
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovProposal
+   */
+   async transitionProposalTx(proposalData: GovProposalData, voteRecord: GovVoteRecord, event: ProposalLifecycle, when: Time): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed 
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.transitionProposalIx(proposalData, voteRecord, event, when))
+    return tx
   }
 }

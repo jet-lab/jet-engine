@@ -20,32 +20,32 @@ import { PublicKey } from "@solana/web3.js"
 import { ProposalContent, ProposalLifecycle, VoteCount } from "./proposal"
 
 export type ProposalAccount = {
-    realm: PublicKey
-    owner: PublicKey
-    created_timestamp: number
-    content: ProposalContent
-    lifecycle: ProposalLifecycle
-    count: VoteCount
+  realm: PublicKey
+  owner: PublicKey
+  created_timestamp: number
+  content: ProposalContent
+  lifecycle: ProposalLifecycle
+  count: VoteCount
 }
 
 export type RealmAccount = {
-    owner: PublicKey
-    authority: PublicKey
-    vault: PublicKey
+  owner: PublicKey
+  authority: PublicKey
+  vault: PublicKey
 }
 
 export type VoterAccount = {
-    realm: PublicKey
-    owner: PublicKey
-    deposited: number
-    active_votes: number
+  realm: PublicKey
+  owner: PublicKey
+  deposited: number
+  active_votes: number
 }
 
 export type VoteRecord = {
-    proposal: PublicKey
-    voter: PublicKey
-    weight: number
-    vote: VoteOption
+  proposal: PublicKey
+  voter: PublicKey
+  weight: number
+  vote: VoteOption
 }
 
 type VoteYes = { yes: Record<string, never> }

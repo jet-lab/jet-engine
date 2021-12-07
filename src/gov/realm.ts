@@ -56,7 +56,7 @@ export class GovRealm implements GovRealmData {
     return new GovRealm(client, address, data.owner, data.authority, data.vault)
   }
 
-  // TODO: init_realm.rs - checked
+  // TODO: init_realm.rs - tx
   /**
    * Create the populated transaction instruction for `initRealm`.
    * @param {GovRealm} realm

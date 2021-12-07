@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import BN from "bn.js"
 import { GovClient, GovRealm, VoteCount } from "."
@@ -93,16 +93,30 @@ export class GovVoteRecord implements GovVoteRecordData {
     return new GovVoteRecord(client, address, data.proposal, data.owner, data.weight, data.vote)
   }
 
-  // TODO: init_voter.rs - checked
+  // TODO: init_voter.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * TODO: question - GovVoter or GovVoteRecord
+   * @memberof GovVoter
+   */
+   async initVoter(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<string> {
+    // TODO: fixme
+    const tx = await this.initVoterTx(voter, realm, bumpSeed)
+    return await this.client.program.provider.send(tx)
+  }
+          
   /**
    * Create the populated transaction instruction for `initVoter`.
    * @param {GovVoter} voter
    * @param {GovRealm} realm
    * @param {number} bumpSeed
    * @returns {TransactionInstruction}
-   * @memberof GovVoteRecord
+   * @memberof GovVoter
    */
-  async createVoterIx(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<TransactionInstruction> {
+  async initVoterIx(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<TransactionInstruction> {
     return this.client.program.instruction.initVoter(bumpSeed, {
       accounts: {
         owner: voter.owner,
@@ -113,7 +127,42 @@ export class GovVoteRecord implements GovVoteRecordData {
     })
   }
 
-  // TODO: deposit_token.rs - checked
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+   async initVoterTx(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    // tx.add(this.initVoterIx(voter, realm, bumpSeed))
+    return tx
+  }
+
+
+  // TODO: deposit_token.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovVoter
+   */
+   async depositToken(realm: GovRealm, voter: GovVoter, tokenAccount: PublicKey, amount: Amount): Promise<string> {
+    // TODO: fixme
+    const tx = await this.depositTokenTx(realm, voter, tokenAccount, amount)
+    return await this.client.program.provider.send(tx)
+  }
+          
   /**
    * Create the populated transaction instruction for `depositToken`.
    * @param {GovRealm} realm
@@ -136,7 +185,45 @@ export class GovVoteRecord implements GovVoteRecordData {
     })
   }
 
-  // TODO: withdraw_token.rs - checked
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+   async depositTokenTx(realm: GovRealm, voter: GovVoter, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.depositTokenIx(realm, voter, tokenAccount, amount))
+    return tx
+  }
+
+  // TODO: withdraw_token.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovVoter
+   */
+   async withdrawToken(realm: GovRealm,
+    voter: GovVoter,
+    tokenAccount: PublicKey,
+    bump: number,
+    amount: Amount): Promise<string> {
+    // TODO: fixme
+    const tx = await this.withdrawTokenTx(realm, voter, tokenAccount, bump, amount)
+    return await this.client.program.provider.send(tx)
+  }
+          
   /**
    * Create the populated transaction instruction for `withdrawToken`.
    * @param {GovRealm} realm
@@ -167,7 +254,49 @@ export class GovVoteRecord implements GovVoteRecordData {
     })
   }
 
-  // TODO: cast_vote.rs - checked
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+   async withdrawTokenTx(    realm: GovRealm,
+    voter: GovVoter,
+    tokenAccount: PublicKey,
+    bump: number,
+    amount: Amount): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.withdrawTokenIx(realm, voter, tokenAccount, bump, amount))
+    return tx
+  }
+
+  // TODO: cast_vote.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovVoter
+   */
+   async castVote(realm: GovRealm,
+    voter: GovVoter,
+    voteRecord: GovVoteRecord,
+    bump: number,
+    vote: VoteCount): Promise<string> {
+    // TODO: fixme
+    const tx = await this.castVoteTx(realm, voter, voteRecord, bump, vote)
+    return await this.client.program.provider.send(tx)
+  }
+          
   /**
    * Create the populated transaction instruction for `castVote`.
    * @param {GovRealm} realm
@@ -178,7 +307,7 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @returns {TransactionInstruction}
    * @memberof GovVoter
    */
-  voteIx(
+  castVoteIx(
     realm: GovRealm,
     voter: GovVoter,
     voteRecord: GovVoteRecord,
@@ -197,7 +326,45 @@ export class GovVoteRecord implements GovVoteRecordData {
     })
   }
 
-  // TODO: change_vote.rs - checked
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+   async castVoteTx(realm: GovRealm,
+    voter: GovVoter,
+    voteRecord: GovVoteRecord,
+    bump: number,
+    vote: VoteCount): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.castVoteIx(realm, voter, voteRecord, bump, vote))
+    return tx
+  }
+
+  // TODO: change_vote.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovVoter
+   */
+  async changeVote(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, vote: VoteCount): Promise<string> {
+  // TODO: fixme
+  const tx = await this.changeVoteTx(realm, voter, voteRecord, vote)
+  return await this.client.program.provider.send(tx)
+}
+      
   /**
    * Create the populated transaction instruction for `changeVote`.
    * @param {GovRealm} realm
@@ -220,7 +387,41 @@ export class GovVoteRecord implements GovVoteRecordData {
     })
   }
 
-  // TODO: rescind_vote.rs - checked
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+   async changeVoteTx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, vote: VoteCount): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.changeVoteIx(realm, voter, voteRecord, vote))
+    return tx
+  }
+
+  // TODO: rescind_vote.rs - tx
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<string>}
+   * @memberof GovVoter
+   */
+    async rescindVote(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord): Promise<string> {
+  // TODO: fixme
+  const tx = await this.rescindVoteTx(realm, voter, voteRecord)
+  return await this.client.program.provider.send(tx)
+}
+  
   /**
    * Creates the populated transaction instruction for a `rescindVote`.
    * @param {GovRealm} realm
@@ -239,5 +440,26 @@ export class GovVoteRecord implements GovVoteRecordData {
         voteRecord: voteRecord.address
       }
     })
+  }
+  
+  /**
+   * TODO: fixme
+   * @param 
+   * @param 
+   * @returns {Promise<Transaction>}
+   * @memberof GovVoter
+   */
+    async rescindVoteTx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+  
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.rescindVoteIx(realm, voter, voteRecord))
+    return tx
   }
 }
