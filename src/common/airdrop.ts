@@ -1,18 +1,23 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { Connection, PublicKey, TransactionInstruction } from "@solana/web3.js"
-import BN from 'bn.js'
+import BN from "bn.js"
 
-export const FAUCET_PROGRAM_ID = new PublicKey('4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt');
+export const FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
 
-export const makeAirdropTx = async (tokenMint: PublicKey, tokenFaucet: PublicKey, user: PublicKey, connection: Connection) => {
+export const makeAirdropTx = async (
+  tokenMint: PublicKey,
+  tokenFaucet: PublicKey,
+  user: PublicKey,
+  connection: Connection
+) => {
   const tokenAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     tokenMint,
     user
-  );
+  )
 
-  const tokenInfo = await connection.getAccountInfo(tokenAddress);
+  const tokenInfo = await connection.getAccountInfo(tokenAddress)
 
   let createAccountIx: TransactionInstruction | undefined
   if (tokenInfo === null) {
@@ -26,7 +31,7 @@ export const makeAirdropTx = async (tokenMint: PublicKey, tokenFaucet: PublicKey
     )
   }
 
-  const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", 'utf8')], FAUCET_PROGRAM_ID)
+  const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", "utf8")], FAUCET_PROGRAM_ID)
 
   const keys = [
     { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
@@ -46,5 +51,5 @@ export const makeAirdropTx = async (tokenMint: PublicKey, tokenFaucet: PublicKey
     keys
   })
 
-  return [createAccountIx, faucetIx].filter(ix => ix) as TransactionInstruction[];
+  return [createAccountIx, faucetIx].filter(ix => ix) as TransactionInstruction[]
 }
