@@ -125,20 +125,21 @@ export class GovProposal implements GovProposalData {
   // Try: pass in proposal as a public key, the proposal data owner should have this key pair, client, `this` keyword and whatever that's needed
   /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<string>}
    * @memberof GovProposal
    */
   async initProposal(
     proposalData: GovProposal,
     content: ProposalContent,
-    lifecycle: ProposalLifecycle): Promise<string> {
+    lifecycle: ProposalLifecycle
+  ): Promise<string> {
     // TODO: fixme
     const tx = await this.initProposalTx(proposalData, content, lifecycle)
     return await this.client.program.provider.send(tx)
   }
-  
+
   /**
    * Creates the populated transaction instruction for a `initProposal`.
    * @param {GovProposal} proposalData
@@ -170,44 +171,42 @@ export class GovProposal implements GovProposalData {
 
   /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<Transaction>}
    * @memberof GovProposal
    */
- async initProposalTx(proposalData: GovProposal, content: ProposalContent, lifecycle: ProposalLifecycle): Promise<Transaction> {
-  // TODO: fixme
-  // set const to get data needed to initialize proposal
-  // const name = content.name // await data
-  // etc
+  async initProposalTx(
+    proposalData: GovProposal,
+    content: ProposalContent,
+    lifecycle: ProposalLifecycle
+  ): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed to initialize proposal
+    // const name = content.name // await data
+    // etc
 
-  const tx = new Transaction()
-  // fill in data
-  //tx.add()
-  // tx.add()
-  tx.add(this.initProposalIx(
-    proposalData,
-    content,
-    lifecycle))
-  return tx
-}
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.initProposalIx(proposalData, content, lifecycle))
+    return tx
+  }
 
   // TODO: edit_proposal.rs - tx
-    /**
+  /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<string>}
    * @memberof GovProposal
    */
-     async editProposal(
-      proposalData: GovProposal,
-      voteRecord: GovVoteRecord,
-      content: ProposalContent): Promise<string> {
-      // TODO: fixme
-      const tx = await this.editProposalTx(proposalData, voteRecord, content)
-      return await this.client.program.provider.send(tx)
-    }
+  async editProposal(proposalData: GovProposal, voteRecord: GovVoteRecord, content: ProposalContent): Promise<string> {
+    // TODO: fixme
+    const tx = await this.editProposalTx(proposalData, voteRecord, content)
+    return await this.client.program.provider.send(tx)
+  }
   /**
    * Creates the populated transaction instruction for a `editProposal`.
    * @param {GovProposal} proposalData
@@ -233,31 +232,34 @@ export class GovProposal implements GovProposalData {
 
   /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<Transaction>}
    * @memberof GovProposal
    */
-  async editProposalTx(proposalData: GovProposal, voteRecord: GovVoteRecord, content: ProposalContent): Promise<Transaction> {
-  // TODO: fixme
-  // set const to get data needed 
-  // const name = content.name // await data
-  // etc
+  async editProposalTx(
+    proposalData: GovProposal,
+    voteRecord: GovVoteRecord,
+    content: ProposalContent
+  ): Promise<Transaction> {
+    // TODO: fixme
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
 
-  const tx = new Transaction()
-  // fill in data
-  //tx.add()
-  // tx.add()
-  tx.add(this.editProposalIx(
-    proposalData, voteRecord, content))
-  return tx
-}
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.editProposalIx(proposalData, voteRecord, content))
+    return tx
+  }
 
   // TODO: transition_proposal.rs - tx
   /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<string>}
    * @memberof GovProposal
    */
@@ -265,11 +267,12 @@ export class GovProposal implements GovProposalData {
     proposalData: GovProposalData,
     voteRecord: GovVoteRecord,
     event: ProposalLifecycle,
-    when: Time): Promise<string> {
-  // TODO: fixme
-  const tx = await this.transitionProposalTx(proposalData, voteRecord, event, when)
-  return await this.client.program.provider.send(tx)
-}
+    when: Time
+  ): Promise<string> {
+    // TODO: fixme
+    const tx = await this.transitionProposalTx(proposalData, voteRecord, event, when)
+    return await this.client.program.provider.send(tx)
+  }
 
   /**
    * Creates the populated transaction instruction for a `transitionProposal`.
@@ -298,17 +301,22 @@ export class GovProposal implements GovProposalData {
 
   /**
    * TODO: fixme
-   * @param 
-   * @param 
+   * @param
+   * @param
    * @returns {Promise<Transaction>}
    * @memberof GovProposal
    */
-   async transitionProposalTx(proposalData: GovProposalData, voteRecord: GovVoteRecord, event: ProposalLifecycle, when: Time): Promise<Transaction> {
+  async transitionProposalTx(
+    proposalData: GovProposalData,
+    voteRecord: GovVoteRecord,
+    event: ProposalLifecycle,
+    when: Time
+  ): Promise<Transaction> {
     // TODO: fixme
-    // set const to get data needed 
+    // set const to get data needed
     // const name = content.name // await data
     // etc
-  
+
     const tx = new Transaction()
     // fill in data
     //tx.add()
