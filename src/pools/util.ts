@@ -17,8 +17,9 @@
 
 import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
-import { PublicKey } from "@solana/web3.js"
+import { AccountInfo, PublicKey } from "@solana/web3.js"
 import type { ObligationPositionStruct } from "./types"
+import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 
 export enum StaticSeeds {
   Collateral = "collateral",
@@ -210,4 +211,43 @@ export function i64Field(property?: string): SignedNumberField {
  */
 export function pubkeyField(property?: string): PubkeyField {
   return new PubkeyField(property)
+}
+
+const TokenAccountLayout = BL.struct([
+  pubkeyField("mint"),
+  pubkeyField("owner"),
+  u64Field("amount"),
+  BL.u32("delegateOption"),
+  pubkeyField("delegate"),
+  BL.u8("state"),
+  BL.u32("isNativeOption"),
+  u64Field("isNative"),
+  u64Field("delegatedAmount"),
+  BL.u32("closeAuthorityOption"),
+  pubkeyField("closeAuthority")
+])
+
+export const parseTokenAccount = (account: AccountInfo<Buffer>, accountPubkey: PublicKey) => {
+  const data = TokenAccountLayout.decode(account.data)
+
+  // PublicKeys and BNs are currently Uint8 arrays and
+  // booleans are really Uint8s. Convert them
+  const decoded: TokenAccountInfo = {
+    address: accountPubkey,
+    mint: new PublicKey(data.mint),
+    owner: new PublicKey(data.owner),
+    amount: new BN(data.amount, undefined, "le"),
+    delegate: (data as any).delegateOption ? new PublicKey(data.delegate) : null,
+    delegatedAmount: new BN(data.delegatedAmount, undefined, "le"),
+    isInitialized: (data as any).state != 0,
+    isFrozen: (data as any).state == 2,
+    isNative: !!(data as any).isNativeOption,
+    rentExemptReserve: new BN(0, undefined, "le"), //  Todo: calculate. I believe this is lamports minus rent for wrapped sol
+    closeAuthority: (data as any).closeAuthorityOption ? new PublicKey(data.closeAuthority) : null
+  }
+  return decoded
+}
+
+export const bnToNumber = (bn: BN) => {
+  return parseFloat(bn.toString())
 }

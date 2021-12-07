@@ -25,12 +25,13 @@ import {
   Commitment
 } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
-import { AccountLayout as TokenAccountLayout, AccountInfo as TokenAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import EventEmitter from "eventemitter3"
 import { DerivedAccount, JetClient } from "./client"
 import { JetMarket, JetMarketReserveInfo } from "./market"
 import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
+import { parseTokenAccount } from "./util"
 
 /**
  * TODO:
@@ -866,7 +867,7 @@ export class JetUser implements JetUserData {
         return
       }
 
-      const tokenAccount: TokenAccount = TokenAccountLayout.decode(info.data)
+      const tokenAccount = parseTokenAccount(info, account.address)
 
       appendTo.push({
         mint: new PublicKey(tokenAccount.mint),

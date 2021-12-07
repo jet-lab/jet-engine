@@ -1,3 +1,8 @@
+/**
+ * This example retrieves a users positions as well as interest rates
+ * in Jet Protocol. Info is retrieved from RPC and printed to stdout. 
+ */
+
 import { JetClient, JetMarket, JetObligation, JetReserve, JetUser, JET_MARKET_ADDRESS_DEVNET } from "../src"
 import { Provider, Wallet } from "@project-serum/anchor"
 import { Connection, Keypair, PublicKey } from "@solana/web3.js"
@@ -6,7 +11,7 @@ export type CollateralizedPosition = {
   mint: string;
   deposited: number;
   borrowed: number;
-  borrowApy: number;
+  borrowApr: number;
   depositApy: number;
 }
 
@@ -39,23 +44,22 @@ async function getBitcoinPosition() {
     const position: CollateralizedPosition = {
       mint: bitcoinPosition.reserve.tokenMint.toBase58(),
       // Bitcoin has 6 decimals, divide by 1e6
-      deposited: bitcoinPosition.collateralBalance.toNumber() / 1e6, 
+      deposited: bitcoinPosition.collateralBalance.toNumber() / 1e6,
       borrowed: bitcoinPosition.loanBalance.toNumber() / 1e6,
-      // FIXME: Asking for borrow Apy
-      borrowApy: bitcoinPosition.reserve.borrowApr,
+      borrowApr: bitcoinPosition.reserve.borrowApr,
       depositApy: bitcoinPosition.reserve.depositApy,
     }
 
     console.log(position)
     /**
-     * {
-     *   mint: '5ym2kCTCcqCHutbQXnPdsGAGFMEVQBQzTQ1CPun9W5A5',
-     *   deposited: 0.097907,
-     *   borrowed: 0,
-     *   borrowApy: undefined,
-     *   depositApy: undefined
-     * }
-     */
+    {
+      mint: '5ym2kCTCcqCHutbQXnPdsGAGFMEVQBQzTQ1CPun9W5A5',
+      deposited: 0.097907,
+      borrowed: 0,
+      borrowApr: 0.005974152137235627,
+      depositApy: 0.00008364370063470388
+    }
+    */
   }
 }
 getBitcoinPosition()
