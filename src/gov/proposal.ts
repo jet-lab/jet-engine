@@ -17,8 +17,8 @@
 
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovClient, GovVoteRecord } from "."
-import { Time } from "./types"
+import { GovClient, GovRealm, GovVoteRecord } from "."
+import { Time, ProposalAccount } from "./types"
 
 export interface GovProposalData {
   realm: PublicKey
@@ -68,6 +68,33 @@ export class GovProposal implements GovProposalData {
     return this.decode(client, address, data)
   }
 
+  // TODO: create loadMultiple(client, realm) - done
+  /**
+   * Return all `Proposal` program accounts that are associated with the realm.
+   * @param client The client to fetch data
+   * @param realm The realm that contains all proposals
+   * @returns
+   */
+  // TODO: question -- currently can't access multiple proposals, 
+  // TODO: possible solution - if realm account struct stores proposals[], then we can loadMultiple like following
+  // static async loadMultiple(client: GovClient, realm: GovRealm) {
+  //   const proposalAddresses = realm.proposals
+  //     .map(GovProposals => GovProposals.proposal)
+  //     .filter(proposalAddress => !proposalAddress.equals(PublicKey.default))
+  //   const proposalInfos = (await client.program.account.realm.fetchMultiple(proposalAddresses)) as ProposalAccount[]
+
+  //   const nullProposalIndex = proposalInfos.findIndex(info => info == null)
+  //   if (nullProposalIndex !== -1) {
+  //     throw new Error(`Governance Proposal at address ${proposalAddresses[nullProposalIndex]} is invalid.`)
+  //   }
+
+  //   const proposals = proposalInfos.map((proposalInfo, i) => {
+  //     return this.decode(client, proposalAddresses[i], proposalInfo)
+  //   })
+
+  //   return proposals
+  // }
+
   async refresh() {
     const proposal = await GovProposal.load(this.client, this.address)
 
@@ -93,7 +120,7 @@ export class GovProposal implements GovProposalData {
     )
   }
 
-  // TODO: make_proposal.rs - checked
+  // TODO: make_proposal.rs - tx
   // CREATE ME - static method for accessing the proposal address
   // Try: pass in proposal as a public key, the proposal data owner should have this key pair, client, `this` keyword and whatever that's needed
   /**
@@ -125,7 +152,7 @@ export class GovProposal implements GovProposalData {
     )
   }
 
-  // TODO: edit_proposal.rs - checked
+  // TODO: edit_proposal.rs - tx
   /**
    * Creates the populated transaction instruction for a `editProposal`.
    * @param {GovProposal} proposalData
@@ -149,7 +176,7 @@ export class GovProposal implements GovProposalData {
     })
   }
 
-  // TODO: transition_proposal.rs - checked
+  // TODO: transition_proposal.rs - tx
   /**
    * Creates the populated transaction instruction for a `transitionProposal`.
    * @param {GovProposalData} proposalData
