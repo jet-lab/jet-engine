@@ -18,6 +18,7 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
 import { GovClient, GovVoteRecord } from "."
+import { Time } from "./types"
 
 export interface GovProposalData {
   realm: PublicKey
@@ -43,12 +44,7 @@ export interface ProposalEvent {
   finalize: Record<string, never>
 }
 
-type TimeNow = { now: Record<string, never> }
-type TimeAt = { at: { value: BN } }
-type TimeNever = { never: Record<string, never> }
-
-export type Time = TimeNow | TimeAt | TimeNever
-
+// TODO: question - what is the difference between this Proposal's VoteCount and Voter's Vote2 enum (named VoteOption in types.ts)
 export interface VoteCount {
   yes: BN
   no: BN

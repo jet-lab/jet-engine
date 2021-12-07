@@ -20,6 +20,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import BN from "bn.js"
 import { GovClient, GovRealm, VoteCount } from "."
 import { Amount } from "../."
+import { VoteOption } from "./types"
 
 export interface GovVoterData {
   address: PublicKey
@@ -61,14 +62,8 @@ export interface GovVoteRecordData {
   proposal: PublicKey
   owner: PublicKey
   weight: BN
-  vote: Vote
+  vote: VoteOption
 }
-
-export type VoteYes = { yes: Record<string, never> }
-export type VoteNo = { no: Record<string, never> }
-export type VoteAbstain = { abstain: Record<string, never> }
-
-export type Vote = VoteYes | VoteNo | VoteAbstain
 
 export class GovVoteRecord implements GovVoteRecordData {
   private constructor(
@@ -77,7 +72,7 @@ export class GovVoteRecord implements GovVoteRecordData {
     public proposal: PublicKey,
     public owner: PublicKey,
     public weight: BN,
-    public vote: Vote
+    public vote: VoteOption
   ) {}
 
   static async load(client: GovClient, address: PublicKey): Promise<GovVoteRecord> {
