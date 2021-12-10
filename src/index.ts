@@ -17,4 +17,5 @@
 
 export * from "./pools"
 export * from "./gov"
+export * from "./common"
 // FIXME: export * from "./p2p"
