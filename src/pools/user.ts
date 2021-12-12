@@ -694,7 +694,6 @@ export class JetUser implements JetUserData {
     return tx
   }
 
-  // TODO: close deposit account - double check
   async closeDepositAccount(reserve: JetReserve, receiver: PublicKey): Promise<string> {
     const tx = await this.closeDepositAccountTx(reserve, receiver)
     return await this.client.program.provider.send(tx)
@@ -720,7 +719,7 @@ export class JetUser implements JetUserData {
     )
     return tx
   }
-  // TODO: close collateral account - double check
+
   async closeCollateralAccount(reserve: JetReserve): Promise<string> {
     const tx = await this.closeCollateralAccountTx(reserve)
     return await this.client.program.provider.send(tx)
@@ -736,13 +735,14 @@ export class JetUser implements JetUserData {
           owner: this.address,
           obligation: this.obligation.address,
           collateralAccount: accounts.collateral.address,
+          depositAccount: accounts.deposits.address,
           tokenProgram: TOKEN_PROGRAM_ID
         }
       })
     )
     return tx
   }
-  // TODO: close loan account - double check
+
   async closeLoanAccount(reserve: JetReserve): Promise<string> {
     const tx = await this.closeLoanAccountTx(reserve)
     return await this.client.program.provider.send(tx)
@@ -764,7 +764,7 @@ export class JetUser implements JetUserData {
     )
     return tx
   }
-  // TODO: close obligation account - double check
+
   async closeObligationAccount(): Promise<string> {
     const tx = await this.closeObligationAccountTx()
     return await this.client.program.provider.send(tx)
