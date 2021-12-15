@@ -21,8 +21,13 @@ import { PublicKey } from "@solana/web3.js"
 export * from "./proposal"
 export * from "./realm"
 export * from "./voter"
+export * from "./airdrop"
+export * from "./distribution"
+export * from "./staking"
 
 const JET_GOV_PROGRAM_ID = new PublicKey("5TBwvU5xoA13fzmZgWVgFBUmBz1YCdiq2AshDZpPn3AL") // FIXME: deploy program
+// TODO: question - does the rewards and staking use the same gov program id or the staking program id
+const JET_GOV_STAKING_PROGRAM_ID = new PublicKey("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS") 
 
 export const StaticSeed = {
   RealmAuthority: Buffer.from("realm-authority"),
@@ -42,7 +47,8 @@ export class GovClient {
     return await PublicKey.findProgramAddress([StaticSeed.RealmAuthority, realm.toBuffer()], this.program.programId)
   }
 
-  async deriveVault(realm: PublicKey) {
+  // TODO: fixme, staking pool is vault now
+  async deriveVault(realm: PublicKey) { 
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
 
@@ -51,5 +57,14 @@ export class GovClient {
       [StaticSeed.Voter, wallet.toBuffer(), realm.toBuffer()],
       this.program.programId
     )
+  }
+}
+
+export class GovStakingClient {
+  constructor(public program: Program) {}
+
+  static async connect(provider: Provider): Promise<GovStakingClient> {
+    const idl = await Program.fetchIdl(JET_GOV_STAKING_PROGRAM_ID, provider)
+    return new GovStakingClient(new Program(idl as any, JET_GOV_STAKING_PROGRAM_ID))
   }
 }
