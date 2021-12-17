@@ -17,7 +17,7 @@
 
 import { Provider, Wallet } from "@project-serum/anchor"
 import { clusterApiUrl, Connection, Keypair, MemcmpFilter, PublicKey } from "@solana/web3.js"
-import { JetMarket, JetReserve, JetClient } from "../src"
+import { JetMarket, JetReserve, JetClient, JET_MARKET_ADDRESS_DEVNET } from "../src"
 
 describe("JetClient", () => {
   let client: JetClient
@@ -71,8 +71,9 @@ describe("JetClient", () => {
     expect(obligations.length).toBeGreaterThan(0)
   })
 
-  test("can fetch all reserves", async () => {
-    const reserves = await JetReserve.allReserves(client)
+  test("can fetch all reserves of a market", async () => {
+    const market = await JetMarket.load(client, JET_MARKET_ADDRESS_DEVNET)
+    const reserves = await JetReserve.loadMultiple(client, market)
     expect(reserves.length).toBeGreaterThan(0)
   })
 })

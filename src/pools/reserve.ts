@@ -18,19 +18,12 @@
 import * as anchor from "@project-serum/anchor"
 import { Market as SerumMarket } from "@project-serum/serum"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import {
-  Connection,
-  GetProgramAccountsFilter,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction
-} from "@solana/web3.js"
+import { AccountInfo, Connection, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 
 import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import { StaticSeeds } from "./util"
+import { bnToNumber, parseTokenAccount, StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
 import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
@@ -114,8 +107,9 @@ export interface ReserveData {
   dexMarket: PublicKey
   state: ReserveStateData
   config: ReserveConfig
-
+  availableLiquidity: BN
   marketSize: BN
+  utilizationRate: number
   ccRate: number
   borrowApr: number
   depositApy: number
@@ -185,11 +179,25 @@ export class JetReserve {
    */
   static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
     const data = await client.program.account.reserve.fetch(address)
-    const [market, pythOracle] = await Promise.all([
+
+    const [
+      market,
+      pythOracle,
+      {
+        value: { amount: availableLiquidity }
+      }
+    ] = await Promise.all([
       maybeMarket || JetMarket.load(client, data.market),
-      JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct)
+      JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct),
+      client.program.provider.connection.getTokenAccountBalance(data.vault, client.program.provider.opts.commitment)
     ])
-    const reserveData = this.decodeReserveData(address, data, pythOracle.priceData, pythOracle.productData)
+    const reserveData = this.decodeReserveData(
+      address,
+      data,
+      pythOracle.priceData,
+      pythOracle.productData,
+      new BN(availableLiquidity)
+    )
 
     return new JetReserve(client, market, reserveData)
   }
@@ -211,10 +219,22 @@ export class JetReserve {
       throw new Error(`Jet Reserve at address ${reserveAddresses[nullReserveIndex]} is invalid.`)
     }
 
-    const pythOracles = await Promise.all(
-      reserveInfos.map(reserveInfo =>
-        JetReserve.loadPythOracle(client, reserveInfo.pythOraclePrice, reserveInfo.pythOracleProduct)
-      )
+    const [pythOracles, vaultInfos] = await Promise.all([
+      Promise.all(
+        reserveInfos.map(reserveInfo =>
+          JetReserve.loadPythOracle(client, reserveInfo.pythOraclePrice, reserveInfo.pythOracleProduct)
+        )
+      ),
+      client.program.provider.connection.getMultipleAccountsInfo(reserveInfos.map(reserve => reserve.vault))
+    ])
+
+    const nullVaultIndex = vaultInfos.findIndex(vault => vault == null)
+    if (nullVaultIndex !== -1) {
+      throw new Error(`Jet Vault at address ${reserveInfos[nullVaultIndex].vault} is invalid.`)
+    }
+
+    const vaults = (vaultInfos as AccountInfo<Buffer>[]).map((vault, i) =>
+      parseTokenAccount(vault, reserveInfos[i].vault)
     )
 
     const reserves = reserveInfos.map((reserveInfo, i) => {
@@ -223,7 +243,8 @@ export class JetReserve {
         reserveAddresses[i],
         reserveInfo,
         pythOracle.priceData,
-        pythOracle.productData
+        pythOracle.productData,
+        vaults[i].amount
       )
       return new JetReserve(client, market, data)
     })
@@ -238,11 +259,27 @@ export class JetReserve {
    */
   async refresh(): Promise<void> {
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    const [, pythOracle] = await Promise.all([
+    const [
+      ,
+      pythOracle,
+      {
+        value: { amount: availableLiquidity }
+      }
+    ] = await Promise.all([
       this.market.refresh(),
-      JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct)
+      JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct),
+      this.client.program.provider.connection.getTokenAccountBalance(
+        data.vault,
+        this.client.program.provider.opts.commitment
+      )
     ])
-    this.data = JetReserve.decodeReserveData(this.data.address, data, pythOracle.priceData, pythOracle.productData)
+    this.data = JetReserve.decodeReserveData(
+      this.data.address,
+      data,
+      pythOracle.priceData,
+      pythOracle.productData,
+      new BN(availableLiquidity)
+    )
   }
 
   static async loadPythOracle(client: JetClient, pythOraclePrice: PublicKey, pythOracleProduct: PublicKey) {
@@ -260,63 +297,32 @@ export class JetReserve {
     return { priceData, productData }
   }
 
-  /**
-   * Return all `Reserve` program accounts that have been created
-   * @param {GetProgramAccountsFilter[]} [filters]
-   * @returns {Promise<ProgramAccount<Reserve>[]>}
-   * @memberof JetClient
-   */
-  static async allReserves(client: JetClient, filters?: GetProgramAccountsFilter[]): Promise<JetReserve[]> {
-    const reserveInfos: anchor.ProgramAccount<ReserveAccount>[] = await client.program.account.reserve.all(filters)
-
-    const uniqueMarketAddresses = [...new Set(reserveInfos.map(account => account.account.market.toBase58()))]
-
-    const marketPromises = uniqueMarketAddresses.map(marketAddress =>
-      JetMarket.load(client, new PublicKey(marketAddress))
-    )
-
-    const markets = (await Promise.allSettled(marketPromises)).reduce(
-      (acc, market) => (market.status === "fulfilled" ? [...acc, market.value] : acc),
-      [] as JetMarket[]
-    )
-
-    const pythOraclePromises = reserveInfos.map(reserveInfo =>
-      JetReserve.loadPythOracle(client, reserveInfo.account.pythOraclePrice, reserveInfo.account.pythOracleProduct)
-    )
-    const pythOracles = await Promise.all(pythOraclePromises)
-
-    const reserves = reserveInfos.map((info, i) => {
-      const pythOracle = pythOracles[i]
-      const data = JetReserve.decodeReserveData(
-        info.publicKey,
-        info.account,
-        pythOracle.priceData,
-        pythOracle.productData
-      )
-      const market = markets.find(market => market.address.equals(info.account.market)) as JetMarket
-      return new JetReserve(client, market, data)
-    })
-
-    return reserves
-  }
-
-  private static decodeReserveData(address: PublicKey, data: any, priceData: PriceData, productData: ProductData) {
+  private static decodeReserveData(
+    address: PublicKey,
+    data: any,
+    priceData: PriceData,
+    productData: ProductData,
+    availableLiquidity: BN
+  ) {
     const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
+    state.outstandingDebt = state.outstandingDebt.div(new BN(1e15))
     const reserve: ReserveData = {
       ...data,
       address,
       state,
       priceData,
-      productData
+      productData,
+      availableLiquidity
     }
 
-    // // Derive market reserve values
-    // reserve.marketSize = reserve.outstandingDebt.add(reserve.availableLiquidity);
-    // reserve.utilizationRate = reserve.marketSize.isZero() ? 0
-    //     : reserve.outstandingDebt.uiAmountFloat / reserve.marketSize.uiAmountFloat;
-    // const ccRate = getCcRate(reserve.config, reserve.utilizationRate);
-    // reserve.borrowRate = getBorrowRate(ccRate, reserve.config.manageFeeRate);
-    // reserve.depositRate = getDepositRate(ccRate, reserve.utilizationRate);
+    // Derive market reserve values
+    reserve.marketSize = reserve.state.outstandingDebt.add(reserve.availableLiquidity)
+    reserve.utilizationRate = reserve.marketSize.isZero()
+      ? 0
+      : bnToNumber(reserve.state.outstandingDebt) / bnToNumber(reserve.marketSize)
+    reserve.ccRate = JetReserve.getCcRate(reserve.config, reserve.utilizationRate)
+    reserve.borrowApr = JetReserve.getBorrowRate(reserve.ccRate, reserve.config.manageFeeRate)
+    reserve.depositApy = JetReserve.getDepositRate(reserve.ccRate, reserve.utilizationRate)
 
     return reserve
   }
@@ -420,50 +426,50 @@ export class JetReserve {
     }
   }
 
-  // /** Linear interpolation between (x0, y0) and (x1, y1) */
-  // private static interpolate = (x: number, x0: number, x1: number, y0: number, y1: number): number => {
-  //   console.assert(x >= x0);
-  //   console.assert(x <= x1);
+  /** Linear interpolation between (x0, y0) and (x1, y1) */
+  private static interpolate = (x: number, x0: number, x1: number, y0: number, y1: number): number => {
+    console.assert(x >= x0)
+    console.assert(x <= x1)
 
-  //   return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
-  // }
+    return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0)
+  }
 
-  // /** Continuous Compounding Rate */
-  // private static getCcRate = (reserveConfig: ReserveConfig, utilRate: number): number => {
-  //   const basisPointFactor = 10000;
-  //   const util1 = reserveConfig.utilizationRate1 / basisPointFactor;
-  //   const util2 = reserveConfig.utilizationRate2 / basisPointFactor;
-  //   const borrow0 = reserveConfig.borrowRate0 / basisPointFactor;
-  //   const borrow1 = reserveConfig.borrowRate1 / basisPointFactor;
-  //   const borrow2 = reserveConfig.borrowRate2 / basisPointFactor;
-  //   const borrow3 = reserveConfig.borrowRate3 / basisPointFactor;
+  /** Continuous Compounding Rate */
+  private static getCcRate = (reserveConfig: ReserveConfig, utilRate: number): number => {
+    const basisPointFactor = 10000
+    const util1 = reserveConfig.utilizationRate1 / basisPointFactor
+    const util2 = reserveConfig.utilizationRate2 / basisPointFactor
+    const borrow0 = reserveConfig.borrowRate0 / basisPointFactor
+    const borrow1 = reserveConfig.borrowRate1 / basisPointFactor
+    const borrow2 = reserveConfig.borrowRate2 / basisPointFactor
+    const borrow3 = reserveConfig.borrowRate3 / basisPointFactor
 
-  //   if (utilRate <= util1) {
-  //     return JetReserve.interpolate(utilRate, 0, util1, borrow0, borrow1);
-  //   } else if (utilRate <= util2) {
-  //     return JetReserve.interpolate(utilRate, util1, util2, borrow1, borrow2);
-  //   } else {
-  //     return JetReserve.interpolate(utilRate, util2, 1, borrow2, borrow3);
-  //   }
-  // };
+    if (utilRate <= util1) {
+      return JetReserve.interpolate(utilRate, 0, util1, borrow0, borrow1)
+    } else if (utilRate <= util2) {
+      return JetReserve.interpolate(utilRate, util1, util2, borrow1, borrow2)
+    } else {
+      return JetReserve.interpolate(utilRate, util2, 1, borrow2, borrow3)
+    }
+  }
 
-  // /** Borrow rate
-  // */
-  // private static getBorrowRate = (ccRate: number, fee: number): number => {
-  //   const basisPointFactor = 10000;
-  //   fee = fee / basisPointFactor;
-  //   const secondsPerYear: number = 365 * 24 * 60 * 60;
-  //   const rt = ccRate / secondsPerYear;
+  /** Borrow rate
+   */
+  private static getBorrowRate = (ccRate: number, fee: number): number => {
+    const basisPointFactor = 10000
+    fee = fee / basisPointFactor
+    const secondsPerYear: number = 365 * 24 * 60 * 60
+    const rt = ccRate / secondsPerYear
 
-  //   return Math.log1p((1 + fee) * Math.expm1(rt)) * secondsPerYear;
-  // };
+    return Math.log1p((1 + fee) * Math.expm1(rt)) * secondsPerYear
+  }
 
-  // /** Deposit rate
-  // */
-  // private static getDepositRate = (ccRate: number, utilRatio: number): number => {
-  //   const secondsPerYear: number = 365 * 24 * 60 * 60;
-  //   const rt = ccRate / secondsPerYear;
+  /** Deposit rate
+   */
+  private static getDepositRate = (ccRate: number, utilRatio: number): number => {
+    const secondsPerYear: number = 365 * 24 * 60 * 60
+    const rt = ccRate / secondsPerYear
 
-  //   return Math.log1p(Math.expm1(rt)) * secondsPerYear * utilRatio;
-  // };
+    return Math.log1p(Math.expm1(rt)) * secondsPerYear * utilRatio
+  }
 }
