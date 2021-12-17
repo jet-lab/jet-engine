@@ -45,7 +45,7 @@ export class GovRewardsDistribution implements GovRewardsDistributionData {
     public distributed: BN,
     public beginAt: BN,
     public endAt: BN,
-    public kind: DistributionKind,
+    public kind: DistributionKind
   ) {}
 
   static async load(client: RewardsClient, address: PublicKey): Promise<GovRewardsDistribution> {
@@ -69,7 +69,19 @@ export class GovRewardsDistribution implements GovRewardsDistributionData {
   }
 
   private static decode(client: RewardsClient, address: PublicKey, data: any) {
-    return new GovRewardsDistribution(client, address, data.authority, data.vault, data.vaultBump, data.targetAccount, data.targetAmount, data.distributed, data.beginAt, data.endAt, data.kind)
+    return new GovRewardsDistribution(
+      client,
+      address,
+      data.authority,
+      data.vault,
+      data.vaultBump,
+      data.targetAccount,
+      data.targetAmount,
+      data.distributed,
+      data.beginAt,
+      data.endAt,
+      data.kind
+    )
   }
 }
 

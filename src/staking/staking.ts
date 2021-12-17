@@ -30,8 +30,6 @@ export interface GovStakePoolData {
   shareSupply: BN
 }
 
-
-
 export class GovStakePool implements GovStakePoolData {
   private constructor(
     private client: GovStakingClient,
@@ -42,7 +40,7 @@ export class GovStakePool implements GovStakePoolData {
     public stakePoolVault: PublicKey,
     public stakeCollateralMint: PublicKey,
     public unbondPeriod: BN,
-    public shareSupply: BN,
+    public shareSupply: BN
   ) {}
 
   static async load(client: GovStakingClient, authority: PublicKey): Promise<GovStakePool> {
@@ -64,135 +62,157 @@ export class GovStakePool implements GovStakePoolData {
   }
 
   private static decode(client: GovStakingClient, authority: PublicKey, data: any) {
-    return new GovStakePool(client, authority, data, data.seed, data.bumpSeed, data.tokenMint, data.stakePoolVault, data.stakeCollateralMint, data.unbondPeriod, data.shareSupply)
+    return new GovStakePool(
+      client,
+      authority,
+      data,
+      data.seed,
+      data.bumpSeed,
+      data.tokenMint,
+      data.stakePoolVault,
+      data.stakeCollateralMint,
+      data.unbondPeriod,
+      data.shareSupply
+    )
   }
 }
 
-
 export interface GovStakeAccountData {
-    owner: PublicKey
-    stakePool: PublicKey
-    unlocked: BN
-    locked: BN
-    mintedVotes: BN
-    mintedCollateral: BN
-    unbounding: BN
-  }
-  
-  
-  
-  export class GovStakeAccount implements GovStakeAccountData {
-    private constructor(
-      private client: GovStakingClient,
-      public owner: PublicKey,
-      public stakePool: PublicKey,
-      public unlocked: BN,
-      public locked: BN,
-      public mintedVotes: BN,
-      public mintedCollateral: BN,
-      public unbounding: BN,
-    ) {}
-  
-    static async load(client: GovStakingClient, owner: PublicKey): Promise<GovStakeAccount> {
-      const data = await client.program.account.voter.fetch(owner)
-      return this.decode(client, owner, data)
-    }
-  
-    async refresh() {
-      const distribution = await GovStakeAccount.load(this.client, this.owner)
-  
-      this.owner = distribution.owner
-      this.stakePool = distribution.stakePool
-      this.unlocked = distribution.unlocked
-      this.locked = distribution.locked
-      this.mintedVotes = distribution.mintedVotes
-      this.mintedCollateral = distribution.mintedCollateral
-      this.unbounding = distribution.unbounding
-    }
-  
-    private static decode(client: GovStakingClient, owner: PublicKey, data: any) {
-      return new GovStakeAccount(client, owner, data.stakePool, data.unlocked, data.locked, data.mintedVotes, data.mintedCollateral, data.unbounding)
-    }
+  owner: PublicKey
+  stakePool: PublicKey
+  unlocked: BN
+  locked: BN
+  mintedVotes: BN
+  mintedCollateral: BN
+  unbounding: BN
+}
+
+export class GovStakeAccount implements GovStakeAccountData {
+  private constructor(
+    private client: GovStakingClient,
+    public owner: PublicKey,
+    public stakePool: PublicKey,
+    public unlocked: BN,
+    public locked: BN,
+    public mintedVotes: BN,
+    public mintedCollateral: BN,
+    public unbounding: BN
+  ) {}
+
+  static async load(client: GovStakingClient, owner: PublicKey): Promise<GovStakeAccount> {
+    const data = await client.program.account.voter.fetch(owner)
+    return this.decode(client, owner, data)
   }
 
+  async refresh() {
+    const distribution = await GovStakeAccount.load(this.client, this.owner)
+
+    this.owner = distribution.owner
+    this.stakePool = distribution.stakePool
+    this.unlocked = distribution.unlocked
+    this.locked = distribution.locked
+    this.mintedVotes = distribution.mintedVotes
+    this.mintedCollateral = distribution.mintedCollateral
+    this.unbounding = distribution.unbounding
+  }
+
+  private static decode(client: GovStakingClient, owner: PublicKey, data: any) {
+    return new GovStakeAccount(
+      client,
+      owner,
+      data.stakePool,
+      data.unlocked,
+      data.locked,
+      data.mintedVotes,
+      data.mintedCollateral,
+      data.unbounding
+    )
+  }
+}
 
 export interface GovUnbondingAccountData {
-    stakeAccount: PublicKey
-    amount: BN
-    unbondedAt: BN
-  }
-  
-  
-  
-  export class GovUnbondingAccount implements GovUnbondingAccountData {
-    private constructor(
-      private client: GovStakingClient,
-      public stakeAccount: PublicKey,
-      public amount: BN,
-      public unbondedAt: BN,
-    ) {}
-  
-    static async load(client: GovStakingClient, stakeAccount: PublicKey): Promise<GovUnbondingAccount> {
-      const data = await client.program.account.voter.fetch(stakeAccount)
-      return this.decode(client, stakeAccount, data)
-    }
-  
-    async refresh() {
-      const distribution = await GovUnbondingAccount.load(this.client, this.stakeAccount)
+  stakeAccount: PublicKey
+  amount: BN
+  unbondedAt: BN
+}
 
-      this.stakeAccount = distribution.stakeAccount
-      this.amount = distribution.amount
-      this.unbondedAt = distribution.unbondedAt
-    }
-  
-    private static decode(client: GovStakingClient, stakeAccount: PublicKey, data: any) {
-      return new GovUnbondingAccount(client, stakeAccount, data.amount, data.unbondedAt)
-    }
+export class GovUnbondingAccount implements GovUnbondingAccountData {
+  private constructor(
+    private client: GovStakingClient,
+    public stakeAccount: PublicKey,
+    public amount: BN,
+    public unbondedAt: BN
+  ) {}
+
+  static async load(client: GovStakingClient, stakeAccount: PublicKey): Promise<GovUnbondingAccount> {
+    const data = await client.program.account.voter.fetch(stakeAccount)
+    return this.decode(client, stakeAccount, data)
   }
 
+  async refresh() {
+    const distribution = await GovUnbondingAccount.load(this.client, this.stakeAccount)
+
+    this.stakeAccount = distribution.stakeAccount
+    this.amount = distribution.amount
+    this.unbondedAt = distribution.unbondedAt
+  }
+
+  private static decode(client: GovStakingClient, stakeAccount: PublicKey, data: any) {
+    return new GovUnbondingAccount(client, stakeAccount, data.amount, data.unbondedAt)
+  }
+}
 
 export interface GovVestingAccountData {
-    stakeAccount: PublicKey
-    seed: BN
-    bump: number
-    total: BN
-    unlocked: BN
-    vestStartAt: BN
-    vestEndAt: BN
-  }
-  
-  export class GovVestingAccount implements GovVestingAccountData {
-    private constructor(
-      private client: GovStakingClient,
-      public stakeAccount: PublicKey,
-      public seed: BN,
-      public bump: number,
-      public total: BN,
-      public unlocked: BN,
-      public vestStartAt: BN,
-      public vestEndAt: BN,
-    ) {}
-  
-    static async load(client: GovStakingClient, stakeAccount: PublicKey): Promise<GovVestingAccount> {
-      const data = await client.program.account.voter.fetch(stakeAccount)
-      return this.decode(client, stakeAccount, data)
-    }
-  
-    async refresh() {
-      const distribution = await GovVestingAccount.load(this.client, this.stakeAccount)
-  
-      this.stakeAccount = distribution.stakeAccount
-      this.seed = distribution.seed
-      this.bump = distribution.bump
-      this.total = distribution.total
-      this.unlocked = distribution.unlocked
-      this.vestStartAt = distribution.vestStartAt
-      this.vestEndAt = distribution.vestEndAt
-    }
-  
-    private static decode(client: GovStakingClient, stakeAccount: PublicKey, data: any) {
-      return new GovVestingAccount(client, stakeAccount, data.seed, data.bump, data.total, data.unlocked, data.vestStartAt, data.vestEndAt)
-    }
+  stakeAccount: PublicKey
+  seed: BN
+  bump: number
+  total: BN
+  unlocked: BN
+  vestStartAt: BN
+  vestEndAt: BN
+}
+
+export class GovVestingAccount implements GovVestingAccountData {
+  private constructor(
+    private client: GovStakingClient,
+    public stakeAccount: PublicKey,
+    public seed: BN,
+    public bump: number,
+    public total: BN,
+    public unlocked: BN,
+    public vestStartAt: BN,
+    public vestEndAt: BN
+  ) {}
+
+  static async load(client: GovStakingClient, stakeAccount: PublicKey): Promise<GovVestingAccount> {
+    const data = await client.program.account.voter.fetch(stakeAccount)
+    return this.decode(client, stakeAccount, data)
   }
 
-  // TODO: instructions IX & TX integrations
+  async refresh() {
+    const distribution = await GovVestingAccount.load(this.client, this.stakeAccount)
+
+    this.stakeAccount = distribution.stakeAccount
+    this.seed = distribution.seed
+    this.bump = distribution.bump
+    this.total = distribution.total
+    this.unlocked = distribution.unlocked
+    this.vestStartAt = distribution.vestStartAt
+    this.vestEndAt = distribution.vestEndAt
+  }
+
+  private static decode(client: GovStakingClient, stakeAccount: PublicKey, data: any) {
+    return new GovVestingAccount(
+      client,
+      stakeAccount,
+      data.seed,
+      data.bump,
+      data.total,
+      data.unlocked,
+      data.vestStartAt,
+      data.vestEndAt
+    )
+  }
+}
+
+// TODO: instructions IX & TX integrations

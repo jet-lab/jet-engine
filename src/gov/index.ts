@@ -42,7 +42,7 @@ export class GovClient {
     return await PublicKey.findProgramAddress([StaticSeed.RealmAuthority, realm.toBuffer()], this.program.programId)
   }
 
-  async deriveVault(realm: PublicKey) { 
+  async deriveVault(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
 

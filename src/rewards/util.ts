@@ -27,162 +27,160 @@ export enum StaticSeeds { // airdrop & distribution
  * @class NumberField
  * @extends {BL.Layout}
  */
- export class NumberField extends BL.Layout {
-    /**
-     * Creates an instance of NumberField which decodes to a BN.
-     * @param span The number of bytes in the number
-     * @param property Field name within in a struct
-     */
-    constructor(span: number, property?: string) {
-      super(span, property)
-    }
-  
-    /**
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {BN}
-     * @memberof NumberField
-     */
-    decode(b: Uint8Array, offset?: number): BN {
-      const start = offset ?? 0
-      const data = b.slice(start, start + this.span)
-      return new BN(data, undefined, "le")
-    }
-  
-    /**
-     * @param {BN} src
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {number}
-     * @memberof NumberField
-     */
-    encode(src: BN, b: Uint8Array, offset?: number): number {
-      const start = offset ?? 0
-      b.set(src.toArray("le"), start)
-      return this.span
-    }
-  }
-  
+export class NumberField extends BL.Layout {
   /**
-   * @export
-   * @class SignedNumberField
-   * @extends {BL.Layout}
+   * Creates an instance of NumberField which decodes to a BN.
+   * @param span The number of bytes in the number
+   * @param property Field name within in a struct
    */
-  export class SignedNumberField extends BL.Layout {
-    /**
-     * Creates an instance of SignedNumberField.
-     * @param {number} span
-     * @param {string} [property]
-     * @memberof SignedNumberField
-     */
-    constructor(span: number, property?: string) {
-      super(span, property)
-    }
-  
-    /**
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {BN}
-     * @memberof SignedNumberField
-     */
-    decode(b: Uint8Array, offset?: number): BN {
-      const start = offset == undefined ? 0 : offset
-      const data = b.slice(start, start + this.span)
-      return new BN(data, undefined, "le").fromTwos(this.span * 8)
-    }
-  
-    /**
-     * @param {BN} src
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {number}
-     * @memberof SignedNumberField
-     */
-    encode(src: BN, b: Uint8Array, offset?: number): number {
-      const start = offset == undefined ? 0 : offset
-      b.set(src.toTwos(this.span * 8).toArray("le"), start)
-  
-      return this.span
-    }
+  constructor(span: number, property?: string) {
+    super(span, property)
   }
-  
+
   /**
-   * @export
-   * @class PubkeyField
-   * @extends {BL.Layout}
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {BN}
+   * @memberof NumberField
    */
-  export class PubkeyField extends BL.Layout {
-    /**
-     * Creates an instance of PubkeyField.
-     * @param {string} [property]
-     * @memberof PubkeyField
-     */
-    constructor(property?: string) {
-      super(32, property)
-    }
-  
-    /**
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {PublicKey}
-     * @memberof PubkeyField
-     */
-    decode(b: Uint8Array, offset?: number): PublicKey {
-      const start = offset ?? 0
-      const data = b.slice(start, start + this.span)
-      return new PublicKey(data)
-    }
-  
-    /**
-     * @param {PublicKey} src
-     * @param {Uint8Array} b
-     * @param {number} [offset]
-     * @returns {number}
-     * @memberof PubkeyField
-     */
-    encode(src: PublicKey, b: Uint8Array, offset?: number): number {
-      const start = offset ?? 0
-      b.set(src.toBytes(), start)
-      return this.span
-    }
+  decode(b: Uint8Array, offset?: number): BN {
+    const start = offset ?? 0
+    const data = b.slice(start, start + this.span)
+    return new BN(data, undefined, "le")
   }
-  
+
   /**
-   * Returns an unsigned number field that is 24 bytes wide
-   * @export
+   * @param {BN} src
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {number}
+   * @memberof NumberField
+   */
+  encode(src: BN, b: Uint8Array, offset?: number): number {
+    const start = offset ?? 0
+    b.set(src.toArray("le"), start)
+    return this.span
+  }
+}
+
+/**
+ * @export
+ * @class SignedNumberField
+ * @extends {BL.Layout}
+ */
+export class SignedNumberField extends BL.Layout {
+  /**
+   * Creates an instance of SignedNumberField.
+   * @param {number} span
    * @param {string} [property]
-   * @returns {NumberField}
+   * @memberof SignedNumberField
    */
-  export function numberField(property?: string): NumberField {
-    return new NumberField(24, property)
+  constructor(span: number, property?: string) {
+    super(span, property)
   }
-  
+
   /**
-   * Returns an unsigned number field that is 8 bytes wide
-   * @param property
-   * @returns
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {BN}
+   * @memberof SignedNumberField
    */
-  export function u64Field(property?: string): NumberField {
-    return new NumberField(8, property)
+  decode(b: Uint8Array, offset?: number): BN {
+    const start = offset == undefined ? 0 : offset
+    const data = b.slice(start, start + this.span)
+    return new BN(data, undefined, "le").fromTwos(this.span * 8)
   }
-  
+
   /**
-   * Returns a signed number field that is 8 bytes wide
-   * @export
+   * @param {BN} src
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {number}
+   * @memberof SignedNumberField
+   */
+  encode(src: BN, b: Uint8Array, offset?: number): number {
+    const start = offset == undefined ? 0 : offset
+    b.set(src.toTwos(this.span * 8).toArray("le"), start)
+
+    return this.span
+  }
+}
+
+/**
+ * @export
+ * @class PubkeyField
+ * @extends {BL.Layout}
+ */
+export class PubkeyField extends BL.Layout {
+  /**
+   * Creates an instance of PubkeyField.
    * @param {string} [property]
-   * @returns {SignedNumberField}
+   * @memberof PubkeyField
    */
-  export function i64Field(property?: string): SignedNumberField {
-    return new SignedNumberField(8, property)
+  constructor(property?: string) {
+    super(32, property)
   }
-  
+
   /**
-   * @export
-   * @param {string} [property]
-   * @returns {PubkeyField}
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {PublicKey}
+   * @memberof PubkeyField
    */
-  export function pubkeyField(property?: string): PubkeyField {
-    return new PubkeyField(property)
+  decode(b: Uint8Array, offset?: number): PublicKey {
+    const start = offset ?? 0
+    const data = b.slice(start, start + this.span)
+    return new PublicKey(data)
   }
-  
-  
+
+  /**
+   * @param {PublicKey} src
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {number}
+   * @memberof PubkeyField
+   */
+  encode(src: PublicKey, b: Uint8Array, offset?: number): number {
+    const start = offset ?? 0
+    b.set(src.toBytes(), start)
+    return this.span
+  }
+}
+
+/**
+ * Returns an unsigned number field that is 24 bytes wide
+ * @export
+ * @param {string} [property]
+ * @returns {NumberField}
+ */
+export function numberField(property?: string): NumberField {
+  return new NumberField(24, property)
+}
+
+/**
+ * Returns an unsigned number field that is 8 bytes wide
+ * @param property
+ * @returns
+ */
+export function u64Field(property?: string): NumberField {
+  return new NumberField(8, property)
+}
+
+/**
+ * Returns a signed number field that is 8 bytes wide
+ * @export
+ * @param {string} [property]
+ * @returns {SignedNumberField}
+ */
+export function i64Field(property?: string): SignedNumberField {
+  return new SignedNumberField(8, property)
+}
+
+/**
+ * @export
+ * @param {string} [property]
+ * @returns {PubkeyField}
+ */
+export function pubkeyField(property?: string): PubkeyField {
+  return new PubkeyField(property)
+}

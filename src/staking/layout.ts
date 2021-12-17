@@ -25,32 +25,31 @@ export const StakePoolStruct = BL.struct([
   pubkeyField("stakeVoteMint"),
   numberField("stakeCollateralMint"),
   i64Field("unboundPeriod"),
-  u64Field("shareSupply"),
+  u64Field("shareSupply")
 ])
-
 
 export const StakeAccountStruct = BL.struct([
-    pubkeyField("owner"),
-    pubkeyField("stakePool"),
-    u64Field("unlocked"),
-    u64Field("locked"),
-    u64Field("mintedVotes"),
-    u64Field("mintedCollateral"),
-    u64Field("unbonding")
+  pubkeyField("owner"),
+  pubkeyField("stakePool"),
+  u64Field("unlocked"),
+  u64Field("locked"),
+  u64Field("mintedVotes"),
+  u64Field("mintedCollateral"),
+  u64Field("unbonding")
 ])
-  
+
 export const UnbondingAccountStruct = BL.struct([
-    pubkeyField("stakeAccount"),
-    u64Field("amount"),
-    i64Field("unbonded_at")
+  pubkeyField("stakeAccount"),
+  u64Field("amount"),
+  i64Field("unbonded_at")
 ])
 
 export const VestingAccountStruct = BL.struct([
-    pubkeyField("stakeAccount"),
-    u32Field("seed"),
-    u8Field("bump"),
-    u64Field("total"),
-    u64Field("unlocked"),
-    i64Field("vestStartAt"),
-    i64Field("vestEndAt")
+  pubkeyField("stakeAccount"),
+  u32Field("seed"),
+  u8Field("bump"),
+  u64Field("total"),
+  u64Field("unlocked"),
+  i64Field("vestStartAt"),
+  i64Field("vestEndAt")
 ])

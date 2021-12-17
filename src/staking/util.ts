@@ -20,8 +20,8 @@ import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
 export enum StaticSeeds { // staking
-    // TODO: what to do with seed.as_bytes()??
-    // TODO: what to do with seed.to_le_bytes()??
+  // TODO: what to do with seed.as_bytes()??
+  // TODO: what to do with seed.to_le_bytes()??
   CollateralMint = "collateral-mint",
   VoteMint = "vote-mint",
   Vault = "vault"
@@ -185,9 +185,9 @@ export function i64Field(property?: string): SignedNumberField {
  * @param property
  * @returns
  */
- export function u32Field(property?: string): NumberField {
-    return new NumberField(4, property)
-  }
+export function u32Field(property?: string): NumberField {
+  return new NumberField(4, property)
+}
 
 /**
  * Returns an unsigned number field that is 1 bytes wide
@@ -195,7 +195,7 @@ export function i64Field(property?: string): SignedNumberField {
  * @returns
  */
 export function u8Field(property?: string): NumberField {
-    return new NumberField(1, property)
+  return new NumberField(1, property)
 }
 
 /**
@@ -206,4 +206,3 @@ export function u8Field(property?: string): NumberField {
 export function pubkeyField(property?: string): PubkeyField {
   return new PubkeyField(property)
 }
-

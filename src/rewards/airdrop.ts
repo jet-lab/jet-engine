@@ -42,7 +42,7 @@ export class GovRewardsAirdrop implements GovRewardsAirdropData {
     public stakePool: PublicKey,
     public shortDesc: number[],
     public vaultBump: [number],
-    public targetInfo: number[],
+    public targetInfo: number[]
   ) {}
 
   static async load(client: RewardsClient, address: PublicKey): Promise<GovRewardsAirdrop> {
@@ -65,7 +65,18 @@ export class GovRewardsAirdrop implements GovRewardsAirdropData {
   }
 
   private static decode(client: RewardsClient, address: PublicKey, data: any) {
-    return new GovRewardsAirdrop(client, address, data.rewardVault, data.authority, data.vestStartAt, data.vestEndAt, data.stakePool, data.shortDesc, data.vaultBump, data.targetInfo)
+    return new GovRewardsAirdrop(
+      client,
+      address,
+      data.rewardVault,
+      data.authority,
+      data.vestStartAt,
+      data.vestEndAt,
+      data.stakePool,
+      data.shortDesc,
+      data.vaultBump,
+      data.targetInfo
+    )
   }
 }
 

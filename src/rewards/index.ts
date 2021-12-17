@@ -21,10 +21,10 @@ import { PublicKey } from "@solana/web3.js"
 export * from "./airdrop"
 export * from "./distribution"
 
-const JET_REWARD_PROGRAM_ID = new PublicKey("JET777rQuPU8BatFbhp6irc1NAbozxTheBqNo25eLQP") 
+const JET_REWARD_PROGRAM_ID = new PublicKey("JET777rQuPU8BatFbhp6irc1NAbozxTheBqNo25eLQP")
 
 export const StaticSeed = {
-  Vault: Buffer.from("vault"),
+  Vault: Buffer.from("vault")
 }
 
 export class RewardsClient {
@@ -35,7 +35,7 @@ export class RewardsClient {
     return new RewardsClient(new Program(idl as any, JET_REWARD_PROGRAM_ID))
   }
 
-  async deriveVault(realm: PublicKey) { 
+  async deriveVault(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
 }

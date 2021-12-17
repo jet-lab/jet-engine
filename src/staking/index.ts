@@ -20,7 +20,7 @@ import { PublicKey } from "@solana/web3.js"
 
 export * from "./staking"
 
-const JET_GOV_STAKING_PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n") 
+const JET_GOV_STAKING_PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
 
 export const StaticSeed = {
   CollateralMint: Buffer.from("collateral-mint"),
@@ -36,7 +36,6 @@ export class GovStakingClient {
     return new GovStakingClient(new Program(idl as any, JET_GOV_STAKING_PROGRAM_ID))
   }
 
-
   async deriveCollateralMint(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.CollateralMint, realm.toBuffer()], this.program.programId)
   }
@@ -48,7 +47,7 @@ export class GovStakingClient {
     )
   }
 
-  async deriveVault(realm: PublicKey) { 
+  async deriveVault(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
 }
