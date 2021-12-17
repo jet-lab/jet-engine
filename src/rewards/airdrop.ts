@@ -17,7 +17,7 @@
 
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovStakingClient } from "."
+import { RewardsClient } from "./index"
 
 export interface GovRewardsAirdropData {
   address: PublicKey
@@ -31,11 +31,9 @@ export interface GovRewardsAirdropData {
   targetInfo: number[]
 }
 
-
-
 export class GovRewardsAirdrop implements GovRewardsAirdropData {
   private constructor(
-    private client: GovStakingClient,
+    private client: RewardsClient,
     public address: PublicKey,
     public rewardVault: PublicKey,
     public authority: PublicKey,
@@ -47,7 +45,7 @@ export class GovRewardsAirdrop implements GovRewardsAirdropData {
     public targetInfo: number[],
   ) {}
 
-  static async load(client: GovStakingClient, address: PublicKey): Promise<GovRewardsAirdrop> {
+  static async load(client: RewardsClient, address: PublicKey): Promise<GovRewardsAirdrop> {
     const data = await client.program.account.voter.fetch(address)
     return this.decode(client, address, data)
   }
@@ -66,7 +64,9 @@ export class GovRewardsAirdrop implements GovRewardsAirdropData {
     this.targetInfo = Airdrop.targetInfo
   }
 
-  private static decode(client: GovStakingClient, address: PublicKey, data: any) {
+  private static decode(client: RewardsClient, address: PublicKey, data: any) {
     return new GovRewardsAirdrop(client, address, data.rewardVault, data.authority, data.vestStartAt, data.vestEndAt, data.stakePool, data.shortDesc, data.vaultBump, data.targetInfo)
   }
 }
+
+// TODO: instructions IX & TX integrations

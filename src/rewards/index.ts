@@ -18,38 +18,24 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
-export * from "./proposal"
-export * from "./realm"
-export * from "./voter"
+export * from "./airdrop"
+export * from "./distribution"
 
-const JET_GOV_PROGRAM_ID = new PublicKey("5TBwvU5xoA13fzmZgWVgFBUmBz1YCdiq2AshDZpPn3AL") // FIXME: deploy program
+const JET_REWARD_PROGRAM_ID = new PublicKey("JET777rQuPU8BatFbhp6irc1NAbozxTheBqNo25eLQP") 
 
 export const StaticSeed = {
-  RealmAuthority: Buffer.from("realm-authority"),
   Vault: Buffer.from("vault"),
-  Voter: Buffer.from("voter")
 }
 
-export class GovClient {
+export class RewardsClient {
   constructor(public program: Program) {}
 
-  static async connect(provider: Provider): Promise<GovClient> {
-    const idl = await Program.fetchIdl(JET_GOV_PROGRAM_ID, provider)
-    return new GovClient(new Program(idl as any, JET_GOV_PROGRAM_ID))
-  }
-
-  async deriveRealmAuthority(realm: PublicKey) {
-    return await PublicKey.findProgramAddress([StaticSeed.RealmAuthority, realm.toBuffer()], this.program.programId)
+  static async connect(provider: Provider): Promise<RewardsClient> {
+    const idl = await Program.fetchIdl(JET_REWARD_PROGRAM_ID, provider)
+    return new RewardsClient(new Program(idl as any, JET_REWARD_PROGRAM_ID))
   }
 
   async deriveVault(realm: PublicKey) { 
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
-  }
-
-  async deriveVoter(realm: PublicKey, wallet: PublicKey) {
-    return await PublicKey.findProgramAddress(
-      [StaticSeed.Voter, wallet.toBuffer(), realm.toBuffer()],
-      this.program.programId
-    )
   }
 }

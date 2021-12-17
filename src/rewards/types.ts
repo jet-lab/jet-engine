@@ -15,8 +15,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from "./pools"
-// WIP: export * from "./gov"
-// WIP: export * from "./rewards"
-// WIP: export * from "./staking"
-// FIXME: export * from "./p2p"
+export type DistributionKind = { Linear: Record<string, never> }

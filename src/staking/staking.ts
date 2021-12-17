@@ -17,8 +17,7 @@
 
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovStakingClient } from "."
-import { } from "./types"
+import { GovStakingClient } from "./index"
 
 export interface GovStakePoolData {
   authority: PublicKey
@@ -195,3 +194,5 @@ export interface GovVestingAccountData {
       return new GovVestingAccount(client, stakeAccount, data.seed, data.bump, data.total, data.unlocked, data.vestStartAt, data.vestEndAt)
     }
   }
+
+  // TODO: instructions IX & TX integrations

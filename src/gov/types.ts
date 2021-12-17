@@ -59,5 +59,3 @@ type TimeAt = { at: { value: BN } }
 type TimeNever = { never: Record<string, never> }
 
 export type Time = TimeNow | TimeAt | TimeNever
-
-export type DistributionKind = { Linear: Record<string, never> }

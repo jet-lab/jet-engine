@@ -17,7 +17,7 @@
 
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovStakingClient } from "."
+import { RewardsClient } from "./index"
 import { DistributionKind } from "./types"
 
 export interface GovRewardsDistributionData {
@@ -33,11 +33,9 @@ export interface GovRewardsDistributionData {
   kind: DistributionKind
 }
 
-
-
 export class GovRewardsDistribution implements GovRewardsDistributionData {
   private constructor(
-    private client: GovStakingClient,
+    private client: RewardsClient,
     public address: PublicKey,
     public authority: PublicKey,
     public vault: PublicKey,
@@ -50,7 +48,7 @@ export class GovRewardsDistribution implements GovRewardsDistributionData {
     public kind: DistributionKind,
   ) {}
 
-  static async load(client: GovStakingClient, address: PublicKey): Promise<GovRewardsDistribution> {
+  static async load(client: RewardsClient, address: PublicKey): Promise<GovRewardsDistribution> {
     const data = await client.program.account.voter.fetch(address)
     return this.decode(client, address, data)
   }
@@ -70,7 +68,9 @@ export class GovRewardsDistribution implements GovRewardsDistributionData {
     this.kind = distribution.kind
   }
 
-  private static decode(client: GovStakingClient, address: PublicKey, data: any) {
+  private static decode(client: RewardsClient, address: PublicKey, data: any) {
     return new GovRewardsDistribution(client, address, data.authority, data.vault, data.vaultBump, data.targetAccount, data.targetAmount, data.distributed, data.beginAt, data.endAt, data.kind)
   }
 }
+
+// TODO: instructions IX & TX integrations
