@@ -43,8 +43,6 @@ export const AirdropTargetInfo = BL.struct([
   BL.blob(AirdropTargetRecipientInfoStructList.span, "recipients")
 ])
 
-
-
 export const Distribution = BL.struct([
   pubkeyField("address"),
   pubkeyField("authority"),

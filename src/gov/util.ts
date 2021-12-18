@@ -19,7 +19,6 @@ import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
-
 /**
  * @export
  * @class NumberField
@@ -227,10 +226,10 @@ export function i64Field(property?: string): SignedNumberField {
  * @param property
  * @returns
  */
- export function u32Field(property?: string): NumberField {
-    return new NumberField(4, property)
+export function u32Field(property?: string): NumberField {
+  return new NumberField(4, property)
 }
-  
+
 /**
  * TODO:
  * @export

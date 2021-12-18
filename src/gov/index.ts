@@ -30,4 +30,4 @@ export const StaticSeed = {
 }
 
 // TODO: findProgramAddress(realm)
-// maybe: realm pda of the mint 
+// maybe: realm pda of the mint

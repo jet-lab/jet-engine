@@ -35,9 +35,24 @@ type VoteRecordV2 = { voteRecordV2: Record<string, never> }
 type ProposalInstructionV2 = { proposalInstructionV2: Record<string, never> }
 type ProposalV2 = { proposalV2: Record<string, never> }
 
-export type GovernanceAccountType = Uninitialized | Realm | TokenOwnerRecord | AccountGovernance | ProgramGovernance | ProposalV1 | SignatoryRecord | VoteRecordV1 | ProposalInstructionV1 | MintGovernance | TokenGovernance | RealmConfig | VoteRecordV2 | ProposalInstructionV2 | ProposalV2
+export type GovernanceAccountType =
+  | Uninitialized
+  | Realm
+  | TokenOwnerRecord
+  | AccountGovernance
+  | ProgramGovernance
+  | ProposalV1
+  | SignatoryRecord
+  | VoteRecordV1
+  | ProposalInstructionV1
+  | MintGovernance
+  | TokenGovernance
+  | RealmConfig
+  | VoteRecordV2
+  | ProposalInstructionV2
+  | ProposalV2
 
-// TODO: what is the type? YesVote(u8) 
+// TODO: what is the type? YesVote(u8)
 type YesVote = { yesVote: Record<number, never> }
 type Quorum = { quorum: Record<number, never> }
 
@@ -55,7 +70,7 @@ type Error = { error: Record<string, never> }
 export type InstructionExecutionStatus = None | Success | Error
 
 type Draft = { draft: Record<string, never> }
-type SigningOff = { signingOff: Record<string, never>} 
+type SigningOff = { signingOff: Record<string, never> }
 type Voting = { voting: Record<string, never> }
 type Succeeded = { succeeded: Record<string, never> }
 type Executing = { executing: Record<string, never> }
@@ -64,7 +79,16 @@ type Cancelled = { cancelled: Record<string, never> }
 type Defeated = { defeated: Record<string, never> }
 type ExecutingWithErrors = { executingWithErrors: Record<string, never> }
 
-export type ProposalState = Draft | SigningOff | Voting | Succeeded | Executing | Completed | Cancelled | Defeated | ExecutingWithErrors
+export type ProposalState =
+  | Draft
+  | SigningOff
+  | Voting
+  | Succeeded
+  | Executing
+  | Completed
+  | Cancelled
+  | Defeated
+  | ExecutingWithErrors
 
 // TODO: none declared for SingleChoice, u16 declared for MultiChoice
 type SingleChoice = { singleChoice: Record<string, never> }
@@ -80,13 +104,11 @@ type UseTransaction = { useTransaction: Record<string, never> }
 export type InstructionExecutionFlags = None | Ordered | UseTransaction
 
 // TODO: how to pass the vector in here?? Vec<u8>
-// Approve(Vec<VoteChoice>) ?? 
+// Approve(Vec<VoteChoice>) ??
 // type Approve =     /// Vote approving choices
 type Deny = { deny: Record<string, never> }
 
-export type Vote = /* Approve */ | Deny
-
-
+export type Vote = /* Approve */ Deny
 
 export type RealmAccount = {
   owner: PublicKey

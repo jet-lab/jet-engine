@@ -66,7 +66,7 @@ export class GovProposal implements GovProposalData {
   static async load(connection: Connection, address: PublicKey): Promise<GovProposal> {
     // connect with spl directly, give buffer with public key -proposalPubKey
     const info = await connection.getAccountInfo(address)
-    // connect with anchor 
+    // connect with anchor
     // const data = await client.program.account.proposal.fetch(address)
     return this.decode(proposalInfo)
   }
