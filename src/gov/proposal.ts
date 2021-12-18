@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
 import { GovClient, GovRealm, GovVoteRecord } from "."
 import { Time, ProposalAccount } from "./types"
@@ -63,9 +63,12 @@ export class GovProposal implements GovProposalData {
     public count: VoteCount
   ) {}
 
-  static async load(client: GovClient, address: PublicKey): Promise<GovProposal> {
-    const data = await client.program.account.proposal.fetch(address)
-    return this.decode(client, address, data)
+  static async load(connection: Connection, address: PublicKey): Promise<GovProposal> {
+    // connect with spl directly, give buffer with public key -proposalPubKey
+    const info = await connection.getAccountInfo(address)
+    // connect with anchor 
+    // const data = await client.program.account.proposal.fetch(address)
+    return this.decode(proposalInfo)
   }
 
   // TODO: create loadMultiple(client, realm) - done

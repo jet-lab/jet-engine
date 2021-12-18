@@ -19,14 +19,74 @@ import BN from "bn.js"
 import { PublicKey } from "@solana/web3.js"
 import { ProposalContent, ProposalLifecycle, VoteCount } from "./proposal"
 
-export type ProposalAccount = {
-  realm: PublicKey
-  owner: PublicKey
-  created_timestamp: number
-  content: ProposalContent
-  lifecycle: ProposalLifecycle
-  count: VoteCount
-}
+type Uninitialized = { uninitialized: Record<string, never> }
+type Realm = { realm: Record<string, never> }
+type TokenOwnerRecord = { tokenOwnerRecord: Record<string, never> }
+type AccountGovernance = { accountGovernance: Record<string, never> }
+type ProgramGovernance = { programGovernance: Record<string, never> }
+type ProposalV1 = { proposalV1: Record<string, never> }
+type SignatoryRecord = { signatoryRecord: Record<string, never> }
+type VoteRecordV1 = { voteRecordV1: Record<string, never> }
+type ProposalInstructionV1 = { proposalInstructionV1: Record<string, never> }
+type MintGovernance = { mintGovernance: Record<string, never> }
+type TokenGovernance = { tokenGovernance: Record<string, never> }
+type RealmConfig = { realmConfig: Record<string, never> }
+type VoteRecordV2 = { voteRecordV2: Record<string, never> }
+type ProposalInstructionV2 = { proposalInstructionV2: Record<string, never> }
+type ProposalV2 = { proposalV2: Record<string, never> }
+
+export type GovernanceAccountType = Uninitialized | Realm | TokenOwnerRecord | AccountGovernance | ProgramGovernance | ProposalV1 | SignatoryRecord | VoteRecordV1 | ProposalInstructionV1 | MintGovernance | TokenGovernance | RealmConfig | VoteRecordV2 | ProposalInstructionV2 | ProposalV2
+
+// TODO: what is the type? YesVote(u8) 
+type YesVote = { yesVote: Record<number, never> }
+type Quorum = { quorum: Record<number, never> }
+
+export type VoteThresholdPercentage = YesVote | Quorum
+
+type Deposit = { deposit: Record<string, never> }
+type Snapshot = { snapshot: Record<string, never> }
+
+export type VoteWeightSource = Deposit | Snapshot
+
+type None = { none: Record<string, never> }
+type Success = { success: Record<string, never> }
+type Error = { error: Record<string, never> }
+
+export type InstructionExecutionStatus = None | Success | Error
+
+type Draft = { draft: Record<string, never> }
+type SigningOff = { signingOff: Record<string, never>} 
+type Voting = { voting: Record<string, never> }
+type Succeeded = { succeeded: Record<string, never> }
+type Executing = { executing: Record<string, never> }
+type Completed = { completed: Record<string, never> }
+type Cancelled = { cancelled: Record<string, never> }
+type Defeated = { defeated: Record<string, never> }
+type ExecutingWithErrors = { executingWithErrors: Record<string, never> }
+
+export type ProposalState = Draft | SigningOff | Voting | Succeeded | Executing | Completed | Cancelled | Defeated | ExecutingWithErrors
+
+// TODO: none declared for SingleChoice, u16 declared for MultiChoice
+type SingleChoice = { singleChoice: Record<string, never> }
+type MultiChoice = { multiChoice: Record<number, never> }
+
+export type VoteType = SingleChoice | MultiChoice
+
+export type OptionVoteResult = None | Succeeded | Defeated
+
+type Ordered = { ordered: Record<string, never> }
+type UseTransaction = { useTransaction: Record<string, never> }
+
+export type InstructionExecutionFlags = None | Ordered | UseTransaction
+
+// TODO: how to pass the vector in here?? Vec<u8>
+// Approve(Vec<VoteChoice>) ?? 
+// type Approve =     /// Vote approving choices
+type Deny = { deny: Record<string, never> }
+
+export type Vote = /* Approve */ | Deny
+
+
 
 export type RealmAccount = {
   owner: PublicKey
@@ -47,15 +107,3 @@ export type VoteRecord = {
   weight: number
   vote: VoteOption
 }
-
-type VoteYes = { yes: Record<string, never> }
-type VoteNo = { no: Record<string, never> }
-type VoteAbstain = { abstain: Record<string, never> }
-
-export type VoteOption = VoteYes | VoteNo | VoteAbstain
-
-type TimeNow = { now: Record<string, never> }
-type TimeAt = { at: { value: BN } }
-type TimeNever = { never: Record<string, never> }
-
-export type Time = TimeNow | TimeAt | TimeNever

@@ -16,45 +16,159 @@
  */
 
 import * as BL from "@solana/buffer-layout"
-import { numberField, i64Field, u64Field, pubkeyField } from "./util"
+import { numberField, i64Field, u64Field, u32Field, pubkeyField, booleanField } from "./util"
+import { GovernanceAccountType, VoteThresholdPercentage, VoteWeightSource, InstructionExecutionStatus, ProposalState } from "./types"
+import { name } from "eventemitter3"
 
-export const MAX_RESERVES = 32
+// TODO: setting some random big number for the Vec<>
+export const VECTOR_WITHOUT_LIMIT = 1000000000000
 
-export const ReserveStateStruct = BL.struct([
-  i64Field("accruedUntil"),
-  numberField("outstandingDebt"),
-  numberField("uncollectedFees"),
-  u64Field("totalDeposits"),
-  u64Field("totalDepositNotes"),
-  u64Field("totalLoanNotes"),
-  BL.blob(416, "_UNUSED_0_"),
-  u64Field("lastUpdated"),
-  BL.u8("invalidated"),
-  BL.blob(7, "_UNUSED_1_")
+// governance.rs
+export const GovernanceStruct = BL.struct([
+  BL.u8("accountType"),
+  pubkeyField("realm"),
+  pubkeyField("governedAccount"),
+  u32Field("totalDeposits"),
+  numberField("reserved"),
+  BL.u8("voteThresholdPercentage"),
+  u64Field("minCommunityTokensToCreateProposal"),
+  u32Field("minInstructionHoldUpTime"),
+  u32Field("maxVotingTime"),
+  BL.u8("voteWeightSource"),
+  u32Field("proposalCoolOffTime"),
+  u64Field("minCouncilTokensToCreateProposal")
 ])
 
-export const ReserveInfoStruct = BL.struct([
-  pubkeyField("reserve"),
-  BL.blob(80, "_UNUSED_0_"),
-  numberField("price"),
-  numberField("depositNoteExchangeRate"),
-  numberField("loanNoteExchangeRate"),
-  numberField("minCollateralRatio"),
-  BL.u16("liquidationBonus"),
-  BL.blob(158, "_UNUSED_1_"),
-  u64Field("lastUpdated"),
-  BL.u8("invalidated"),
-  BL.blob(7, "_UNUSED_2_")
+// proposal_instruction.rs
+export const AccountMetaDataStruct = BL.struct([
+    pubkeyField("pubkey"),
+    booleanField("isSigner"),
+    booleanField("isWritable")
+])
+  
+export const AccountMetaDataInfoStructList = BL.seq(AccountMetaDataStruct, VECTOR_WITHOUT_LIMIT)
+
+export const ProposalInstructionV2Struct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("proposal"),
+    BL.u16("optionIndex"),
+    BL.u16("instructionIndex"),
+    u32Field("holdUpTime"),
+
+    // TODO: this is InstructionData Struct, do i flatten this to ProposalInstructionV2Struct?
+    pubkeyField("programId"),
+    // TODO: Vec<> how to set number constraints
+    BL.blob(AccountMetaDataInfoStructList.span, "accounts"),
+    // TODO: is Vec<u8> same as [u8; some really big number]?
+    // do i need to create a new field?
+    numberField("data"),
+
+    // TODO: do we use the same field for Option? a NONE or SOME scenario?
+    i64Field("executedAt"),
+    BL.u8("executionStatus")
 ])
 
-export const MarketReserveInfoStructList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
-
-export const PositionInfoStruct = BL.struct([
-  pubkeyField("account"),
-  numberField("amount"),
-  BL.u32("side"),
-  BL.u16("reserveIndex"),
-  BL.blob(66, "_reserved")
+// proposal.rs
+export const ProposalOptionStruct = BL.struct([
+    // TODO: can i use cstr for String? how to deal with dynamically sized?
+    BL.cstr("label"),
+    u64Field("voteWeight"),
+    BL.u8("voteResult"),
+    BL.u16("instructionsExecutedCount"),
+    BL.u16("instructionsCount"),
+    BL.u16("instructionsNextIndex"),
 ])
 
-export const PositionInfoStructList = BL.seq(PositionInfoStruct, 16, "positions")
+export const ProposalOptionStructList = BL.seq(ProposalOptionStruct, VECTOR_WITHOUT_LIMIT)
+  
+export const ProposalV2Struct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("governance"),
+    pubkeyField("governingTokenMint"),
+    BL.u8("state"),
+    pubkeyField("tokenOwnerRecord"),
+    BL.u8("signatoriesCount"),
+    BL.u8("signatoriesSignedOffCount"),
+    BL.u16("voteType"),
+    BL.blob(ProposalOptionStructList.span, "options"),
+    // TODO: do we use the same field for Option? a NONE or SOME scenario?
+    u64Field("denyVoteWeight"),
+    i64Field("draftAt"),
+    i64Field("signingOffAt"),
+    i64Field("votingAt"),
+    u64Field("votingAtSlot"),
+    i64Field("votingCompletedAt"),
+    i64Field("executingAt"),
+    i64Field("closeAt"),
+    BL.u8("execution_flags"),
+    u64Field("maxVoteWeight"),
+    BL.u8("voteThresholdPercentage"),
+    // TODO: how to deal with dynamically sized? name & description?
+    BL.blob(VECTOR_WITHOUT_LIMIT, "name"),
+    BL.blob(VECTOR_WITHOUT_LIMIT, "description_link")
+])
+
+// realm_config.rs
+
+export const RealmConfigAccountStruct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("proposal"),
+    pubkeyField("communityVoterWeightAddin"),
+    pubkeyField("communityMaxVoteWeightAddin"),
+    pubkeyField("councilVoterWeightAddin"),
+    pubkeyField("councilMaxVoteWeightAddin"),
+    numberField("reserved"),
+])
+
+// signatory_record.rs
+
+export const SignatoryRecordStruct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("proposal"),
+    pubkeyField("signatory"),
+    booleanField("signedOff")
+])
+
+// token_owner_record.rs
+
+export const TokenOwnerRecordStruct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("realm"),
+    pubkeyField("governingTokenMint"),
+    pubkeyField("governingTokenOwner"),
+    u64Field("governingTokenDepositAmount"),
+    u32Field("unrelinquishedVotesCount"),
+    u32Field("totalVotesCount"),
+    BL.u8("outstandingProposalCount"),
+    numberField("reserved"),
+    pubkeyField("governanceDelegate")
+])
+
+export const TokenOwnerRecordV1Struct = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("realm"),
+    pubkeyField("governingTokenMint"),
+    pubkeyField("governingTokenOwner"),
+    u64Field("governingTokenDepositAmount"),
+    u32Field("unrelinquishedVotesCount"),
+    u32Field("totalVotesCount"),
+    numberField("reserved"),
+    pubkeyField("governanceDelegate")
+])
+
+// vote_record.rs
+
+export const VoteChoice = BL.struct([
+    BL.u8("rank"),
+    BL.u8("weightPercentage")
+])
+
+export const VoteRecordV2 = BL.struct([
+    BL.u8("accountType"),
+    pubkeyField("proposal"),
+    pubkeyField("governingTokenOwner"),
+    booleanField("isRelinquished"),
+    u64Field("voterWeight"),
+    BL.blob(VECTOR_WITHOUT_LIMIT, "vote")
+])
+

@@ -18,29 +18,9 @@
 import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import type { ObligationPositionStruct } from "./types"
 
-export enum StaticSeeds {
-  Collateral = "collateral",
-  Deposits = "deposits",
-  DexOpenOrders = "dex-open-orders",
-  DexSwapTokens = "dex-swap-tokens",
-  FeeVault = "fee-vault",
-  Loans = "loans",
-  Obligation = "obligation",
-  Vault = "vault"
-}
-
-export const parsePosition = (position: any): ObligationPositionStruct => ({
-  account: new PublicKey(position.account),
-  amount: new BN(position.amount),
-  side: position.side,
-  reserveIndex: position.reserveIndex,
-  _reserved: []
-})
 
 /**
- * TODO:
  * @export
  * @class NumberField
  * @extends {BL.Layout}
@@ -56,7 +36,6 @@ export class NumberField extends BL.Layout {
   }
 
   /**
-   * TODO:
    * @param {Uint8Array} b
    * @param {number} [offset]
    * @returns {BN}
@@ -172,6 +151,47 @@ export class PubkeyField extends BL.Layout {
     return this.span
   }
 }
+/**
+ * * Returns an boolean field that is 1 bytes wide
+ * @export
+ * @class BooleanField
+ * @extends {BL.Layout}
+ */
+export class BooleanField extends BL.Layout {
+  /**
+   * Creates an instance of BooleanField.
+   * @param {string} [property]
+   * @memberof BooleanField
+   */
+  constructor(property?: string) {
+    super(1, property)
+  }
+
+  /**
+   * @param {Uint8Array} b
+   * @returns {BN}
+   * @memberof BooleanField
+   */
+  decode(b: Uint8Array, offset?: number): BN {
+    const start = offset ?? 0
+    const data = b.slice(start, start + this.span)
+    return new BN(data, undefined, "le").fromTwos(this.span)
+  }
+
+  /**
+   * @param {BN} src
+   * @param {Uint8Array} b
+   * @param {number} [offset]
+   * @returns {number}
+   * @memberof BooleanField
+   */
+  encode(src: BN, b: Uint8Array, offset?: number): number {
+    const start = offset ?? 0
+    b.set(src.toTwos(this.span).toArray("le"), start)
+
+    return this.span
+  }
+}
 
 /**
  * Returns an unsigned number field that is 24 bytes wide
@@ -203,6 +223,15 @@ export function i64Field(property?: string): SignedNumberField {
 }
 
 /**
+ * Returns an unsigned number field that is 4 bytes wide
+ * @param property
+ * @returns
+ */
+ export function u32Field(property?: string): NumberField {
+    return new NumberField(4, property)
+}
+  
+/**
  * TODO:
  * @export
  * @param {string} [property]
@@ -210,4 +239,13 @@ export function i64Field(property?: string): SignedNumberField {
  */
 export function pubkeyField(property?: string): PubkeyField {
   return new PubkeyField(property)
+}
+
+/**
+ * @export
+ * @param {string} [property]
+ * @returns {BooleanField}
+ */
+export function booleanField(property?: string): BooleanField {
+  return new BooleanField(property)
 }

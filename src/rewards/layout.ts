@@ -32,17 +32,18 @@ export const Airdrop = BL.struct([
   numberField("targetInfo")
 ])
 
-export const AirdropTargetInfo = BL.struct([
-  u64Field("rewardTotal"),
-  u64Field("recipientsTotal"),
-  u64Field("finalized")
-  // TODO: how to put the BL.seq in BL.struct? for recipients:
-  // https://github.com/jet-lab/jet-governance/blob/e0733ffc386dc5c595f6f058dc38168335aa469f/programs/rewards/src/state/airdrop.rs#L109
-])
-
 export const AirdropTarget = BL.struct([pubkeyField("recipient"), u64Field("amount")])
 
 export const AirdropTargetRecipientInfoStructList = BL.seq(AirdropTarget, NUMBER_AIRDROP_RECEIPIENTS)
+
+export const AirdropTargetInfo = BL.struct([
+  u64Field("rewardTotal"),
+  u64Field("recipientsTotal"),
+  u64Field("finalized"),
+  BL.blob(AirdropTargetRecipientInfoStructList.span, "recipients")
+])
+
+
 
 export const Distribution = BL.struct([
   pubkeyField("address"),
@@ -53,9 +54,6 @@ export const Distribution = BL.struct([
   u64Field("targetAmount"),
   u64Field("distributed"),
   u64Field("beginAt"),
-  u64Field("endAt")
-  // TODO: how to put an enum type in BL-layout?
-  // DistributionKind is anchorSerialized, anchorDeserialized - Linear
-  // currently DistributionKind is in ./type
-  // https://github.com/jet-lab/jet-governance/blob/e0733ffc386dc5c595f6f058dc38168335aa469f/programs/rewards/src/state/distribution.rs#L33
+  u64Field("endAt"),
+  BL.u8("kind")
 ])
