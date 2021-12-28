@@ -32,25 +32,11 @@ import { JetMarket, JetMarketReserveInfo } from "./market"
 import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
 import { parseTokenAccount } from "./util"
-
-/**
- * TODO:
- * @export
- * @class TokenAmount
- */
-export class TokenAmount {
-  /**
-   * Creates an instance of TokenAmount.
-   * @param {PublicKey} mint
-   * @param {anchor.BN} amount
-   * @memberof TokenAmount
-   */
-  constructor(public mint: PublicKey, public amount: anchor.BN) {}
-}
+import { TokenAmount } from ".."
 
 export interface JetUserData {
   address: PublicKey
-
+  //think about switching this to object? include "loan notes exists" and "collateral exists"
   deposits(): TokenAmount[]
 
   collateral(): TokenAmount[]
@@ -77,6 +63,7 @@ export class JetUser implements JetUserData {
    * Creates an instance of JetUser.
    * @param {JetClient} client
    * @param {JetMarket} market
+   * @param {JetReserve[]} reserves
    * @param {PublicKey} address
    * @param {DerivedAccount} obligation
    * @memberof JetUser
@@ -84,6 +71,7 @@ export class JetUser implements JetUserData {
   private constructor(
     private client: JetClient,
     public market: JetMarket,
+    public reserves: JetReserve[],
     public address: PublicKey,
     private obligation: DerivedAccount
   ) {
@@ -99,9 +87,14 @@ export class JetUser implements JetUserData {
    * @returns {Promise<JetUser>}
    * @memberof JetUser
    */
-  static async load(client: JetClient, market: JetMarket, address: PublicKey): Promise<JetUser> {
+  static async load(
+    client: JetClient,
+    market: JetMarket,
+    reserves: JetReserve[],
+    address: PublicKey
+  ): Promise<JetUser> {
     const obligationAccount = await market.getAssociatedObligationAddress(address)
-    const user = new JetUser(client, market, address, obligationAccount)
+    const user = new JetUser(client, market, reserves, address, obligationAccount)
 
     await user.refresh()
     return user
@@ -864,15 +857,22 @@ export class JetUser implements JetUserData {
       const info = await this.conn.getAccountInfo(account.address)
 
       if (info == null) {
+        console.log("cannot get account info")
         return
       }
 
+      //parse token account
       const tokenAccount = parseTokenAccount(info, account.address)
 
-      appendTo.push({
-        mint: new PublicKey(tokenAccount.mint),
-        amount: new anchor.BN(tokenAccount.amount, undefined, "le")
-      })
+      //get token decimals
+      const tokenAccountBalance = await this.conn.getTokenAccountBalance(tokenAccount.address)
+
+      if (tokenAccountBalance == null) {
+        console.log("cannot get token account balance")
+        return
+      }
+
+      appendTo.push(TokenAmount.tokenAccount(tokenAccount, tokenAccountBalance.value.decimals))
     } catch (e) {
       console.log(`error getting user account: ${e}`)
       // ignore error, which should mean it's an invalid/uninitialized account

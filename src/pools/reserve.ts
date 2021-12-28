@@ -23,11 +23,12 @@ import { AccountInfo, Connection, Keypair, PublicKey, Transaction, TransactionIn
 import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import { bnToNumber, parseTokenAccount, StaticSeeds } from "./util"
+import { parseTokenAccount, parseMintAccount, StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
 import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
 import { BN } from "@project-serum/anchor"
+import { TokenAmount } from ".."
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -107,8 +108,8 @@ export interface ReserveData {
   dexMarket: PublicKey
   state: ReserveStateData
   config: ReserveConfig
-  availableLiquidity: BN
-  marketSize: BN
+  availableLiquidity: TokenAmount
+  marketSize: TokenAmount
   utilizationRate: number
   ccRate: number
   borrowApr: number
@@ -120,11 +121,11 @@ export interface ReserveData {
 
 export interface ReserveStateData {
   accruedUntil: anchor.BN
-  outstandingDebt: anchor.BN
-  uncollectedFees: anchor.BN
-  totalDeposits: anchor.BN
-  totalDepositNotes: anchor.BN
-  totalLoanNotes: anchor.BN
+  outstandingDebt: TokenAmount
+  uncollectedFees: TokenAmount
+  totalDeposits: TokenAmount
+  totalDepositNotes: TokenAmount
+  totalLoanNotes: TokenAmount
 }
 
 export interface ReserveDexMarketAccounts {
@@ -180,25 +181,31 @@ export class JetReserve {
   static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
     const data = await client.program.account.reserve.fetch(address)
 
-    const [
-      market,
-      pythOracle,
-      {
-        value: { amount: availableLiquidity }
-      }
-    ] = await Promise.all([
-      maybeMarket || JetMarket.load(client, data.market),
-      JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct),
-      client.program.provider.connection.getTokenAccountBalance(data.vault, client.program.provider.opts.commitment)
-    ])
+    const [market] = await Promise.all([maybeMarket || JetMarket.load(client, data.market)])
+
+    const pythOracle = await JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct)
+
+    const {
+      value: { amount: availableLiquidity }
+    } = await client.program.provider.connection.getTokenAccountBalance(
+      data.vault,
+      client.program.provider.opts.commitment
+    )
+
+    const mintInfo = await client.program.provider.connection.getAccountInfo(data.tokenMint)
+
+    if (!mintInfo) {
+      throw new Error("reserve tokenMint does not exist")
+    }
+
     const reserveData = this.decodeReserveData(
       address,
       data,
       pythOracle.priceData,
       pythOracle.productData,
+      mintInfo.data,
       new BN(availableLiquidity)
     )
-
     return new JetReserve(client, market, reserveData)
   }
 
@@ -237,6 +244,25 @@ export class JetReserve {
       parseTokenAccount(vault, reserveInfos[i].vault)
     )
 
+    const multipleData = []
+    for (let i = 0; i < reserveAddresses.length; i++) {
+      const data = await client.program.account.reserve.fetch(reserveAddresses[i])
+      if (!data) {
+        throw new Error("cannot fetch reserves")
+      }
+      multipleData.push(data)
+    }
+
+    //load mintInfo
+    const multipleMintInfo: Buffer[] = []
+    for (let i = 0; i < multipleData.length; i++) {
+      const mintInfo = await client.program.provider.connection.getAccountInfo(multipleData[i].tokenMint)
+      if (!mintInfo) {
+        throw new Error("reserve tokenMint does not exist")
+      }
+      multipleMintInfo.push(mintInfo.data)
+    }
+
     const reserves = reserveInfos.map((reserveInfo, i) => {
       const pythOracle = pythOracles[i]
       const data = JetReserve.decodeReserveData(
@@ -244,6 +270,7 @@ export class JetReserve {
         reserveInfo,
         pythOracle.priceData,
         pythOracle.productData,
+        multipleMintInfo[i],
         vaults[i].amount
       )
       return new JetReserve(client, market, data)
@@ -273,11 +300,16 @@ export class JetReserve {
         this.client.program.provider.opts.commitment
       )
     ])
+    const mintInfo = await this.client.program.provider.connection.getAccountInfo(data.tokenMint)
+    if (!mintInfo) {
+      throw new Error("reserve tokenMint does not exist")
+    }
     this.data = JetReserve.decodeReserveData(
       this.data.address,
       data,
       pythOracle.priceData,
       pythOracle.productData,
+      mintInfo.data,
       new BN(availableLiquidity)
     )
   }
@@ -302,10 +334,16 @@ export class JetReserve {
     data: any,
     priceData: PriceData,
     productData: ProductData,
+    mintData: Buffer,
     availableLiquidity: BN
   ) {
-    const state = ReserveStateStruct.decode(new Uint8Array(data.state)) as ReserveStateData
-    state.outstandingDebt = state.outstandingDebt.div(new BN(1e15))
+    const mint = parseMintAccount(mintData)
+    const state = ReserveStateStruct.decode(new Uint8Array(data.state))
+    state.outstandingDebt = new TokenAmount(
+      (state.outstandingDebt as BN).div(new BN(1e15)),
+      mint.decimals,
+      data.tokenMint
+    )
     const reserve: ReserveData = {
       ...data,
       address,
@@ -314,12 +352,11 @@ export class JetReserve {
       productData,
       availableLiquidity
     }
-
     // Derive market reserve values
     reserve.marketSize = reserve.state.outstandingDebt.add(reserve.availableLiquidity)
     reserve.utilizationRate = reserve.marketSize.isZero()
       ? 0
-      : bnToNumber(reserve.state.outstandingDebt) / bnToNumber(reserve.marketSize)
+      : reserve.state.outstandingDebt.tokens / reserve.marketSize.tokens
     reserve.ccRate = JetReserve.getCcRate(reserve.config, reserve.utilizationRate)
     reserve.borrowApr = JetReserve.getBorrowRate(reserve.ccRate, reserve.config.manageFeeRate)
     reserve.depositApy = JetReserve.getDepositRate(reserve.ccRate, reserve.utilizationRate)

@@ -18,26 +18,27 @@
 import { PublicKey } from "@solana/web3.js"
 import BN from "bn.js"
 import { JetClient, JetMarket, JetMarketData, JetReserve, JetUser, ReserveData } from "."
-import { TokenAmount, JetUserData } from "./user"
+import { JetUserData } from "./user"
+import { TokenAmount } from ".."
 
 interface Balances {
   reserve: ReserveData
   depositNotes?: TokenAmount
-  depositBalance: BN
+  depositBalance: TokenAmount
   collateralNotes?: TokenAmount
-  collateralBalance: BN
+  collateralBalance: TokenAmount
   loanNotes?: TokenAmount
-  loanBalance: BN
+  loanBalance: TokenAmount
 }
 
 export type Position = {
   reserve: ReserveData
   depositNotes?: TokenAmount
-  depositBalance: BN
+  depositBalance: TokenAmount
   collateralNotes?: TokenAmount
-  collateralBalance: BN
+  collateralBalance: TokenAmount
   loanNotes?: TokenAmount
-  loanBalance: BN
+  loanBalance: TokenAmount
   // FIXME: calculate these fields
   // maxDepositAmount: TokenAmount
   // maxWithdrawAmount: TokenAmount
@@ -49,6 +50,7 @@ export interface Obligation {
   positions: Record<number, Position>
   depositedValue: number
   collateralValue: number
+  loanedValue: number
   collateralRatio: number
   utilizationRate: number
 }
@@ -79,10 +81,10 @@ export class JetObligation implements Obligation {
     public utilizationRate: number
   ) {}
 
-  static async load(client: JetClient, marketAddress: PublicKey, userAddress: PublicKey) {
+  static async load(client: JetClient, marketAddress: PublicKey, jetReserves: JetReserve[], userAddress: PublicKey) {
     const market = await JetMarket.load(client, marketAddress)
     const [user, reserves] = await Promise.all([
-      JetUser.load(client, market, userAddress),
+      JetUser.load(client, market, jetReserves, userAddress),
       JetReserve.loadMultiple(client, market)
     ])
     return this.create(
@@ -132,12 +134,17 @@ export class JetObligation implements Obligation {
       const balance: Balances = {
         reserve: reserve,
         depositNotes,
-        depositBalance: depositNotes?.amount.mul(reserveCache.depositNoteExchangeRate).div(new BN(1e15)) ?? new BN(0),
+        depositBalance:
+          depositNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.depositNoteMint),
         collateralNotes: collateralNotes,
         collateralBalance:
-          collateralNotes?.amount.mul(reserveCache.depositNoteExchangeRate).div(new BN(1e15)) ?? new BN(0),
+          collateralNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.depositNoteMint),
         loanNotes: loanNotes,
-        loanBalance: loanNotes?.amount.mul(reserveCache.loanNoteExchangeRate).div(new BN(1e15)) ?? new BN(0)
+        loanBalance:
+          loanNotes?.mulb(reserveCache.loanNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.loanNoteMint)
       }
 
       const price = reserve.priceData.price

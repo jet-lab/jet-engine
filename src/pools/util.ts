@@ -19,7 +19,7 @@ import * as BL from "@solana/buffer-layout"
 import { BN } from "@project-serum/anchor"
 import { AccountInfo, PublicKey } from "@solana/web3.js"
 import type { ObligationPositionStruct } from "./types"
-import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
+import { AccountInfo as TokenAccountInfo, MintLayout, MintInfo } from "@solana/spl-token"
 
 export enum StaticSeeds {
   Collateral = "collateral",
@@ -246,6 +246,11 @@ export const parseTokenAccount = (account: AccountInfo<Buffer>, accountPubkey: P
     closeAuthority: (data as any).closeAuthorityOption ? new PublicKey(data.closeAuthority) : null
   }
   return decoded
+}
+
+export const parseMintAccount = (mint: Buffer): MintInfo => {
+  //convert? isInitialized 0/1 and freeAuthority - null | PublicKey.default
+  return MintLayout.decode(mint) as MintInfo
 }
 
 export const bnToNumber = (bn: BN) => {
