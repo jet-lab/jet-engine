@@ -56,7 +56,7 @@ describe("TokenAmount", () => {
   let t: TokenAmount
 
   test("properly instantiates", () => {
-    t = new TokenAmount(web3.PublicKey.default, new BN(10))
+    t = new TokenAmount(new BN(10), 6, web3.PublicKey.default,)
   })
 
   test("sets the proper mint address", () => {
@@ -64,7 +64,8 @@ describe("TokenAmount", () => {
   })
 
   test("sets the correct token amount", () => {
-    expect(t.amount.toNumber()).toStrictEqual(10)
+    // 6 decimals
+    expect(t.tokens).toStrictEqual(10 / 1e6)
   })
 })
 
