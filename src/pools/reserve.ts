@@ -179,11 +179,11 @@ export class JetReserve {
    * @memberof JetReserve
    */
   static async load(client: JetClient, address: PublicKey, maybeMarket?: JetMarket): Promise<JetReserve> {
-    const data = await client.program.account.reserve.fetch(address)
+    const data = await client.program.account.reserve.fetch(address);
 
-    const [market] = await Promise.all([maybeMarket || JetMarket.load(client, data.market)])
+    const market = maybeMarket || await JetMarket.load(client, data.market);
 
-    const pythOracle = await JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct)
+    const pythOracle = await JetReserve.loadPythOracle(client, data.pythOraclePrice, data.pythOracleProduct);
 
     const {
       value: { amount: availableLiquidity }
@@ -192,7 +192,7 @@ export class JetReserve {
       client.program.provider.opts.commitment
     )
 
-    const mintInfo = await client.program.provider.connection.getAccountInfo(data.tokenMint)
+    const mintInfo = await client.program.provider.connection.getAccountInfo(data.tokenMint);
 
     if (!mintInfo) {
       throw new Error("reserve tokenMint does not exist")
