@@ -55,7 +55,6 @@ export class GovStakingClient {
   }
 }
 
-
 /**
  * TODO:
  * @export
@@ -75,7 +74,7 @@ export class Amount {
    * @returns {{ units: never; value: anchor.BN }}
    * @memberof Amount
    */
-  toRpcArg(): {value: anchor.BN } {
+  toRpcArg(): { value: anchor.BN } {
     return {
       value: this.value
     }
