@@ -18,6 +18,9 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
+import * as anchor from "@project-serum/anchor"
+import { u64 } from "@solana/spl-token"
+
 export * from "./staking"
 
 const JET_GOV_STAKING_PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
@@ -49,5 +52,32 @@ export class GovStakingClient {
 
   async deriveVault(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
+  }
+}
+
+
+/**
+ * TODO:
+ * @export
+ * @class Amount
+ */
+export class Amount {
+  /**
+   * Creates an instance of Amount.
+   * @param {anchor.BN} value
+   * @memberof Amount
+   */
+  constructor(public value: anchor.BN) {}
+
+  /**
+   * Converts the class instance into an object that can
+   * be used as an argument for Solana instruction calls.
+   * @returns {{ units: never; value: anchor.BN }}
+   * @memberof Amount
+   */
+  toRpcArg(): {value: anchor.BN } {
+    return {
+      value: this.value
+    }
   }
 }
