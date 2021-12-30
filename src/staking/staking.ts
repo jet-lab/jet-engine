@@ -17,8 +17,11 @@
 
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
-import { GovStakingClient, Amount } from "./index"
+import { GovStakingClient, DerivedAccount } from "./index"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { StaticSeeds, Amount } from "./util"
+import { publicKey } from "@project-serum/anchor/dist/cjs/utils"
+import account from "@project-serum/anchor/dist/cjs/program/namespace/account"
 
 export interface GovStakePoolData {
   authority: PublicKey
@@ -28,7 +31,15 @@ export interface GovStakePoolData {
   stakePoolVault: PublicKey
   stakeCollateralMint: PublicKey
   unbondPeriod: BN
-  shareSupply: BN
+  sharesBonded: BN
+  sharesUnbonded: BN
+}
+
+// TODO: question - findProgramAddress or create derived account first then get the pubkey
+export interface StakePoolAccounts {
+  stakeVoteMint: DerivedAccount
+  stakeCollateralMint: DerivedAccount
+  stakePoolVault: DerivedAccount
 }
 
 export type InitPoolSeeds = Record<"stakePool" | "stakeTokenMint" | "stakePoolVault", number>
@@ -43,7 +54,8 @@ export class GovStakePool implements GovStakePoolData {
     public stakePoolVault: PublicKey,
     public stakeCollateralMint: PublicKey,
     public unbondPeriod: BN,
-    public shareSupply: BN
+    public sharesBonded: BN,
+    public sharesUnbonded: BN
   ) {}
 
   static async load(client: GovStakingClient, authority: PublicKey): Promise<GovStakePool> {
@@ -61,7 +73,8 @@ export class GovStakePool implements GovStakePoolData {
     this.stakePoolVault = distribution.stakePoolVault
     this.stakeCollateralMint = distribution.stakeCollateralMint
     this.unbondPeriod = distribution.unbondPeriod
-    this.shareSupply = distribution.shareSupply
+    this.sharesBonded = distribution.sharesBonded
+    this.sharesUnbonded = distribution.sharesUnbonded
   }
 
   private static decode(client: GovStakingClient, authority: PublicKey, data: any) {
@@ -74,14 +87,38 @@ export class GovStakePool implements GovStakePoolData {
       data.stakePoolVault,
       data.stakeCollateralMint,
       data.unbondPeriod,
-      data.shareSupply
+      data.sharesBonded,
+      data.sharesUnbonded
     )
+  }
+
+  /**
+   * Derive all the associated accounts for a stakePool.
+   * @param {GovStakingClient} client The client to use for the request
+   * @param {PublicKey} address The stakePool address to derive the accounts for.
+   * @param {PublicKey} tokenMint The address of the mint for the token stored in the reserve.
+   * @returns {Promise<ReserveAccounts>}
+   * @memberof GovStakePool
+   */
+  static async deriveAccounts(
+    client: GovStakingClient,
+    address: PublicKey,
+    tokenMint: PublicKey
+  ): Promise<StakePoolAccounts> {
+    return {
+      stakeVoteMint: await client.findDerivedAccount([StaticSeeds.VoteMint, address, tokenMint]),
+      stakeCollateralMint: await client.findDerivedAccount([StaticSeeds.CollateralMint, address, tokenMint]),
+      stakePoolVault: await client.findDerivedAccount([StaticSeeds.Vault, address, tokenMint])
+    }
   }
 
   // TODO: instructions IX & TX integrations
   // TODO: init_pool.rs - tx
   /**
-   * @param
+   * @param { PublicKey } signer
+   * @param { GovStakePool } stakePoolData
+   * @param { string } seed
+   * @param { InitPoolSeeds } bump
    * @returns {Promise<string>}
    * @memberof GovStakePool
    */
@@ -94,10 +131,14 @@ export class GovStakePool implements GovStakePoolData {
   // stakePool
   // stakeVoteMint
   // stakeCollateralMint
+  // maybe findDerivedAccount(seed)?
 
   /**
    * Creates the populated transaction instruction for a `initPool`.
-   * @param {GovStakePool} stakePoolData
+   * @param { PublicKey } signer
+   * @param { GovStakePool } stakePoolData
+   * @param { string } seed
+   * @param { InitPoolSeeds } bump
    * @returns {TransactionInstruction}
    * @memberof GovStakePool
    */
@@ -105,17 +146,19 @@ export class GovStakePool implements GovStakePoolData {
     signer: PublicKey,
     stakePoolData: GovStakePool,
     seed: string,
-    bump: InitPoolSeeds
+    bump: InitPoolSeeds,
+    stakePool: PublicKey,
+    stakePoolAccounts: StakePoolAccounts
   ): TransactionInstruction {
     return this.client.program.instruction.initPool(seed, bump, {
       accounts: {
         payer: signer,
         authority: stakePoolData.authority,
         tokenMint: stakePoolData.tokenMint,
-        // stakePool: ??initializeAccount,
-        // stakeVoteMint: ??initializeAccount,
-        // stakeCollateralMint: ??initializeAccount, stakePoolData.stakeCollateralMint,
-        stakePoolVault: stakePoolData.stakePoolVault,
+        stakePool: stakePool,
+        stakeVoteMint: stakePoolAccounts.stakeVoteMint.address,
+        stakeCollateralMint: stakePoolAccounts.stakeCollateralMint.address,
+        stakePoolVault: stakePoolAccounts.stakePoolVault.address,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
@@ -124,7 +167,10 @@ export class GovStakePool implements GovStakePoolData {
   }
 
   /**
-   * @param
+   * @param { PublicKey } signer
+   * @param { GovStakePool } stakePoolData
+   * @param { string } seed
+   * @param { InitPoolSeeds } bump
    * @returns {Promise<Transaction>}
    * @memberof GovStakePool
    */
@@ -134,16 +180,20 @@ export class GovStakePool implements GovStakePoolData {
     seed: string,
     bump: InitPoolSeeds
   ): Promise<Transaction> {
-    // TODO: fixme
-    // set const to get data needed to initialize pool
-    // const name = content.name // await data
-    // etc
+    //TODO: question: what is [seed.as_bytes()], in the buffer representation?
+    // is `this.client.program.programId` necessary?
+    const [stakePool] = await PublicKey.findProgramAddress([signer.toBuffer()], this.client.program.programId)
+    const stakePoolAccounts = await GovStakePool.deriveAccounts(this.client, stakePool, stakePoolData.tokenMint)
 
     const tx = new Transaction()
-    // fill in data
-    //tx.add()
-    // tx.add()
-    tx.add(this.initPoolIx(signer, stakePoolData, seed, bump))
+
+    const bumpSeeds = {
+      stakePool: bump.stakePool,
+      stakeTokenMint: bump.stakeTokenMint,
+      stakePoolVault: bump.stakePoolVault
+    }
+
+    tx.add(this.initPoolIx(signer, stakePoolData, seed, bumpSeeds, stakePool, stakePoolAccounts))
     return tx
   }
 }
@@ -155,7 +205,7 @@ export interface GovStakeAccountData {
   locked: BN
   mintedVotes: BN
   mintedCollateral: BN
-  unbounding: BN
+  unbonding: BN
 }
 
 export type InitStakeAccountSeeds = Record<"stakeAccount" | "stakeTokenAccount", number>
@@ -169,7 +219,7 @@ export class GovStakeAccount implements GovStakeAccountData {
     public locked: BN,
     public mintedVotes: BN,
     public mintedCollateral: BN,
-    public unbounding: BN
+    public unbonding: BN
   ) {}
 
   static async load(client: GovStakingClient, owner: PublicKey): Promise<GovStakeAccount> {
@@ -186,7 +236,7 @@ export class GovStakeAccount implements GovStakeAccountData {
     this.locked = distribution.locked
     this.mintedVotes = distribution.mintedVotes
     this.mintedCollateral = distribution.mintedCollateral
-    this.unbounding = distribution.unbounding
+    this.unbonding = distribution.unbonding
   }
 
   private static decode(client: GovStakingClient, owner: PublicKey, data: any) {
@@ -198,7 +248,7 @@ export class GovStakeAccount implements GovStakeAccountData {
       data.locked,
       data.mintedVotes,
       data.mintedCollateral,
-      data.unbounding
+      data.unbonding
     )
   }
 
@@ -215,7 +265,7 @@ export class GovStakeAccount implements GovStakeAccountData {
   }
 
   // TODO: figure out the initializing accounts
-  // stakeAccount
+  // stakeAccount - static fx
 
   /**
    * Creates the populated transaction instruction for a `initStakeAccount`.
@@ -223,12 +273,16 @@ export class GovStakeAccount implements GovStakeAccountData {
    * @returns {TransactionInstruction}
    * @memberof GovStakeAccount
    */
-  initStakeAccountIx(GovStakeAccountData: GovStakeAccount, bump: InitStakeAccountSeeds): TransactionInstruction {
+  initStakeAccountIx(
+    GovStakeAccountData: GovStakeAccount,
+    bump: InitStakeAccountSeeds,
+    account: DerivedAccount
+  ): TransactionInstruction {
     return this.client.program.instruction.initStakeAccount(bump, {
       accounts: {
         owner: GovStakeAccountData.owner,
         stakePool: GovStakeAccountData.stakePool,
-        // stakeAccount: ??initializeAccount,
+        stakeAccount: account.address,
         payer: GovStakeAccountData.owner,
         systemProgram: SystemProgram.programId
       }
@@ -241,15 +295,13 @@ export class GovStakeAccount implements GovStakeAccountData {
    * @memberof GovStakeAccount
    */
   async initStakeAccountTx(GovStakeAccountData: GovStakeAccount, bump: InitStakeAccountSeeds): Promise<Transaction> {
-    // set const to get data needed to initialize stake account
-    // const name = content.name // await data
-    // etc
-
+    const stakeAccount = await this.client.findDerivedAccount([
+      GovStakeAccountData.stakePool,
+      GovStakeAccountData.owner
+    ])
     const tx = new Transaction()
-    // fill in data
-    //tx.add()
-    // tx.add()
-    tx.add(this.initStakeAccountIx(GovStakeAccountData, bump))
+
+    tx.add(this.initStakeAccountIx(GovStakeAccountData, bump, stakeAccount))
     return tx
   }
 
@@ -265,8 +317,13 @@ export class GovStakeAccount implements GovStakeAccountData {
    * @returns {Promise<string>}
    * @memberof GovStakeAccount
    */
-  async addStake(stakePoolData: GovStakePool, GovStakeAccountData: GovStakeAccount, amount: Amount): Promise<string> {
-    const tx = await this.addStakeTx(stakePoolData, GovStakeAccountData, amount)
+  async addStake(
+    stakePoolData: GovStakePool,
+    GovStakeAccountData: GovStakeAccount,
+    amount: Amount,
+    tokenAccount: PublicKey
+  ): Promise<string> {
+    const tx = await this.addStakeTx(stakePoolData, GovStakeAccountData, amount, tokenAccount)
     return await this.client.program.provider.send(tx)
   }
   /**
@@ -280,15 +337,17 @@ export class GovStakeAccount implements GovStakeAccountData {
   addStakeIx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    account: DerivedAccount,
+    tokenAccount: PublicKey
   ): TransactionInstruction {
     return this.client.program.instruction.addStake(amount.toRpcArg(), {
       accounts: {
         stakePool: GovStakeAccountData.stakePool,
         stakePoolVault: stakePoolData.stakePoolVault,
-        // stakeAccount: ??,//call the get the initialized stake account
+        stakeAccount: account.address,
         payer: GovStakeAccountData.owner,
-        // payerTokenAccount: ??,//deposit's token account to take the deposit from,
+        payerTokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
       }
     })
@@ -303,17 +362,14 @@ export class GovStakeAccount implements GovStakeAccountData {
   async addStakeTx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    tokenAccount: PublicKey
   ): Promise<Transaction> {
-    // set const to get data needed
-    // const name = content.name // await data
-    // etc
-
+    // TODO: check the buffer passed in
+    const account = await this.client.findDerivedAccount([GovStakeAccountData.stakePool, GovStakeAccountData.owner])
     const tx = new Transaction()
-    // fill in data
-    //tx.add()
-    // tx.add()
-    tx.add(this.addStakeIx(stakePoolData, GovStakeAccountData, amount))
+
+    tx.add(this.addStakeIx(stakePoolData, GovStakeAccountData, amount, account, tokenAccount))
     return tx
   }
 
@@ -326,8 +382,13 @@ export class GovStakeAccount implements GovStakeAccountData {
    * @returns {Promise<string>}
    * @memberof GovStakeAccount
    */
-  async mintVotes(stakePoolData: GovStakePool, GovStakeAccountData: GovStakeAccount, amount: Amount): Promise<string> {
-    const tx = await this.mintVotesTx(stakePoolData, GovStakeAccountData, amount)
+  async mintVotes(
+    stakePoolData: GovStakePool,
+    GovStakeAccountData: GovStakeAccount,
+    amount: Amount,
+    tokenAccount: PublicKey
+  ): Promise<string> {
+    const tx = await this.mintVotesTx(stakePoolData, GovStakeAccountData, amount, tokenAccount)
     return await this.client.program.provider.send(tx)
   }
 
@@ -342,15 +403,17 @@ export class GovStakeAccount implements GovStakeAccountData {
   mintVotesIx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    account: DerivedAccount,
+    tokenAccount: PublicKey
   ): TransactionInstruction {
     return this.client.program.instruction.mintVotes(amount.toRpcArg(), {
       accounts: {
         owner: GovStakeAccountData.owner,
         stakePool: GovStakeAccountData.stakePool,
         stakeVoteMint: stakePoolData.tokenMint,
-        // stakeAccount: ??,//call the get the initialized stake account
-        // voterTokenAccount: ??,// The token account to deposit the vote tokens into
+        stakeAccount: account.address,
+        voterTokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
       }
     })
@@ -364,17 +427,14 @@ export class GovStakeAccount implements GovStakeAccountData {
   async mintVotesTx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    tokenAccount: PublicKey
   ): Promise<Transaction> {
-    // set const to get data needed
-    // const name = content.name // await data
-    // etc
-
+    // TODO: check the buffer passed in
+    const account = await this.client.findDerivedAccount([GovStakeAccountData.stakePool, GovStakeAccountData.owner])
     const tx = new Transaction()
-    // fill in data
-    //tx.add()
-    // tx.add()
-    tx.add(this.mintVotesIx(stakePoolData, GovStakeAccountData, amount))
+
+    tx.add(this.mintVotesIx(stakePoolData, GovStakeAccountData, amount, account, tokenAccount))
     return tx
   }
 
@@ -386,8 +446,13 @@ export class GovStakeAccount implements GovStakeAccountData {
    * @returns {Promise<string>}
    * @memberof GovStakeAccount
    */
-  async burnVotes(stakePoolData: GovStakePool, GovStakeAccountData: GovStakeAccount, amount: Amount): Promise<string> {
-    const tx = await this.burnVotesTx(stakePoolData, GovStakeAccountData, amount)
+  async burnVotes(
+    stakePoolData: GovStakePool,
+    GovStakeAccountData: GovStakeAccount,
+    amount: Amount,
+    tokenAccount: PublicKey
+  ): Promise<string> {
+    const tx = await this.burnVotesTx(stakePoolData, GovStakeAccountData, amount, tokenAccount)
     return await this.client.program.provider.send(tx)
   }
 
@@ -403,16 +468,18 @@ export class GovStakeAccount implements GovStakeAccountData {
   burnVotesIx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    account: DerivedAccount,
+    tokenAccount: PublicKey
   ): TransactionInstruction {
     return this.client.program.instruction.burnVotes(amount.toRpcArg(), {
       accounts: {
         owner: GovStakeAccountData.owner,
         stakePool: GovStakeAccountData.stakePool,
         stakeVoteMint: stakePoolData.tokenMint,
-        // stakeAccount: ??,//call the get the initialized stake account
-        // voterTokenAccount: ??,// The token account to deposit the vote tokens into
-        // voter: ??,// The signer for the vote token account
+        stakeAccount: account.address,
+        voterTokenAccount: tokenAccount,
+        voter: GovStakeAccountData.owner,
         tokenProgram: TOKEN_PROGRAM_ID
       }
     })
@@ -426,17 +493,14 @@ export class GovStakeAccount implements GovStakeAccountData {
   async burnVotesTx(
     stakePoolData: GovStakePool,
     GovStakeAccountData: GovStakeAccount,
-    amount: Amount
+    amount: Amount,
+    tokenAccount: PublicKey
   ): Promise<Transaction> {
-    // set const to get data needed
-    // const name = content.name // await data
-    // etc
-
+    // TODO: check the buffer passed in
+    const account = await this.client.findDerivedAccount([GovStakeAccountData.stakePool, GovStakeAccountData.owner])
     const tx = new Transaction()
-    // fill in data
-    //tx.add()
-    // tx.add()
-    tx.add(this.burnVotesIx(stakePoolData, GovStakeAccountData, amount))
+
+    tx.add(this.burnVotesIx(stakePoolData, GovStakeAccountData, amount, account, tokenAccount))
     return tx
   }
 }
@@ -444,6 +508,7 @@ export class GovStakeAccount implements GovStakeAccountData {
 export interface GovUnbondingAccountData {
   stakeAccount: PublicKey
   amount: BN
+  tokenAmount: BN
   unbondedAt: BN
 }
 
@@ -452,6 +517,7 @@ export class GovUnbondingAccount implements GovUnbondingAccountData {
     private client: GovStakingClient,
     public stakeAccount: PublicKey,
     public amount: BN,
+    public tokenAmount: BN,
     public unbondedAt: BN
   ) {}
 
@@ -469,7 +535,128 @@ export class GovUnbondingAccount implements GovUnbondingAccountData {
   }
 
   private static decode(client: GovStakingClient, stakeAccount: PublicKey, data: any) {
-    return new GovUnbondingAccount(client, stakeAccount, data.amount, data.unbondedAt)
+    return new GovUnbondingAccount(client, stakeAccount, data.amount, data.tokenAmount, data.unbondedAt)
+  }
+
+  // TODO: unbond_stake
+
+  /**
+   * @param
+   * @returns {Promise<string>}
+   * @memberof GovUnbondingAccount
+   */
+  async unbondStake(
+    // ??,
+    bump: number,
+    seed: number,
+    sharedAmount: Amount
+  ): Promise<string> {
+    const tx = await this.unbondStakeTx(bump, seed, sharedAmount)
+    return await this.client.program.provider.send(tx)
+  }
+
+  /**
+   * Creates the populated transaction instruction for a `unbondStake`.
+   * @param
+   * @returns {TransactionInstruction}
+   * @memberof GovUnbondingAccount
+   */
+  unbondStakeIx(
+    // GovStakeAccountData: GovStakeAccount,
+    // unbondingAccount: GovUnbondingAccount,
+    bump: number,
+    seed: number,
+    sharedAmount: Amount
+  ): TransactionInstruction {
+    return this.client.program.instruction.unbondStake(bump, seed, sharedAmount, {
+      accounts: {
+        // owner: GovStakeAccountData.owner,
+        // payer: GovStakeAccountData.owner,
+        // stakeAccount: ..,
+        // stakePool: ..,
+        // stakePoolVault: ..,
+        // unbondingAccount: ..,
+        systemProgram: SystemProgram.programId
+      }
+    })
+  }
+
+  /**
+   * @param
+   * @returns {Promise<Transaction>}
+   * @memberof GovUnbondingAccount
+   */
+  async unbondStakeTx(
+    // ??,
+    bump: number,
+    seed: number,
+    sharedAmount: Amount
+  ): Promise<Transaction> {
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.unbondStakeIx(bump, seed, sharedAmount))
+    return tx
+  }
+
+  // TODO: withdraw_unbonded
+
+  /**
+   * @param
+   * @returns {Promise<string>}
+   * @memberof GovUnbondingAccount
+   */
+  async withdrawUnbonded(): // ??,
+  Promise<string> {
+    const tx = await this.withdrawUnbondedTx()
+    return await this.client.program.provider.send(tx)
+  }
+
+  /**
+   * Creates the populated transaction instruction for a `withdrawUnbonded`.
+   * @param
+   * @returns {TransactionInstruction}
+   * @memberof GovUnbondingAccount
+   */
+  withdrawUnbondedIx(): // ??,
+  TransactionInstruction {
+    return this.client.program.instruction.withdrawUnbonded({
+      accounts: {
+        // owner: ..,
+        // closer: ..,
+        // tokenReceiver: ..,
+        // stakeAccount: ..,
+        // stakeTokenAccount: ..,
+        // stakePool: ..,
+        // stakePoolVault: ..,
+        // unbondingAccount: ..,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+  }
+
+  /**
+   * @param
+   * @returns {Promise<Transaction>}
+   * @memberof GovUnbondingAccount
+   */
+  async withdrawUnbondedTx(): // ??,
+  Promise<Transaction> {
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.withdrawUnbondedIx())
+    return tx
   }
 }
 
@@ -524,9 +711,175 @@ export class GovVestingAccount implements GovVestingAccountData {
       data.vestEndAt
     )
   }
+
+  // TODO: add_stake_locked
+
+  /**
+   * @param
+   * @returns {Promise<string>}
+   * @memberof GovVestingAccount
+   */
+  async addStakeLocked(vestingAccount: GovVestingAccount, amount: Amount, bump: number, seed: number): Promise<string> {
+    const tx = await this.addStakeLockedTx(vestingAccount, amount, bump, seed)
+    return await this.client.program.provider.send(tx)
+  }
+
+  /**
+   * Creates the populated transaction instruction for a `addStakeLocked`.
+   * @param
+   * @returns {TransactionInstruction}
+   * @memberof GovVestingAccount
+   */
+  addStakeLockedIx(
+    vestingAccount: GovVestingAccount,
+    amount: Amount,
+    bump: number,
+    seed: number
+  ): TransactionInstruction {
+    return this.client.program.instruction.addStakeLocked(
+      bump,
+      seed,
+      amount,
+      vestingAccount.vestStartAt,
+      vestingAccount.vestEndAt,
+      {
+        accounts: {
+          // stakePool: ..,
+          // stakePoolVault: ..,
+          // stakeAccount: ..,
+          // vestingAccount: ..,
+          // payer: ..,
+          // payerTokenAccount: ..,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId
+        }
+      }
+    )
+  }
+
+  /**
+   * @param
+   * @returns {Promise<Transaction>}
+   * @memberof GovVestingAccount
+   */
+  async addStakeLockedTx(
+    vestingAccount: GovVestingAccount,
+    amount: Amount,
+    bump: number,
+    seed: number
+  ): Promise<Transaction> {
+    // set const to get data needed to initialize proposal
+    // const name = content.name // await data
+    // etc
+
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.addStakeLockedIx(vestingAccount, amount, bump, seed))
+    return tx
+  }
+
+  // TODO: unlock_stake
+
+  /**
+   * @param
+   * @returns {Promise<string>}
+   * @memberof GovVestingAccount
+   */
+  async unlockStake(): Promise<string> {
+    const tx = await this.unlockStakeTx()
+    return await this.client.program.provider.send(tx)
+  }
+  /**
+   * Creates the populated transaction instruction for a `unlockStake`.
+   * @param
+   * @returns {TransactionInstruction}
+   * @memberof GovVestingAccount
+   */
+  unlockStakeIx(): // ??,
+  TransactionInstruction {
+    return this.client.program.instruction.unlockStake({
+      accounts: {
+        // owner: ..,
+        // stakeAccount: ..,
+        // vestingAccount: ..,
+      }
+    })
+  }
+
+  /**
+   * @param
+   * @returns {Promise<Transaction>}
+   * @memberof GovVestingAccount
+   */
+  async unlockStakeTx(): // ??,
+  Promise<Transaction> {
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.unlockStakeIx())
+    return tx
+  }
+
+  // TODO: close_vesting_account
+
+  /**
+   * @param
+   * @returns {Promise<string>}
+   * @memberof GovVestingAccount
+   */
+  async unbondStake(): // ??,
+  Promise<string> {
+    const tx = await this.closeVestingAccountTx()
+    return await this.client.program.provider.send(tx)
+  }
+
+  /**
+   * Creates the populated transaction instruction for a `closeVestingAccount`.
+   * @param
+   * @returns {TransactionInstruction}
+   * @memberof GovVestingAccount
+   */
+  closeVestingAccountIx(): // ??,
+  TransactionInstruction {
+    return this.client.program.instruction.closeVestingAccount({
+      accounts: {
+        // owner: ..,
+        // closer: ..,
+        // stakeAccount: ..,
+        // vestingAccount: ..
+      }
+    })
+  }
+
+  /**
+   * @param
+   * @returns {Promise<Transaction>}
+   * @memberof GovVestingAccount
+   */
+  async closeVestingAccountTx(): // ??,
+  Promise<Transaction> {
+    // set const to get data needed
+    // const name = content.name // await data
+    // etc
+
+    const tx = new Transaction()
+    // fill in data
+    //tx.add()
+    // tx.add()
+    tx.add(this.closeVestingAccountIx())
+    return tx
+  }
 }
 
 // TODO: instructions IX & TX integrations
+
 // TODO: add_stake_locked.rs - tx
 // TODO: add_stake.rs - tx
 // TODO: burn_votes.rs - tx

@@ -24,8 +24,9 @@ export const StakePoolStruct = BL.struct([
   pubkeyField("stakePoolVault"),
   pubkeyField("stakeVoteMint"),
   numberField("stakeCollateralMint"),
-  i64Field("unboundPeriod"),
-  u64Field("shareSupply")
+  i64Field("unbondPeriod"),
+  u64Field("sharesBonded"),
+  u64Field("sharesUnbonded")
 ])
 
 export const StakeAccountStruct = BL.struct([
@@ -41,6 +42,7 @@ export const StakeAccountStruct = BL.struct([
 export const UnbondingAccountStruct = BL.struct([
   pubkeyField("stakeAccount"),
   u64Field("amount"),
+  u64Field("tokenAmount"),
   i64Field("unbonded_at")
 ])
 

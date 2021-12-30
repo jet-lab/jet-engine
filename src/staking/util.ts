@@ -206,3 +206,28 @@ export function u8Field(property?: string): NumberField {
 export function pubkeyField(property?: string): PubkeyField {
   return new PubkeyField(property)
 }
+
+/**
+ * @export
+ * @class Amount
+ */
+export class Amount {
+  /**
+   * Creates an instance of Amount.
+   * @param {BN} value
+   * @memberof Amount
+   */
+  constructor(public value: BN) {}
+
+  /**
+   * Converts the class instance into an object that can
+   * be used as an argument for Solana instruction calls.
+   * @returns {{ units: never; value: BN }}
+   * @memberof Amount
+   */
+  toRpcArg(): { value: BN } {
+    return {
+      value: this.value
+    }
+  }
+}

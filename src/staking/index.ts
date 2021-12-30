@@ -17,17 +17,39 @@
 
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-
-import * as anchor from "@project-serum/anchor"
-import { u64 } from "@solana/spl-token"
-
 export * from "./staking"
 
 const JET_GOV_STAKING_PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
 
+interface ToBytes {
+  toBytes(): Uint8Array
+}
+
+interface HasPublicKey {
+  publicKey: PublicKey
+}
+
+type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string
+
+/**
+ * Utility class to store a calculated PDA and
+ * the bump nonce associated with it.
+ * @export
+ * @class DerivedAccount
+ */
+export class DerivedAccount {
+  /**
+   * Creates an instance of DerivedAccount.
+   * @param {PublicKey} address
+   * @param {number} bumpSeed
+   * @memberof DerivedAccount
+   */
+  constructor(public address: PublicKey, public bumpSeed: number) {}
+}
+
 export const StaticSeed = {
   CollateralMint: Buffer.from("collateral-mint"),
-  VoteMint: Buffer.from("collateral-mint"),
+  VoteMint: Buffer.from("vote-mint"),
   Vault: Buffer.from("vault")
 }
 
@@ -53,30 +75,27 @@ export class GovStakingClient {
   async deriveVault(realm: PublicKey) {
     return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
-}
-
-/**
- * TODO:
- * @export
- * @class Amount
- */
-export class Amount {
-  /**
-   * Creates an instance of Amount.
-   * @param {anchor.BN} value
-   * @memberof Amount
-   */
-  constructor(public value: anchor.BN) {}
 
   /**
-   * Converts the class instance into an object that can
-   * be used as an argument for Solana instruction calls.
-   * @returns {{ units: never; value: anchor.BN }}
-   * @memberof Amount
+   * Derive a PDA and associated bump nonce from
+   * the argued list of seeds.
+   * @param {DerivedAccountSeed[]} seeds
+   * @returns {Promise<DerivedAccount>}
+   * @memberof JetClient
    */
-  toRpcArg(): { value: anchor.BN } {
-    return {
-      value: this.value
-    }
+  async findDerivedAccount(seeds: DerivedAccountSeed[]): Promise<DerivedAccount> {
+    const seedBytes = seeds.map(s => {
+      if (typeof s == "string") {
+        return Buffer.from(s)
+      } else if ("publicKey" in s) {
+        return s.publicKey.toBytes()
+      } else if ("toBytes" in s) {
+        return s.toBytes()
+      } else {
+        return s
+      }
+    })
+    const [address, bumpSeed] = await PublicKey.findProgramAddress(seedBytes, this.program.programId)
+    return new DerivedAccount(address, bumpSeed)
   }
 }
