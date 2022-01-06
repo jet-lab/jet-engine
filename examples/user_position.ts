@@ -21,36 +21,34 @@ async function getBitcoinPosition() {
 
   const options = Provider.defaultOptions();
   const connection = new Connection("https://api.devnet.solana.com", options);
-  const wallet = new Wallet(Keypair.generate())
+  const wallet = new Wallet(Keypair.generate());
   const provider = new Provider(connection, wallet, options);
 
   // Load the Anchor IDL from RPC
-  const client = await JetClient.connect(provider, true)
+  const client = await JetClient.connect(provider, true);
 
   // Load market data from RPC
   // The following can be condensed to
   // const obligation = await JetObligation.load(client, JET_MARKET_ADDRESS_DEVNET, userAddress);
   const market = await JetMarket.load(client, JET_MARKET_ADDRESS_DEVNET);
-  const user = await JetUser.load(client, market, userAddress)
   const reserves = await JetReserve.loadMultiple(client, market);
+  const user = await JetUser.load(client, market, reserves, userAddress);
   const obligation = JetObligation.create(market, user, reserves.map(reserve => reserve.data));
-
 
   // Locate the bitcoin position and log some information
   const bitcoinMint = new PublicKey("5ym2kCTCcqCHutbQXnPdsGAGFMEVQBQzTQ1CPun9W5A5");
-  const bitcoinPosition = obligation.positions.find(position => position.reserve.tokenMint.equals(bitcoinMint))
+  const bitcoinPosition = obligation.positions.find(position => position.reserve.tokenMint.equals(bitcoinMint));
 
   if (bitcoinPosition) {
     const position: CollateralizedPosition = {
       mint: bitcoinPosition.reserve.tokenMint.toBase58(),
-      // Bitcoin has 6 decimals, divide by 1e6
-      deposited: bitcoinPosition.collateralBalance.toNumber() / 1e6,
-      borrowed: bitcoinPosition.loanBalance.toNumber() / 1e6,
+      deposited: bitcoinPosition.collateralBalance.tokens, 
+      borrowed: bitcoinPosition.loanBalance.tokens,
       borrowApr: bitcoinPosition.reserve.borrowApr,
       depositApy: bitcoinPosition.reserve.depositApy,
     }
 
-    console.log(position)
+    console.log(position);
     /**
     {
       mint: '5ym2kCTCcqCHutbQXnPdsGAGFMEVQBQzTQ1CPun9W5A5',
@@ -62,4 +60,5 @@ async function getBitcoinPosition() {
     */
   }
 }
-getBitcoinPosition()
+
+getBitcoinPosition();
