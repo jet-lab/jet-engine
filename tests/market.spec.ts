@@ -15,7 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Provider, Wallet } from "@project-serum/anchor"
+import { Provider } from "@project-serum/anchor"
+import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
 import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js"
 import { JetClient, JetMarket, JET_MARKET_ADDRESS_DEVNET } from "../src"
 
@@ -25,7 +26,7 @@ describe("JetMarket", () => {
 
   beforeAll(async () => {
     const wallet = Keypair.generate()
-    const provider = new Provider(new Connection(clusterApiUrl("devnet")), new Wallet(wallet), {})
+    const provider = new Provider(new Connection(clusterApiUrl("devnet")), new NodeWallet(wallet), {})
     client = await JetClient.connect(provider, true)
   })
 
