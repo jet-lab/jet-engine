@@ -23,6 +23,7 @@ import { CreateReserveParams, JetReserve } from "./reserve"
 import { parsePosition, StaticSeeds } from "./util"
 import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
+import { findDerivedAccount } from "../common"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey
@@ -256,11 +257,7 @@ export class JetMarket implements JetMarketData {
    * @memberof JetClient
    */
   async getAssociatedObligationAddress(borrower: PublicKey): Promise<DerivedAccount> {
-    return this.client.findDerivedAccount([
-      Buffer.from(StaticSeeds.Obligation),
-      this.address.toBytes(),
-      borrower.toBytes()
-    ])
+    return findDerivedAccount(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
   }
 }
 
