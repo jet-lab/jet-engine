@@ -23,12 +23,14 @@ import { AccountInfo, Connection, Keypair, PublicKey, Transaction, TransactionIn
 import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient, DerivedAccount } from "./client"
 import { JetMarket } from "./market"
-import { parseTokenAccount, parseMintAccount, StaticSeeds } from "./util"
+import { StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
 import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
 import { BN } from "@project-serum/anchor"
 import { TokenAmount } from ".."
+import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
+import { findDerivedAccount } from "../common"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -241,7 +243,7 @@ export class JetReserve {
     }
 
     const vaults = (vaultInfos as AccountInfo<Buffer>[]).map((vault, i) =>
-      parseTokenAccount(vault, reserveInfos[i].vault)
+      parseTokenAccount(vault.data, reserveInfos[i].vault)
     )
 
     const multipleData = []
@@ -453,13 +455,13 @@ export class JetReserve {
    */
   static async deriveAccounts(client: JetClient, address: PublicKey, tokenMint: PublicKey): Promise<ReserveAccounts> {
     return {
-      vault: await client.findDerivedAccount([StaticSeeds.Vault, address]),
-      feeNoteVault: await client.findDerivedAccount([StaticSeeds.FeeVault, address]),
-      dexSwapTokens: await client.findDerivedAccount([StaticSeeds.DexSwapTokens, address]),
-      dexOpenOrders: await client.findDerivedAccount([StaticSeeds.DexOpenOrders, address]),
+      vault: await findDerivedAccount(client.program.programId, StaticSeeds.Vault, address),
+      feeNoteVault: await findDerivedAccount(client.program.programId, StaticSeeds.FeeVault, address),
+      dexSwapTokens: await findDerivedAccount(client.program.programId, StaticSeeds.DexSwapTokens, address),
+      dexOpenOrders: await findDerivedAccount(client.program.programId, StaticSeeds.DexOpenOrders, address),
 
-      loanNoteMint: await client.findDerivedAccount([StaticSeeds.Loans, address, tokenMint]),
-      depositNoteMint: await client.findDerivedAccount([StaticSeeds.Deposits, address, tokenMint])
+      loanNoteMint: await findDerivedAccount(client.program.programId, StaticSeeds.Loans, address, tokenMint),
+      depositNoteMint: await findDerivedAccount(client.program.programId, StaticSeeds.Deposits, address, tokenMint)
     }
   }
 

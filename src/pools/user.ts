@@ -31,8 +31,9 @@ import { DerivedAccount, JetClient } from "./client"
 import { JetMarket, JetMarketReserveInfo } from "./market"
 import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
-import { parseTokenAccount } from "./util"
 import { TokenAmount } from ".."
+import { parseTokenAccount } from "../common/accountParser"
+import { findDerivedAccount } from "../common"
 
 export interface JetUserData {
   address: PublicKey
@@ -952,7 +953,7 @@ export class JetUser implements JetUserData {
       }
 
       //parse token account
-      const tokenAccount = parseTokenAccount(info, account.address)
+      const tokenAccount = parseTokenAccount(info.data, account.address)
 
       //get token decimals
       const tokenAccountBalance = await this.conn.getTokenAccountBalance(tokenAccount.address)
@@ -979,14 +980,21 @@ export class JetUser implements JetUserData {
   private async findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): Promise<UserReserveAccounts> {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = await this.client.findDerivedAccount(["deposits", reserveAddress, this.address])
-    const loan = await this.client.findDerivedAccount(["loan", reserveAddress, this.obligation.address, this.address])
-    const collateral = await this.client.findDerivedAccount([
+    const deposits = await findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
+    const loan = await findDerivedAccount(
+      this.client.program.programId,
+      "loan",
+      reserveAddress,
+      this.obligation.address,
+      this.address
+    )
+    const collateral = await findDerivedAccount(
+      this.client.program.programId,
       "collateral",
       reserveAddress,
       this.obligation.address,
       this.address
-    ])
+    )
 
     return {
       deposits,

@@ -23,16 +23,6 @@ import { JET_ID } from "."
 import { PositionInfoStructList } from "./layout"
 import { parsePosition } from "./util"
 
-interface ToBytes {
-  toBytes(): Uint8Array
-}
-
-interface HasPublicKey {
-  publicKey: PublicKey
-}
-
-type DerivedAccountSeed = HasPublicKey | ToBytes | Uint8Array | string
-
 /**
  * Utility class to store a calculated PDA and
  * the bump nonce associated with it.
@@ -109,28 +99,5 @@ export class JetClient {
    */
   encodeObligation(o: ObligationAccount): Promise<Buffer> {
     return this.program.coder.accounts.encode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
-  }
-
-  /**
-   * Derive a PDA and associated bump nonce from
-   * the argued list of seeds.
-   * @param {DerivedAccountSeed[]} seeds
-   * @returns {Promise<DerivedAccount>}
-   * @memberof JetClient
-   */
-  async findDerivedAccount(seeds: DerivedAccountSeed[]): Promise<DerivedAccount> {
-    const seedBytes = seeds.map(s => {
-      if (typeof s == "string") {
-        return Buffer.from(s)
-      } else if ("publicKey" in s) {
-        return s.publicKey.toBytes()
-      } else if ("toBytes" in s) {
-        return s.toBytes()
-      } else {
-        return s
-      }
-    })
-    const [address, bumpSeed] = await PublicKey.findProgramAddress(seedBytes, this.program.programId)
-    return new DerivedAccount(address, bumpSeed)
   }
 }
