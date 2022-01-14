@@ -1,5 +1,5 @@
 import { BN } from "@project-serum/anchor"
-import type { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token"
+import { MintInfo, AccountInfo as TokenAccount } from "@solana/spl-token"
 import { PublicKey } from "@solana/web3.js"
 
 export class TokenAmount {
@@ -30,7 +30,7 @@ export class TokenAmount {
     return new TokenAmount(new BN(0), decimals, mint)
   }
 
-  public static tokenAccount(tokenAccount: TokenAccountInfo, decimals: number) {
+  public static tokenAccount(tokenAccount: TokenAccount, decimals: number) {
     return new TokenAmount(tokenAccount.amount, decimals, tokenAccount.mint)
   }
 
