@@ -19,11 +19,23 @@ export interface FullAmount {
 }
 
 export class UnbondingAccount {
-  static async deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: string) {
-    return await findDerivedAccount(program.programId, stakeAccount, seed)
+  private static UINT32_MAXVALUE = 0xffffffff
+
+  private static toBuffer(seed: BN) {
+    if (seed.gtn(UnbondingAccount.UINT32_MAXVALUE)) {
+      throw new Error(`Seed must not exceed ${this.UINT32_MAXVALUE}`)
+    }
+    if (seed.ltn(0)) {
+      throw new Error(`Seed must not be negative`)
+    }
+    return seed.toBuffer("le", 4)
   }
 
-  static async load(program: Program, stakeAccount: PublicKey, seed: string) {
+  static async deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN) {
+    return await findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
+  }
+
+  static async load(program: Program, stakeAccount: PublicKey, seed: BN) {
     const { address: address } = await this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.UnbondingAccount.fetch(address)
@@ -45,4 +57,35 @@ export class UnbondingAccount {
   }
 
   constructor(public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
+
+  // static async unbondStake(stakePool: StakePool) {
+  //   console.log(stakePool)
+  // }
+
+  // private static async withUnbondStake(
+  //   instructions: TransactionInstruction[],
+  //   stakePool: StakePool,
+  //   stakeAccount: StakeAccount,
+  //   unbondingSeed: BN,
+  //   amount: BN
+  // ) {
+  //   const { address, bumpSeed } = await UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
+  //   const ix = stakePool.program.instruction.unbondStake(
+  //     bumpSeed,
+  //     this.toBuffer(unbondingSeed),
+  //     { kind: { tokens: {} }, amount },
+  //     {
+  //       accounts: {
+  //         owner: stakeAccount.stakeAccount.owner,
+  //         payer: stakePool.program.provider.wallet.publicKey,
+  //         stakeAccount: stakeAccount.address,
+  //         stakePool: stakePool.addresses.stakePool.address,
+  //         stakePoolVault: stakePool.addresses.stakePoolVault.address,
+  //         unbondingAccount: address,
+  //         systemProgram: SystemProgram.programId
+  //       }
+  //     }
+  //   )
+  //   instructions.push(ix)
+  // }
 }

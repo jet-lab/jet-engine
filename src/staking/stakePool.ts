@@ -87,23 +87,26 @@ export class StakePool {
   static async load(program: Program, seed: string) {
     const addresses = await this.deriveAccounts(program.programId, seed)
 
-    const stakePool = await program.account.StakePool.fetch(addresses.stakePool.address)
+    const stakePool = (await program.account.StakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
 
-    const [voteMintInfo, collateralMintInfo, vaultInfo] = await program.provider.connection.getMultipleAccountsInfo([
-      addresses.stakeVoteMint.address,
-      addresses.stakeCollateralMint.address,
-      addresses.stakePoolVault.address
-    ])
+    const [voteMintInfo, collateralMintInfo, vaultInfo, tokenMintInfo] =
+      await program.provider.connection.getMultipleAccountsInfo([
+        addresses.stakeVoteMint.address,
+        addresses.stakeCollateralMint.address,
+        addresses.stakePoolVault.address,
+        stakePool.tokenMint
+      ])
 
-    if (!voteMintInfo || !collateralMintInfo || !vaultInfo) {
+    if (!voteMintInfo || !collateralMintInfo || !vaultInfo || !tokenMintInfo) {
       throw new Error("Invalid mint")
     }
 
     const voteMint = parseMintAccount(voteMintInfo.data)
     const collateralMint = parseMintAccount(collateralMintInfo.data)
     const vault = parseTokenAccount(vaultInfo.data, addresses.stakePoolVault.address)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data)
 
-    return new StakePool(program, addresses, stakePool as any, voteMint, collateralMint, vault)
+    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
 
   constructor(
@@ -112,7 +115,8 @@ export class StakePool {
     public stakePool: StakePoolInfo,
     public voteMint: MintInfo,
     public collateralMint: MintInfo,
-    public vault: TokenAccountInfo
+    public vault: TokenAccountInfo,
+    public tokenMint: MintInfo
   ) {}
 
   static async deriveAccounts(programId: PublicKey, seed: string): Promise<StakePoolAccounts> {
