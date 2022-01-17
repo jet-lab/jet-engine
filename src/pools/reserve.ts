@@ -165,7 +165,7 @@ export class JetReserve {
    * @param {ReserveData} data
    * @memberof JetReserve
    */
-  constructor(private client: JetClient, private market: JetMarket, public data: ReserveData) {
+  constructor(public client: JetClient, public market: JetMarket, public data: ReserveData) {
     this.conn = this.client.program.provider.connection
   }
 

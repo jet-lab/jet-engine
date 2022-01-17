@@ -64,7 +64,7 @@ export class JetMarket implements JetMarketData {
    * @memberof JetMarket
    */
   private constructor(
-    private client: JetClient,
+    public client: JetClient,
     public address: PublicKey,
     public quoteTokenMint: PublicKey,
     public quoteCurrency: string,

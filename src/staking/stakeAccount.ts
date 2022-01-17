@@ -1,8 +1,9 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
-import { BN, Program, Provider } from "@project-serum/anchor"
+import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { findDerivedAccount } from "../common"
+import { AssociatedToken } from "../common/associatedToken"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -51,7 +52,7 @@ export class StakeAccount {
   static async addStake(stakePool: StakePool, owner: PublicKey, collateralTokenAccount: PublicKey, amount: BN) {
     const instructions: TransactionInstruction[] = []
 
-    const voterTokenAccount = await this.withCreateAssociatedToken(
+    const voterTokenAccount = await AssociatedToken.withCreateAssociatedToken(
       instructions,
       stakePool.program.provider,
       owner,
@@ -59,7 +60,7 @@ export class StakeAccount {
     )
     await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool.address, owner)
     await this.withAddStake(instructions, stakePool, owner, collateralTokenAccount, amount)
-    await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
+    await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount.address, amount)
 
     return await stakePool.program.provider.send(new Transaction().add(...instructions))
   }
@@ -151,43 +152,5 @@ export class StakeAccount {
       }
     )
     instructions.push(ix)
-  }
-
-  private static async withCreateAssociatedToken(
-    instructions: TransactionInstruction[],
-    provider: Provider,
-    owner: PublicKey,
-    mint: PublicKey
-  ) {
-    const associatedAccount = await this.getAssociatedTokenAddress(mint, owner)
-    const info = await provider.connection.getAccountInfo(associatedAccount)
-    if (!info) {
-      const ix = Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        associatedAccount,
-        owner,
-        provider.wallet.publicKey
-      )
-      instructions.push(ix)
-    }
-    return associatedAccount
-  }
-
-  /**
-   * Get the address for the associated token account
-   *
-   * @param mint Token mint account
-   * @param owner Owner of the new account
-   * @return Public key of the associated token account
-   */
-  private static async getAssociatedTokenAddress(mint: PublicKey, owner: PublicKey): Promise<PublicKey> {
-    return (
-      await PublicKey.findProgramAddress(
-        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      )
-    )[0]
   }
 }

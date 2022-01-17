@@ -1,55 +1,57 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { Connection, PublicKey, TransactionInstruction } from "@solana/web3.js"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
+import { AssociatedToken } from "./associatedToken"
+import type { JetReserve } from "../pools/reserve"
 
-export const FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
+export class Airdrop {
+  static readonly FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
 
-export const makeAirdropTx = async (
-  tokenMint: PublicKey,
-  tokenFaucet: PublicKey,
-  user: PublicKey,
-  connection: Connection
-) => {
-  const tokenAddress = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    tokenMint,
-    user
-  )
+  private static async withAirdrop(
+    instructions: TransactionInstruction[],
+    tokenMint: PublicKey,
+    tokenFaucet: PublicKey,
+    tokenAccount: PublicKey
+  ) {
+    const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", "utf8")], this.FAUCET_PROGRAM_ID)
 
-  const tokenInfo = await connection.getAccountInfo(tokenAddress)
+    const keys = [
+      { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
+      {
+        pubkey: tokenMint,
+        isSigner: false,
+        isWritable: true
+      },
+      { pubkey: tokenAccount, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: tokenFaucet, isSigner: false, isWritable: false }
+    ]
 
-  let createAccountIx: TransactionInstruction | undefined
-  if (tokenInfo === null) {
-    createAccountIx = Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenMint,
-      tokenAddress,
-      user,
-      user
-    )
+    const faucetIx = new TransactionInstruction({
+      programId: this.FAUCET_PROGRAM_ID,
+      data: Buffer.from([1, ...new BN(10000000000000).toArray("le", 8)]),
+      keys
+    })
+
+    instructions.push(faucetIx)
   }
 
-  const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", "utf8")], FAUCET_PROGRAM_ID)
+  static async airdropToken(reserve: JetReserve, faucet: PublicKey, user: PublicKey) {
+    const instructions: TransactionInstruction[] = []
 
-  const keys = [
-    { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
-    {
-      pubkey: tokenMint,
-      isSigner: false,
-      isWritable: true
-    },
-    { pubkey: tokenAddress, isSigner: false, isWritable: true },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    { pubkey: tokenFaucet, isSigner: false, isWritable: false }
-  ]
+    // Check for user token account
+    // If it doesn't exist add instructions to create it
+    const associatedAccount = await AssociatedToken.withCreateAssociatedToken(
+      instructions,
+      reserve.client.program.provider,
+      user,
+      reserve.data.tokenMint
+    )
 
-  const faucetIx = new TransactionInstruction({
-    programId: FAUCET_PROGRAM_ID,
-    data: Buffer.from([1, ...new BN(10000000000000).toArray("le", 8)]),
-    keys
-  })
+    // Create airdrop instructions
+    await this.withAirdrop(instructions, reserve.data.tokenMint, faucet, associatedAccount.address)
 
-  return [createAccountIx, faucetIx].filter(ix => ix) as TransactionInstruction[]
+    // Execute airdrop
+    return await reserve.client.program.provider.send(new Transaction().add(...instructions))
+  }
 }
