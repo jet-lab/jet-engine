@@ -70,11 +70,11 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private constructor(
-    private client: JetClient,
+    public client: JetClient,
     public market: JetMarket,
     public reserves: JetReserve[],
     public address: PublicKey,
-    private obligation: DerivedAccount
+    public obligation: DerivedAccount
   ) {
     this.conn = this.client.program.provider.connection
   }

@@ -1,8 +1,9 @@
 import { PublicKey } from "@solana/web3.js"
 import { DerivedAccount } from ".."
 
-export * from "./airdrop"
 export * from "./tokenAmount"
+export { Airdrop } from "./airdrop"
+export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
 
 export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
