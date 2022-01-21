@@ -33,9 +33,15 @@ export class StakeAccount {
   static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
     const { address: address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
-    const stakeAccount = await stakeProgram.account.StakeAccount.fetch(address)
+    const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
 
     return new StakeAccount(address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
+  }
+
+  static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
+    const { address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(address)
+    return stakeAccount !== null
   }
 
   private constructor(public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
@@ -52,7 +58,7 @@ export class StakeAccount {
   static async addStake(stakePool: StakePool, owner: PublicKey, collateralTokenAccount: PublicKey, amount: BN) {
     const instructions: TransactionInstruction[] = []
 
-    const voterTokenAccount = await AssociatedToken.withCreateAssociatedToken(
+    const voterTokenAccount = await AssociatedToken.withCreate(
       instructions,
       stakePool.program.provider,
       owner,
@@ -65,13 +71,13 @@ export class StakeAccount {
     return await stakePool.program.provider.send(new Transaction().add(...instructions))
   }
 
-  private static async withCreate(
+  static async withCreate(
     instructions: TransactionInstruction[],
     stakeProgram: Program,
     stakePool: PublicKey,
     owner: PublicKey
   ) {
-    const { address: stakeAccount, bumpSeed } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const { address: stakeAccount, bump: bumpSeed } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const info = await stakeProgram.provider.connection.getAccountInfo(stakeAccount)
 
@@ -82,6 +88,7 @@ export class StakeAccount {
     // 4) If the account exists, should we error or not
 
     if (!info) {
+      console.log("Creating the stake account.")
       const ix = stakeProgram.instruction.initStakeAccount(bumpSeed, {
         accounts: {
           owner,
@@ -95,7 +102,7 @@ export class StakeAccount {
     }
   }
 
-  private static async withAddStake(
+  static async withAddStake(
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     owner: PublicKey,
@@ -124,7 +131,7 @@ export class StakeAccount {
     instructions.push(ix)
   }
 
-  private static async withMintVotes(
+  static async withMintVotes(
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     owner: PublicKey,

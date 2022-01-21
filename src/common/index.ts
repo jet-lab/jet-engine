@@ -1,5 +1,6 @@
+import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import { DerivedAccount } from ".."
+import { DerivedAccount } from "./associatedToken"
 
 export * from "./tokenAmount"
 export { Airdrop } from "./airdrop"
@@ -33,4 +34,21 @@ export async function findDerivedAccount(
 
   const [address, bumpSeed] = await PublicKey.findProgramAddress(seedBytes, programId)
   return new DerivedAccount(address, bumpSeed)
+}
+
+/**
+ * Create a new client for interacting with the Jet staking program.
+ * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
+ * @returns {Promise<JetClient>} The client
+ * @memberof JetClient
+ */
+export async function connect(provider: Provider, programId: PublicKey) {
+  const idl = await Program.fetchIdl(programId, provider)
+
+  if (!idl) {
+    throw new Error("Program lacks an IDL account.")
+  }
+  const program = new Program(idl, programId, provider)
+
+  return program
 }

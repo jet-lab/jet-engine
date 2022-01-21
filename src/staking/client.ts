@@ -25,7 +25,7 @@ import { JET_STAKE_ID } from "."
  */
 export class StakeClient {
   /**
-   * Creates an instance of JetClient.
+   * Creates an instance of StakeClient.
    * @param {Program<Jet>} program
    * @param {boolean} [devnet]
    * @memberof JetClient
@@ -33,9 +33,8 @@ export class StakeClient {
   private constructor(public program: Program) {}
 
   /**
-   * Create a new client for interacting with the Jet lending program.
+   * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
-   * @param {boolean} [devnet] Flag to determine if the connection is for devnet
    * @returns {Promise<JetClient>} The client
    * @memberof JetClient
    */

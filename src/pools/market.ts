@@ -18,12 +18,13 @@
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
-import { JetClient, DEX_ID, DEX_ID_DEVNET, DerivedAccount } from "."
+import { JetClient, DEX_ID, DEX_ID_DEVNET } from "."
 import { CreateReserveParams, JetReserve } from "./reserve"
 import { parsePosition, StaticSeeds } from "./util"
 import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
 import { findDerivedAccount } from "../common"
+import { DerivedAccount } from "../common/associatedToken"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey
@@ -187,13 +188,13 @@ export class JetMarket implements JetMarketData {
     const derivedAccounts = await JetReserve.deriveAccounts(this.client, account.publicKey, params.tokenMint)
 
     const bumpSeeds = {
-      vault: derivedAccounts.vault.bumpSeed,
-      feeNoteVault: derivedAccounts.feeNoteVault.bumpSeed,
-      dexOpenOrders: derivedAccounts.dexOpenOrders.bumpSeed,
-      dexSwapTokens: derivedAccounts.dexSwapTokens.bumpSeed,
+      vault: derivedAccounts.vault.bump,
+      feeNoteVault: derivedAccounts.feeNoteVault.bump,
+      dexOpenOrders: derivedAccounts.dexOpenOrders.bump,
+      dexSwapTokens: derivedAccounts.dexSwapTokens.bump,
 
-      loanNoteMint: derivedAccounts.loanNoteMint.bumpSeed,
-      depositNoteMint: derivedAccounts.depositNoteMint.bumpSeed
+      loanNoteMint: derivedAccounts.loanNoteMint.bump,
+      depositNoteMint: derivedAccounts.depositNoteMint.bump
     }
 
     const createReserveAccount = await this.client.program.account.reserve.createInstruction(account)

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+export { Auth } from "./auth/auth"
 export { TokenAmount, bnToNumber, AssociatedToken, Airdrop } from "./common"
 export * from "./gov"
 // FIXME: export * from "./p2p"

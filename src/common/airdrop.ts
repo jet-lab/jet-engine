@@ -2,7 +2,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
 import { AssociatedToken } from "./associatedToken"
-import type { JetReserve } from "../pools/reserve"
+import { Provider } from "@project-serum/anchor"
 
 export class Airdrop {
   static readonly FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
@@ -36,22 +36,17 @@ export class Airdrop {
     instructions.push(faucetIx)
   }
 
-  static async airdropToken(reserve: JetReserve, faucet: PublicKey, user: PublicKey) {
+  static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey) {
     const instructions: TransactionInstruction[] = []
 
     // Check for user token account
     // If it doesn't exist add instructions to create it
-    const associatedAccount = await AssociatedToken.withCreateAssociatedToken(
-      instructions,
-      reserve.client.program.provider,
-      user,
-      reserve.data.tokenMint
-    )
+    const { address } = await AssociatedToken.withCreate(instructions, provider, user, mint)
 
     // Create airdrop instructions
-    await this.withAirdrop(instructions, reserve.data.tokenMint, faucet, associatedAccount.address)
+    await this.withAirdrop(instructions, mint, faucet, address)
 
     // Execute airdrop
-    return await reserve.client.program.provider.send(new Transaction().add(...instructions))
+    return await provider.send(new Transaction().add(...instructions))
   }
 }
