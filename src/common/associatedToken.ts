@@ -51,14 +51,14 @@ export class AssociatedToken {
     instructions: TransactionInstruction[],
     owner: PublicKey,
     mint: PublicKey,
-    destination: PublicKey,
+    rentDestination: PublicKey,
     multiSigner: Signer[] = []
   ) {
     const tokenAddress = await this.getAssociatedTokenAddress(mint, owner)
     const ix = Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
       tokenAddress.address,
-      destination,
+      rentDestination,
       owner,
       multiSigner
     )

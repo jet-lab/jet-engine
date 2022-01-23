@@ -160,4 +160,26 @@ export class StakeAccount {
     )
     instructions.push(ix)
   }
+
+  static async withBurnVotes(
+    instructions: TransactionInstruction[],
+    stakePool: StakePool,
+    stakeAccount: StakeAccount,
+    owner: PublicKey,
+    voterTokenAccount: PublicKey,
+    amount: BN
+  ) {
+    const ix = stakePool.program.instruction.burnVotes(amount, {
+      accounts: {
+        owner,
+        stakePool: stakePool.addresses.stakePool.address,
+        stakeVoteMint: stakePool.addresses.stakeVoteMint.address,
+        stakeAccount: stakeAccount.address,
+        voterTokenAccount,
+        voter: owner,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+    instructions.push(ix)
+  }
 }
