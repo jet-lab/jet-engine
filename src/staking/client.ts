@@ -16,6 +16,7 @@
  */
 
 import { Program, Provider } from "@project-serum/anchor"
+import { useEffect, useState } from "react"
 import { JET_STAKE_ID } from "."
 
 /**
@@ -51,6 +52,23 @@ export class StakeClient {
     acc.StakePool = (acc as any).stakePool
     acc.StakeAccount = (acc as any).stakeAccount
     acc.UnbondingAccount = (acc as any).unbondingAccount
+
+    return program
+  }
+
+  static use(provider: Provider) {
+    const [program, setProgram] = useState<Program | undefined>()
+
+    useEffect(() => {
+      let abort = false
+      StakeClient.connect(provider)
+        .then(newProgram => !abort && setProgram(newProgram))
+        .catch(console.error)
+
+      return () => {
+        abort = true
+      }
+    }, [provider])
 
     return program
   }

@@ -206,6 +206,6 @@ export const parseMintAccount = (mint: Buffer): MintInfo => {
   return MintLayout.decode(mint) as MintInfo
 }
 
-export const bnToNumber = (bn: BN) => {
-  return parseFloat(bn.toString())
+export const bnToNumber = (bn: BN | undefined) => {
+  return bn ? parseFloat(bn.toString()) : 0
 }

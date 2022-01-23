@@ -2,6 +2,7 @@ import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "
 import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
+import { useEffect, useState } from "react"
 
 export interface UnbondingAccountInfo {
   /// The related account requesting to unstake
@@ -64,6 +65,26 @@ export class UnbondingAccount {
   }
 
   constructor(public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
+
+  static useByStakeAccount(stakeProgram: Program | undefined, stakeAccount: StakeAccount | undefined) {
+    const [unbondingAccounts, setUnbondingAccounts] = useState<UnbondingAccount[] | undefined>()
+    useEffect(() => {
+      let abort = false
+
+      if (stakeProgram && stakeAccount) {
+        UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address)
+          .then(newUnbondingAccounts => !abort && setUnbondingAccounts(newUnbondingAccounts))
+          .catch(console.error)
+      } else {
+        setUnbondingAccounts(undefined)
+      }
+
+      return () => {
+        abort = true
+      }
+    }, [stakeProgram, stakeAccount])
+    return unbondingAccounts
+  }
 
   static async withUnbondStake(
     instructions: TransactionInstruction[],

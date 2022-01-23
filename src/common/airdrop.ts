@@ -41,7 +41,7 @@ export class Airdrop {
 
     // Check for user token account
     // If it doesn't exist add instructions to create it
-    const { address } = await AssociatedToken.withCreate(instructions, provider, user, mint)
+    const address = await AssociatedToken.withCreate(instructions, provider, user, mint)
 
     // Create airdrop instructions
     await this.withAirdrop(instructions, mint, faucet, address)

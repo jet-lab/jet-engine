@@ -2,8 +2,9 @@ import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@
 import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { findDerivedAccount } from "../common"
+import { bnToNumber, findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
+import { useEffect, useState } from "react"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -25,6 +26,13 @@ export interface StakeAccountInfo {
   unbonding: BN
 }
 
+export interface StakeBalance {
+  stakedJet: number
+  unstakedJet: number
+  unbondingJet: number
+  unlockedVotes: number
+}
+
 export class StakeAccount {
   static async deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
     return await findDerivedAccount(stakeProgram.programId, stakePool, owner)
@@ -35,7 +43,7 @@ export class StakeAccount {
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
 
-    return new StakeAccount(address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
+    return new StakeAccount(stakeProgram, address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
   }
 
   static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
@@ -44,7 +52,63 @@ export class StakeAccount {
     return stakeAccount !== null
   }
 
-  private constructor(public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
+  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
+
+  static use(
+    stakeProgram: Program | undefined,
+    stakePool: StakePool | undefined,
+    wallet: PublicKey | undefined | null
+  ) {
+    const [stakeAccount, setStakeAccount] = useState<StakeAccount | undefined>()
+    useEffect(() => {
+      let abort = false
+
+      if (stakeProgram && stakePool && wallet) {
+        StakeAccount.load(stakeProgram, stakePool.addresses.stakePool.address, wallet)
+          .then(newStakeAccount => !abort && setStakeAccount(newStakeAccount))
+          .catch(() => !abort && setStakeAccount(undefined))
+      } else {
+        setStakeAccount(undefined)
+      }
+
+      return () => {
+        abort = true
+      }
+    }, [stakeProgram, stakePool, wallet])
+    return stakeAccount
+  }
+
+  static useBalance(stakeAccount: StakeAccount | undefined, stakePool: StakePool | undefined): StakeBalance {
+    const unlockedVoteLamports = AssociatedToken.use(
+      stakePool?.program.provider,
+      stakePool?.addresses.stakeVoteMint.address,
+      stakeAccount?.stakeAccount.owner
+    )
+    const unstakedJetLamports = AssociatedToken.use(
+      stakePool?.program.provider,
+      stakePool?.stakePool.tokenMint,
+      stakeAccount?.stakeAccount.owner
+    )
+
+    const decimals = stakePool?.collateralMint.decimals
+    const voteDecimals = stakePool?.voteMint.decimals
+
+    const unlockedVotes = voteDecimals !== undefined ? bnToNumber(unlockedVoteLamports?.amount) / 10 ** voteDecimals : 0
+
+    const unstakedJet = decimals !== undefined ? bnToNumber(unstakedJetLamports?.amount) / 10 ** decimals : 0
+
+    const stakedJet =
+      stakeAccount && decimals !== undefined ? bnToNumber(stakeAccount.stakeAccount.shares) / 10 ** decimals : 0
+
+    const unbondingJet = -1
+
+    return {
+      stakedJet,
+      unstakedJet,
+      unbondingJet,
+      unlockedVotes
+    }
+  }
 
   static async create(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
     const instructions: TransactionInstruction[] = []
@@ -66,7 +130,7 @@ export class StakeAccount {
     )
     await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool.address, owner)
     await this.withAddStake(instructions, stakePool, owner, collateralTokenAccount, amount)
-    await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount.address, amount)
+    await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
 
     return await stakePool.program.provider.send(new Transaction().add(...instructions))
   }

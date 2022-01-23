@@ -19,7 +19,7 @@ import { PublicKey } from "@solana/web3.js"
 
 export { StakeClient } from "./client"
 export { StakeIdl } from "./idl"
-export { StakeAccount } from "./stakeAccount"
+export { StakeAccount, StakeBalance } from "./stakeAccount"
 export { StakePool } from "./stakePool"
 export { UnbondingAccount } from "./unbondingAccount"
 

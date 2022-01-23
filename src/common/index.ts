@@ -1,5 +1,6 @@
 import { Program, Provider } from "@project-serum/anchor"
-import { PublicKey } from "@solana/web3.js"
+import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
+import { useMemo } from "react"
 import { DerivedAccount } from "./associatedToken"
 
 export * from "./tokenAmount"
@@ -52,4 +53,14 @@ export async function connect(provider: Provider, programId: PublicKey) {
   const program = new Program(idl, programId, provider)
 
   return program
+}
+
+const confirmOptions: ConfirmOptions = {
+  skipPreflight: false,
+  commitment: "recent" as Commitment,
+  preflightCommitment: "recent"
+}
+
+export function useProvider(connection: Connection, wallet: any) {
+  return useMemo(() => new Provider(connection, wallet, confirmOptions), [connection, wallet, confirmOptions])
 }
