@@ -32,14 +32,14 @@ export class Auth {
 
   static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<UserAuthentication> {
     const { address: auth } = await this.deriveUserAuthentication(user)
-    return (await authProgram.account.UserAuthentication.fetch(auth)) as UserAuthentication
+    return (await authProgram.account.userAuthentication.fetch(auth)) as UserAuthentication
   }
 
   /** Create a new account that can be used to identify that a
    * wallet/address is properly authenticated to perform protected actions. */
   static async createUserAuth(authProgram: Program, user: PublicKey, payer: PublicKey) {
     const { address: auth, bump } = await this.deriveUserAuthentication(user)
-    return await authProgram.rpc.createUserAuth(bump, {
+    return authProgram.transaction.createUserAuth(bump, {
       accounts: {
         user,
         payer,
@@ -53,7 +53,7 @@ export class Auth {
   static async approveAuthentication(authProgram: Program, user: PublicKey) {
     const authority = (authProgram.provider.wallet as NodeWallet).payer
 
-    return authProgram.rpc.authenticate({
+    return authProgram.transaction.authenticate({
       accounts: {
         auth: user,
         authority: authority.publicKey
