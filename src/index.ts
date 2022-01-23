@@ -16,7 +16,7 @@
  */
 
 export { Auth } from "./auth/auth"
-export { TokenAmount, bnToNumber, AssociatedToken, Airdrop } from "./common"
+export { TokenAmount, bnToNumber, AssociatedToken, Airdrop, DerivedAccount } from "./common"
 export * from "./gov"
 // FIXME: export * from "./p2p"
 export * from "./pools"

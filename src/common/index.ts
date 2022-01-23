@@ -6,6 +6,7 @@ export * from "./tokenAmount"
 export { Airdrop } from "./airdrop"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
+export { DerivedAccount } from "./associatedToken"
 
 export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
 
