@@ -15,29 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js"
+import { GetProgramAccountsFilter } from "@solana/web3.js"
 import { Program, Provider, ProgramAccount } from "@project-serum/anchor"
 import { Jet } from "./idl"
 import { ObligationAccount } from "./types"
 import { JET_ID } from "."
 import { PositionInfoStructList } from "./layout"
 import { parsePosition } from "./util"
-
-/**
- * Utility class to store a calculated PDA and
- * the bump nonce associated with it.
- * @export
- * @class DerivedAccount
- */
-export class DerivedAccount {
-  /**
-   * Creates an instance of DerivedAccount.
-   * @param {PublicKey} address
-   * @param {number} bumpSeed
-   * @memberof DerivedAccount
-   */
-  constructor(public address: PublicKey, public bumpSeed: number) {}
-}
 
 /**
  * TODO:

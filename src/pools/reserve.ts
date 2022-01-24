@@ -21,7 +21,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AccountInfo, Connection, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 
 import { DEX_ID, DEX_ID_DEVNET } from "."
-import { JetClient, DerivedAccount } from "./client"
+import { JetClient } from "./client"
 import { JetMarket } from "./market"
 import { StaticSeeds } from "./util"
 import { ReserveStateStruct } from "./layout"
@@ -31,6 +31,7 @@ import { BN } from "@project-serum/anchor"
 import { TokenAmount } from ".."
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { findDerivedAccount } from "../common"
+import { DerivedAccount } from "../common/associatedToken"
 
 export interface ReserveConfig {
   utilizationRate1: number

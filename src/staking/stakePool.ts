@@ -4,7 +4,8 @@ import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { DerivedAccount } from ".."
+import { DerivedAccount } from "../common/associatedToken"
+import { useEffect, useState } from "react"
 
 export interface StakePoolAccounts {
   accounts: {
@@ -119,6 +120,26 @@ export class StakePool {
     public tokenMint: MintInfo
   ) {}
 
+  static use(stakeProgram: Program | undefined) {
+    const [pool, setPool] = useState<StakePool | undefined>()
+    useEffect(() => {
+      let abort = false
+      if (stakeProgram) {
+        StakePool.load(stakeProgram, StakePool.CANONICAL_SEED)
+          .then(newPool => !abort && setPool(newPool))
+          .catch(console.error)
+      } else {
+        setPool(undefined)
+      }
+
+      return () => {
+        abort = true
+      }
+    }, [stakeProgram])
+
+    return pool
+  }
+
   static async deriveAccounts(programId: PublicKey, seed: string): Promise<StakePoolAccounts> {
     const stakePool = await findDerivedAccount(programId, seed)
     const stakeVoteMint = await findDerivedAccount(programId, seed, "vote-mint")
@@ -132,10 +153,10 @@ export class StakePool {
         stakePoolVault: stakePoolVault.address
       },
       bumps: {
-        stakePool: stakePool.bumpSeed,
-        stakeVoteMint: stakeVoteMint.bumpSeed,
-        stakeCollateralMint: stakeCollateralMint.bumpSeed,
-        stakePoolVault: stakePoolVault.bumpSeed
+        stakePool: stakePool.bump,
+        stakeVoteMint: stakeVoteMint.bump,
+        stakeCollateralMint: stakeCollateralMint.bump,
+        stakePoolVault: stakePoolVault.bump
       },
       stakePool,
       stakeVoteMint,

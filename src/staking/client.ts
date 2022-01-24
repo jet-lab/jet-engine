@@ -16,6 +16,7 @@
  */
 
 import { Program, Provider } from "@project-serum/anchor"
+import { useEffect, useState } from "react"
 import { JET_STAKE_ID } from "."
 
 /**
@@ -25,7 +26,7 @@ import { JET_STAKE_ID } from "."
  */
 export class StakeClient {
   /**
-   * Creates an instance of JetClient.
+   * Creates an instance of StakeClient.
    * @param {Program<Jet>} program
    * @param {boolean} [devnet]
    * @memberof JetClient
@@ -33,9 +34,8 @@ export class StakeClient {
   private constructor(public program: Program) {}
 
   /**
-   * Create a new client for interacting with the Jet lending program.
+   * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
-   * @param {boolean} [devnet] Flag to determine if the connection is for devnet
    * @returns {Promise<JetClient>} The client
    * @memberof JetClient
    */
@@ -52,6 +52,23 @@ export class StakeClient {
     acc.StakePool = (acc as any).stakePool
     acc.StakeAccount = (acc as any).stakeAccount
     acc.UnbondingAccount = (acc as any).unbondingAccount
+
+    return program
+  }
+
+  static use(provider: Provider) {
+    const [program, setProgram] = useState<Program | undefined>()
+
+    useEffect(() => {
+      let abort = false
+      StakeClient.connect(provider)
+        .then(newProgram => !abort && setProgram(newProgram))
+        .catch(console.error)
+
+      return () => {
+        abort = true
+      }
+    }, [provider])
 
     return program
   }

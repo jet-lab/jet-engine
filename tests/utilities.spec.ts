@@ -16,7 +16,7 @@
  */
 
 import { BN, web3 } from "@project-serum/anchor"
-import { TokenAmount, DerivedAccount } from "../src"
+import { DerivedAccount, TokenAmount } from "../src"
 import { Amount } from "../src"
 import { pubkeyField, u64Field } from "../src/common/accountParser"
 
@@ -81,7 +81,7 @@ describe("DerivedAccount", () => {
   })
 
   test("sets the correct bump seed", () => {
-    expect(d.bumpSeed).toStrictEqual(200)
+    expect(d.bump).toStrictEqual(200)
   })
 })
 
