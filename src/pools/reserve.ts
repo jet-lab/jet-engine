@@ -111,7 +111,7 @@ export interface ReserveData {
   dexMarket: PublicKey
   state: ReserveStateData
   config: ReserveConfig
-  availableLiquidity: TokenAmount
+  availableLiquidity: BN
   marketSize: TokenAmount
   utilizationRate: number
   ccRate: number
@@ -356,7 +356,7 @@ export class JetReserve {
       availableLiquidity
     }
     // Derive market reserve values
-    reserve.marketSize = reserve.state.outstandingDebt.add(reserve.availableLiquidity)
+    reserve.marketSize = reserve.state.outstandingDebt.addb(reserve.availableLiquidity)
     reserve.utilizationRate = reserve.marketSize.isZero()
       ? 0
       : reserve.state.outstandingDebt.tokens / reserve.marketSize.tokens
