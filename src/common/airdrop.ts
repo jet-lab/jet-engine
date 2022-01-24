@@ -5,8 +5,23 @@ import { AssociatedToken } from "./associatedToken"
 import { Provider } from "@project-serum/anchor"
 
 export class Airdrop {
+  /**
+   * Airdrop faucet program public key.
+   * @static
+   * @memberof Airdrop
+   */
   static readonly FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
 
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {PublicKey} tokenMint
+   * @param {PublicKey} tokenFaucet
+   * @param {PublicKey} tokenAccount
+   * @memberof Airdrop
+   */
   private static async withAirdrop(
     instructions: TransactionInstruction[],
     tokenMint: PublicKey,
@@ -36,7 +51,17 @@ export class Airdrop {
     instructions.push(faucetIx)
   }
 
-  static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey) {
+  /**
+   * TODO:
+   * @static
+   * @param {Provider} provider
+   * @param {PublicKey} faucet
+   * @param {PublicKey} user
+   * @param {PublicKey} mint
+   * @returns {Promise<string>}
+   * @memberof Airdrop
+   */
+  static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey): Promise<string> {
     const instructions: TransactionInstruction[] = []
 
     // Check for user token account
@@ -47,6 +72,6 @@ export class Airdrop {
     await this.withAirdrop(instructions, mint, faucet, address)
 
     // Execute airdrop
-    return await provider.send(new Transaction().add(...instructions))
+    return provider.send(new Transaction().add(...instructions))
   }
 }
