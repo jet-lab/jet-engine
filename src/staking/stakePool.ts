@@ -110,10 +110,10 @@ export class StakePool {
       throw new Error("Invalid mint")
     }
 
-    const voteMint = parseMintAccount(voteMintInfo.data)
-    const collateralMint = parseMintAccount(collateralMintInfo.data)
-    const vault = parseTokenAccount(vaultInfo.data, addresses.stakePoolVault.address)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data)
+    const voteMint = parseMintAccount(voteMintInfo.data as Buffer)
+    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
+    const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault.address)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
 
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }

@@ -327,8 +327,8 @@ export class JetReserve {
     } else if (!productInfo) {
       throw new Error("Invalid pyth oracle product")
     }
-    const priceData = parsePriceData(priceInfo.data)
-    const productData = parseProductData(productInfo.data)
+    const priceData = parsePriceData(priceInfo.data as Buffer)
+    const productData = parseProductData(productInfo.data as Buffer)
     return { priceData, productData }
   }
 
