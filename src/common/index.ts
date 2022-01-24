@@ -1,4 +1,4 @@
-import { Program, Provider } from "@project-serum/anchor"
+import { Idl, Program, Provider } from "@project-serum/anchor"
 import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
 import { useMemo } from "react"
 import { DerivedAccount } from "./associatedToken"
@@ -14,6 +14,7 @@ export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: Public
 /**
  * Derive a PDA and associated bump nonce from
  * the argued list of seeds.
+ * @param {PublicKey} programId
  * @param {DerivedAccountSeed[]} seeds
  * @returns {Promise<DerivedAccount>}
  * @memberof JetClient
@@ -41,10 +42,11 @@ export async function findDerivedAccount(
 /**
  * Create a new client for interacting with the Jet staking program.
  * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
- * @returns {Promise<JetClient>} The client
+ * @param {PublicKey} programId
+ * @returns {Promise<Program<Idl>>} The client
  * @memberof JetClient
  */
-export async function connect(provider: Provider, programId: PublicKey) {
+export async function connect(provider: Provider, programId: PublicKey): Promise<Program<Idl>> {
   const idl = await Program.fetchIdl(programId, provider)
 
   if (!idl) {
@@ -61,6 +63,13 @@ const confirmOptions: ConfirmOptions = {
   preflightCommitment: "recent"
 }
 
-export function useProvider(connection: Connection, wallet: any) {
+/**
+ * TODO:
+ * @export
+ * @param {Connection} connection
+ * @param {any} wallet
+ * @returns {Provider}
+ */
+export function useProvider(connection: Connection, wallet: any): Provider {
   return useMemo(() => new Provider(connection, wallet, confirmOptions), [connection, wallet, confirmOptions])
 }

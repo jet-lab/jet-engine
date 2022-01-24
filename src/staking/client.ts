@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Program, Provider } from "@project-serum/anchor"
+import { Idl, Program, Provider } from "@project-serum/anchor"
 import { useEffect, useState } from "react"
 import { JET_STAKE_ID } from "."
 
@@ -56,7 +56,14 @@ export class StakeClient {
     return program
   }
 
-  static use(provider: Provider) {
+  /**
+   * TODO:
+   * @static
+   * @param {Provider} provider
+   * @returns {(Program<Idl> | undefined)}
+   * @memberof StakeClient
+   */
+  static use(provider: Provider): Program<Idl> | undefined {
     const [program, setProgram] = useState<Program | undefined>()
 
     useEffect(() => {

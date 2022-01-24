@@ -1,6 +1,6 @@
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { findDerivedAccount } from "../common"
+import { DerivedAccount, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { useEffect, useState } from "react"
 
@@ -23,7 +23,15 @@ export interface FullAmount {
 export class UnbondingAccount {
   private static UINT32_MAXVALUE = 0xffffffff
 
-  private static toBuffer(seed: BN) {
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {BN} seed
+   * @returns {Buffer}
+   * @memberof UnbondingAccount
+   */
+  private static toBuffer(seed: BN): Buffer {
     if (seed.gtn(UnbondingAccount.UINT32_MAXVALUE)) {
       throw new Error(`Seed must not exceed ${this.UINT32_MAXVALUE}`)
     }
@@ -33,17 +41,41 @@ export class UnbondingAccount {
     return seed.toBuffer("le", 4)
   }
 
-  static randomSeed() {
+  /**
+   * TODO:
+   * @static
+   * @returns {BN}
+   * @memberof UnbondingAccount
+   */
+  static randomSeed(): BN {
     const min = 0
     const max = this.UINT32_MAXVALUE
     return new BN(Math.random() * (max - min) + min)
   }
 
-  static async deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN) {
-    return await findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
+  /**
+   * TODO:
+   * @static
+   * @param {Program} program
+   * @param {PublicKey} stakeAccount
+   * @param {BN} seed
+   * @returns {Promise<DerivedAccount>}
+   * @memberof UnbondingAccount
+   */
+  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN): Promise<DerivedAccount> {
+    return findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
   }
 
-  static async load(program: Program, stakeAccount: PublicKey, seed: BN) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} program
+   * @param {PublicKey} stakeAccount
+   * @param {BN} seed
+   * @returns {Promise<UnbondingAccount>}
+   * @memberof UnbondingAccount
+   */
+  static async load(program: Program, stakeAccount: PublicKey, seed: BN): Promise<UnbondingAccount> {
     const { address: address } = await this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.UnbondingAccount.fetch(address)
@@ -51,7 +83,15 @@ export class UnbondingAccount {
     return new UnbondingAccount(address, unbondingAccount as any)
   }
 
-  static async loadByStakeAccount(program: Program, stakeAccount: PublicKey) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} program
+   * @param {PublicKey} stakeAccount
+   * @returns {Promise<UnbondingAccount[]>}
+   * @memberof UnbondingAccount
+   */
+  static async loadByStakeAccount(program: Program, stakeAccount: PublicKey): Promise<UnbondingAccount[]> {
     // Filter by UnbondingAccount.stakeAccount
     const stakeAccountFilter: MemcmpFilter = {
       memcmp: {
@@ -64,9 +104,23 @@ export class UnbondingAccount {
     return unbondingAccounts.map(info => new UnbondingAccount(info.publicKey, info as any))
   }
 
+  /**
+   * Creates an instance of UnbondingAccount.
+   * @param {PublicKey} address
+   * @param {UnbondingAccountInfo} unbondingAccount
+   * @memberof UnbondingAccount
+   */
   constructor(public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
 
-  static useByStakeAccount(stakeProgram: Program | undefined, stakeAccount: StakeAccount | undefined) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} [stakeProgram]
+   * @param {StakeAccount} [stakeAccount]
+   * @returns {(UnbondingAccount[] | undefined)}
+   * @memberof UnbondingAccount
+   */
+  static useByStakeAccount(stakeProgram?: Program, stakeAccount?: StakeAccount): UnbondingAccount[] | undefined {
     const [unbondingAccounts, setUnbondingAccounts] = useState<UnbondingAccount[] | undefined>()
     useEffect(() => {
       let abort = false
@@ -83,9 +137,20 @@ export class UnbondingAccount {
         abort = true
       }
     }, [stakeProgram, stakeAccount])
+
     return unbondingAccounts
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {StakePool} stakePool
+   * @param {StakeAccount} stakeAccount
+   * @param {BN} unbondingSeed
+   * @param {BN} amount
+   * @memberof UnbondingAccount
+   */
   static async withUnbondStake(
     instructions: TransactionInstruction[],
     stakePool: StakePool,

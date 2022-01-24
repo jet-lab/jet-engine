@@ -30,6 +30,16 @@ export interface GovRealmData {
 }
 
 export class GovRealm implements GovRealmData {
+  /**
+   * Creates an instance of GovRealm.
+   * @private
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {PublicKey} owner
+   * @param {PublicKey} authority
+   * @param {PublicKey} vault
+   * @memberof GovRealm
+   */
   private constructor(
     private client: GovClient,
     public address: PublicKey,
@@ -38,21 +48,42 @@ export class GovRealm implements GovRealmData {
     public vault: PublicKey
   ) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @returns {Promise<GovRealm>}
+   * @memberof GovRealm
+   */
   static async load(client: GovClient, address: PublicKey): Promise<GovRealm> {
     const data = await client.program.account.realm.fetch(address)
     return this.decode(client, address, data)
   }
 
+  /**
+   * TODO:
+   * @memberof GovRealm
+   */
   async refresh() {
     const realm = await GovRealm.load(this.client, this.address)
-
     this.address = realm.address
     this.owner = realm.owner
     this.authority = realm.authority
     this.vault = realm.vault
   }
 
-  private static decode(client: GovClient, address: PublicKey, data: any) {
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {any} data
+   * @returns {GovRealm}
+   * @memberof GovRealm
+   */
+  private static decode(client: GovClient, address: PublicKey, data: any): GovRealm {
     return new GovRealm(client, address, data.owner, data.authority, data.vault)
   }
 

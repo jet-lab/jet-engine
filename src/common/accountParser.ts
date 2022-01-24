@@ -201,11 +201,21 @@ export const parseTokenAccount = (account: Buffer, accountPubkey: PublicKey) => 
   return decoded
 }
 
+/**
+ * TODO:
+ * @param {Buffer} mint
+ * @returns {MintInfo}
+ */
 export const parseMintAccount = (mint: Buffer): MintInfo => {
   //convert? isInitialized 0/1 and freeAuthority - null | PublicKey.default
   return MintLayout.decode(mint) as MintInfo
 }
 
-export const bnToNumber = (bn: BN | undefined) => {
+/**
+ * TODO:
+ * @param {BN} [bn]
+ * @returns {number}
+ */
+export const bnToNumber = (bn?: BN): number => {
   return bn ? parseFloat(bn.toString()) : 0
 }
