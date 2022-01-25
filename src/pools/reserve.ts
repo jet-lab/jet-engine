@@ -271,11 +271,7 @@ export class JetReserve {
         pythOracle.priceData,
         pythOracle.productData,
         multipleMintInfo[i],
-        new TokenAmount(
-          new BN(vaults[i].amount.toNumber()),
-          parseMintAccount(multipleMintInfo[i]).decimals,
-          reserveInfo.tokenMint
-        )
+        vaults[i].amount
       )
       return new JetReserve(client, market, data)
     })
