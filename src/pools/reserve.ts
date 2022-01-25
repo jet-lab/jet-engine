@@ -271,7 +271,7 @@ export class JetReserve {
         pythOracle.priceData,
         pythOracle.productData,
         multipleMintInfo[i],
-        vaults[i].amount
+        new BN(vaults[i].amount.toNumber())
       )
       return new JetReserve(client, market, data)
     })
@@ -338,7 +338,7 @@ export class JetReserve {
     availableLiquidityLamports: BN
   ) {
     const mint = parseMintAccount(mintData)
-    const availableLiquidity = new TokenAmount(availableLiquidity, mint.decimals, data.tokenMint)
+    const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals, data.tokenMint)
     const state = ReserveStateStruct.decode(new Uint8Array(data.state))
     state.outstandingDebt = new TokenAmount(
       (state.outstandingDebt as BN).div(new BN(1e15)),
