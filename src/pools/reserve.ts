@@ -204,7 +204,7 @@ export class JetReserve {
       pythOracle.priceData,
       pythOracle.productData,
       mintInfo.data,
-      new BN(availableLiquidity)
+      new TokenAmount(new BN(availableLiquidity), parseMintAccount(mintInfo.data).decimals, data.tokenMint)
     )
     return new JetReserve(client, market, reserveData)
   }
@@ -271,7 +271,11 @@ export class JetReserve {
         pythOracle.priceData,
         pythOracle.productData,
         multipleMintInfo[i],
-        vaults[i].amount
+        new TokenAmount(
+          new BN(vaults[i].amount.toNumber()),
+          parseMintAccount(multipleMintInfo[i]).decimals,
+          reserveInfo.tokenMint
+        )
       )
       return new JetReserve(client, market, data)
     })
@@ -310,7 +314,7 @@ export class JetReserve {
       pythOracle.priceData,
       pythOracle.productData,
       mintInfo.data,
-      new BN(availableLiquidity)
+      new TokenAmount(new BN(availableLiquidity), parseMintAccount(mintInfo.data).decimals, this.data.tokenMint)
     )
   }
 
@@ -335,7 +339,7 @@ export class JetReserve {
     priceData: PriceData,
     productData: ProductData,
     mintData: Buffer,
-    availableLiquidity: BN
+    availableLiquidity: TokenAmount
   ) {
     const mint = parseMintAccount(mintData)
     const state = ReserveStateStruct.decode(new Uint8Array(data.state))
