@@ -335,9 +335,10 @@ export class JetReserve {
     priceData: PriceData,
     productData: ProductData,
     mintData: Buffer,
-    availableLiquidity: TokenAmount
+    availableLiquidityLamports: BN
   ) {
     const mint = parseMintAccount(mintData)
+    const availableLiquidity = new TokenAmount(availableLiquidity, mint.decimals, data.tokenMint)
     const state = ReserveStateStruct.decode(new Uint8Array(data.state))
     state.outstandingDebt = new TokenAmount(
       (state.outstandingDebt as BN).div(new BN(1e15)),
