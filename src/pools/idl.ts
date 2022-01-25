@@ -503,6 +503,124 @@ export type Jet = {
       ]
     },
     {
+      name: "closeCollateralAccount"
+      accounts: [
+        {
+          name: "market"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "marketAuthority"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "obligation"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "owner"
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: "collateralAccount"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "depositAccount"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "tokenProgram"
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: "bump"
+          type: "u8"
+        }
+      ]
+    },
+    {
+      name: "closeLoanAccount"
+      accounts: [
+        {
+          name: "market"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "marketAuthority"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "obligation"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "owner"
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: "loanAccount"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "tokenProgram"
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: "bump"
+          type: "u8"
+        }
+      ]
+    },
+    {
+      name: "closeObligation"
+      accounts: [
+        {
+          name: "market"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "marketAuthority"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "owner"
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: "obligation"
+          isMut: true
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: "bump"
+          type: "u8"
+        }
+      ]
+    },
+    {
       name: "deposit"
       accounts: [
         {
@@ -1610,6 +1728,20 @@ export type Jet = {
       }
     },
     {
+      name: "SwapKind"
+      type: {
+        kind: "enum"
+        variants: [
+          {
+            name: "Buy"
+          },
+          {
+            name: "Sell"
+          }
+        ]
+      }
+    },
+    {
       name: "Side"
       type: {
         kind: "enum"
@@ -1878,6 +2010,21 @@ export type Jet = {
       code: 323
       name: "InvalidParameter"
       msg: "a given parameter is not valid"
+    },
+    {
+      code: 324
+      name: "PositionNotEmpty"
+      msg: "the obligation account still holds position in the loan or collateral account"
+    },
+    {
+      code: 325
+      name: "ObligationPositionNotFound"
+      msg: "position not found in an obligation"
+    },
+    {
+      code: 326
+      name: "AccountNotEmptyError"
+      msg: "the collateral/loan account is not empty"
     }
   ]
 }
@@ -2359,6 +2506,124 @@ export const IDL: Jet = {
         {
           name: "tokenProgram",
           isMut: false,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "bump",
+          type: "u8"
+        }
+      ]
+    },
+    {
+      name: "closeCollateralAccount",
+      accounts: [
+        {
+          name: "market",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "marketAuthority",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "obligation",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "owner",
+          isMut: true,
+          isSigner: true
+        },
+        {
+          name: "collateralAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "depositAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "bump",
+          type: "u8"
+        }
+      ]
+    },
+    {
+      name: "closeLoanAccount",
+      accounts: [
+        {
+          name: "market",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "marketAuthority",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "obligation",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "owner",
+          isMut: true,
+          isSigner: true
+        },
+        {
+          name: "loanAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false
+        }
+      ],
+      args: [
+        {
+          name: "bump",
+          type: "u8"
+        }
+      ]
+    },
+    {
+      name: "closeObligation",
+      accounts: [
+        {
+          name: "market",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "marketAuthority",
+          isMut: false,
+          isSigner: false
+        },
+        {
+          name: "owner",
+          isMut: true,
+          isSigner: true
+        },
+        {
+          name: "obligation",
+          isMut: true,
           isSigner: false
         }
       ],
@@ -3477,6 +3742,20 @@ export const IDL: Jet = {
       }
     },
     {
+      name: "SwapKind",
+      type: {
+        kind: "enum",
+        variants: [
+          {
+            name: "Buy"
+          },
+          {
+            name: "Sell"
+          }
+        ]
+      }
+    },
+    {
       name: "Side",
       type: {
         kind: "enum",
@@ -3745,6 +4024,21 @@ export const IDL: Jet = {
       code: 323,
       name: "InvalidParameter",
       msg: "a given parameter is not valid"
+    },
+    {
+      code: 324,
+      name: "PositionNotEmpty",
+      msg: "the obligation account still holds position in the loan or collateral account"
+    },
+    {
+      code: 325,
+      name: "ObligationPositionNotFound",
+      msg: "position not found in an obligation"
+    },
+    {
+      code: 326,
+      name: "AccountNotEmptyError",
+      msg: "the collateral/loan account is not empty"
     }
   ]
 }

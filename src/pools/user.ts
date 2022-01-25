@@ -27,12 +27,14 @@ import {
 import * as anchor from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import EventEmitter from "eventemitter3"
-import { DerivedAccount, JetClient } from "./client"
+import { JetClient } from "./client"
 import { JetMarket, JetMarketReserveInfo } from "./market"
 import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
-import { parseTokenAccount } from "./util"
 import { TokenAmount } from ".."
+import { parseTokenAccount } from "../common/accountParser"
+import { findDerivedAccount } from "../common"
+import { DerivedAccount } from "../common/associatedToken"
 
 export interface JetUserData {
   address: PublicKey
@@ -69,11 +71,11 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private constructor(
-    private client: JetClient,
+    public client: JetClient,
     public market: JetMarket,
     public reserves: JetReserve[],
     public address: PublicKey,
-    private obligation: DerivedAccount
+    public obligation: DerivedAccount
   ) {
     this.conn = this.client.program.provider.connection
   }
@@ -415,8 +417,8 @@ export class JetUser implements JetUserData {
   async makeWithdrawCollateralTx(reserve: JetReserve, amount: Amount): Promise<Transaction> {
     const { collateral, deposits } = await this.findReserveAccounts(reserve)
     const bumpSeeds = {
-      collateralAccount: collateral.bumpSeed,
-      depositAccount: deposits.bumpSeed
+      collateralAccount: collateral.bump,
+      depositAccount: deposits.bump
     }
 
     const tx = new Transaction()
@@ -453,7 +455,7 @@ export class JetUser implements JetUserData {
     tokenAccount: PublicKey,
     amount: Amount
   ): TransactionInstruction {
-    return this.client.program.instruction.withdraw(deposits.bumpSeed, amount.toRpcArg(), {
+    return this.client.program.instruction.withdraw(deposits.bump, amount.toRpcArg(), {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -512,7 +514,7 @@ export class JetUser implements JetUserData {
     tokenAccount: PublicKey,
     amount: Amount
   ): TransactionInstruction {
-    return this.client.program.instruction.deposit(deposits.bumpSeed, amount.toRpcArg(), {
+    return this.client.program.instruction.deposit(deposits.bump, amount.toRpcArg(), {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -616,8 +618,8 @@ export class JetUser implements JetUserData {
     }
 
     const bumpSeeds = {
-      depositAccount: deposits.bumpSeed,
-      collateralAccount: collateral.bumpSeed
+      depositAccount: deposits.bump,
+      collateralAccount: collateral.bump
     }
 
     tx.add(reserve.makeRefreshIx())
@@ -648,7 +650,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   makeBorrowIx(reserve: JetReserve, loan: DerivedAccount, receiver: PublicKey, amount: Amount): TransactionInstruction {
-    return this.client.program.instruction.borrow(loan.bumpSeed, amount.toRpcArg(), {
+    return this.client.program.instruction.borrow(loan.bump, amount.toRpcArg(), {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -684,6 +686,96 @@ export class JetUser implements JetUserData {
 
     tx.add(reserve.makeRefreshIx())
     tx.add(this.makeBorrowIx(reserve, accounts.loan, receiver, amount))
+    return tx
+  }
+
+  async closeDepositAccount(reserve: JetReserve, receiver: PublicKey): Promise<string> {
+    const tx = await this.closeDepositAccountTx(reserve, receiver)
+    return await this.client.program.provider.send(tx)
+  }
+  async closeDepositAccountTx(reserve: JetReserve, receiver: PublicKey): Promise<Transaction> {
+    const accounts = await this.findReserveAccounts(reserve)
+    const tx = new Transaction()
+    tx.add(reserve.makeRefreshIx())
+    tx.add(
+      this.client.program.instruction.closeDepositAccount(accounts.deposits.bump, {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
+          reserve: reserve.data.address,
+          vault: reserve.data.vault,
+          depositNoteMint: reserve.data.depositNoteMint,
+          depositor: this.address,
+          depositAccount: accounts.deposits.address,
+          receiverAccount: receiver,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
+      })
+    )
+    return tx
+  }
+
+  async closeCollateralAccount(reserve: JetReserve): Promise<string> {
+    const tx = await this.closeCollateralAccountTx(reserve)
+    return await this.client.program.provider.send(tx)
+  }
+  async closeCollateralAccountTx(reserve: JetReserve): Promise<Transaction> {
+    const accounts = await this.findReserveAccounts(reserve)
+    const tx = new Transaction()
+    tx.add(
+      this.client.program.instruction.closeCollateralAccount(accounts.collateral.bump, {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
+          owner: this.address,
+          obligation: this.obligation.address,
+          collateralAccount: accounts.collateral.address,
+          depositAccount: accounts.deposits.address,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
+      })
+    )
+    return tx
+  }
+
+  async closeLoanAccount(reserve: JetReserve): Promise<string> {
+    const tx = await this.closeLoanAccountTx(reserve)
+    return await this.client.program.provider.send(tx)
+  }
+  async closeLoanAccountTx(reserve: JetReserve): Promise<Transaction> {
+    const accounts = await this.findReserveAccounts(reserve)
+    const tx = new Transaction()
+    tx.add(
+      this.client.program.instruction.closeLoanAccount(accounts.loan.bump, {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
+          owner: this.address,
+          obligation: this.obligation.address,
+          loanAccount: accounts.loan.address,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
+      })
+    )
+    return tx
+  }
+
+  async closeObligationAccount(): Promise<string> {
+    const tx = await this.closeObligationAccountTx()
+    return await this.client.program.provider.send(tx)
+  }
+  async closeObligationAccountTx(): Promise<Transaction> {
+    const tx = new Transaction()
+    tx.add(
+      this.client.program.instruction.closeObligation(this.obligation.bump, {
+        accounts: {
+          market: this.market.address,
+          marketAuthority: this.market.marketAuthority,
+          obligation: this.obligation.address,
+          owner: this.address
+        }
+      })
+    )
     return tx
   }
 
@@ -723,7 +815,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private makeInitDepositAccountIx(reserve: JetReserve, account: DerivedAccount): TransactionInstruction {
-    return this.client.program.instruction.initDepositAccount(account.bumpSeed, {
+    return this.client.program.instruction.initDepositAccount(account.bump, {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -747,7 +839,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private makeInitCollateralAccountIx(reserve: JetReserve, account: DerivedAccount): TransactionInstruction {
-    return this.client.program.instruction.initCollateralAccount(account.bumpSeed, {
+    return this.client.program.instruction.initCollateralAccount(account.bump, {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -774,7 +866,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private makeInitLoanAccountIx(reserve: JetReserve, account: DerivedAccount): TransactionInstruction {
-    return this.client.program.instruction.initLoanAccount(account.bumpSeed, {
+    return this.client.program.instruction.initLoanAccount(account.bump, {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -799,7 +891,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private makeInitObligationAccountIx(): TransactionInstruction {
-    return this.client.program.instruction.initObligation(this.obligation.bumpSeed, {
+    return this.client.program.instruction.initObligation(this.obligation.bump, {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
@@ -862,7 +954,7 @@ export class JetUser implements JetUserData {
       }
 
       //parse token account
-      const tokenAccount = parseTokenAccount(info, account.address)
+      const tokenAccount = parseTokenAccount(info.data, account.address)
 
       //get token decimals
       const tokenAccountBalance = await this.conn.getTokenAccountBalance(tokenAccount.address)
@@ -889,14 +981,21 @@ export class JetUser implements JetUserData {
   private async findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): Promise<UserReserveAccounts> {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = await this.client.findDerivedAccount(["deposits", reserveAddress, this.address])
-    const loan = await this.client.findDerivedAccount(["loan", reserveAddress, this.obligation.address, this.address])
-    const collateral = await this.client.findDerivedAccount([
+    const deposits = await findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
+    const loan = await findDerivedAccount(
+      this.client.program.programId,
+      "loan",
+      reserveAddress,
+      this.obligation.address,
+      this.address
+    )
+    const collateral = await findDerivedAccount(
+      this.client.program.programId,
       "collateral",
       reserveAddress,
       this.obligation.address,
       this.address
-    ])
+    )
 
     return {
       deposits,

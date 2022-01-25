@@ -16,7 +16,8 @@
  */
 
 import * as BL from "@solana/buffer-layout"
-import { numberField, i64Field, u64Field, pubkeyField } from "./util"
+import { numberField, pubkeyField, u64Field } from "../common/accountParser"
+import { i64Field } from "./util"
 
 export const MAX_RESERVES = 32
 

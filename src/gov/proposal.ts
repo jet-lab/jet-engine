@@ -56,6 +56,19 @@ export interface VoteCount {
 }
 
 export class GovProposal implements GovProposalData {
+  /**
+   * Creates an instance of GovProposal.
+   * @private
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {PublicKey} realm
+   * @param {PublicKey} owner
+   * @param {number} createdTimestamp
+   * @param {ProposalContent} content
+   * @param {ProposalLifecycle} lifecycle
+   * @param {VoteCount} count
+   * @memberof GovProposal
+   */
   private constructor(
     private client: GovClient,
     public address: PublicKey,
@@ -67,14 +80,25 @@ export class GovProposal implements GovProposalData {
     public count: VoteCount
   ) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @returns {Promise<GovProposal>}
+   * @memberof GovProposal
+   */
   static async load(client: GovClient, address: PublicKey): Promise<GovProposal> {
     const data = await client.program.account.proposal.fetch(address)
     return this.decode(client, address, data)
   }
 
+  /**
+   * TODO:
+   * @memberof GovProposal
+   */
   async refresh() {
     const proposal = await GovProposal.load(this.client, this.address)
-
     this.address = proposal.address
     this.realm = proposal.realm
     this.owner = proposal.owner
@@ -84,7 +108,17 @@ export class GovProposal implements GovProposalData {
     this.count = proposal.count
   }
 
-  private static decode(client: GovClient, address: PublicKey, data: any) {
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {any} data
+   * @returns {GovProposal}
+   * @memberof GovProposal
+   */
+  private static decode(client: GovClient, address: PublicKey, data: any): GovProposal {
     return new GovProposal(
       client,
       address,

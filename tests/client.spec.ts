@@ -15,42 +15,47 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Provider, Wallet } from "@project-serum/anchor"
+import { Provider } from "@project-serum/anchor"
+import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
 import { clusterApiUrl, Connection, Keypair, MemcmpFilter, PublicKey } from "@solana/web3.js"
 import { JetMarket, JetReserve, JetClient, JET_MARKET_ADDRESS_DEVNET } from "../src"
+import { findDerivedAccount } from "../src/common"
 
 describe("JetClient", () => {
   let client: JetClient
 
   beforeAll(async () => {
     const wallet = Keypair.generate()
-    const provider = new Provider(new Connection(clusterApiUrl("devnet")), new Wallet(wallet), {})
+    const provider = new Provider(new Connection(clusterApiUrl("devnet")), new NodeWallet(wallet), {})
     client = await JetClient.connect(provider, true)
   })
 
   describe("can calculate derived account addresses and bump nonces", () => {
     test("using buffer seeds", async () => {
-      const derived = await client.findDerivedAccount([Buffer.from("test")])
+      const derived = await findDerivedAccount(client.program.programId, Buffer.from("test"))
       expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bumpSeed).toBeLessThan(256)
+      expect(derived.bump).toBeLessThan(256)
     })
 
     test("using string seeds", async () => {
-      const derived = await client.findDerivedAccount(["test"])
+      const derived = await findDerivedAccount(client.program.programId, "test")
       expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bumpSeed).toBeLessThan(256)
+      expect(derived.bump).toBeLessThan(256)
     })
 
     test("using public key seeds", async () => {
-      const derived = await client.findDerivedAccount([new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")])
+      const derived = await findDerivedAccount(
+        client.program.programId,
+        new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+      )
       expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bumpSeed).toBeLessThan(256)
+      expect(derived.bump).toBeLessThan(256)
     })
 
     test("using keypair seeds", async () => {
-      const derived = await client.findDerivedAccount([Keypair.generate()])
+      const derived = await findDerivedAccount(client.program.programId, Keypair.generate())
       expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bumpSeed).toBeLessThan(256)
+      expect(derived.bump).toBeLessThan(256)
     })
   })
 

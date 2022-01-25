@@ -38,18 +38,15 @@ export class GovClient {
     return new GovClient(new Program(idl as any, JET_GOV_PROGRAM_ID))
   }
 
-  async deriveRealmAuthority(realm: PublicKey) {
-    return await PublicKey.findProgramAddress([StaticSeed.RealmAuthority, realm.toBuffer()], this.program.programId)
+  deriveRealmAuthority(realm: PublicKey): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress([StaticSeed.RealmAuthority, realm.toBuffer()], this.program.programId)
   }
 
-  async deriveVault(realm: PublicKey) {
-    return await PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
+  deriveVault(realm: PublicKey): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress([StaticSeed.Vault, realm.toBuffer()], this.program.programId)
   }
 
-  async deriveVoter(realm: PublicKey, wallet: PublicKey) {
-    return await PublicKey.findProgramAddress(
-      [StaticSeed.Voter, wallet.toBuffer(), realm.toBuffer()],
-      this.program.programId
-    )
+  deriveVoter(realm: PublicKey, wallet: PublicKey): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress([StaticSeed.Voter, wallet.toBuffer(), realm.toBuffer()], this.program.programId)
   }
 }

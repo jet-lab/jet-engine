@@ -1,55 +1,77 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { Connection, PublicKey, TransactionInstruction } from "@solana/web3.js"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import BN from "bn.js"
+import { AssociatedToken } from "./associatedToken"
+import { Provider } from "@project-serum/anchor"
 
-export const FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
+export class Airdrop {
+  /**
+   * Airdrop faucet program public key.
+   * @static
+   * @memberof Airdrop
+   */
+  static readonly FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
 
-export const makeAirdropTx = async (
-  tokenMint: PublicKey,
-  tokenFaucet: PublicKey,
-  user: PublicKey,
-  connection: Connection
-) => {
-  const tokenAddress = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    tokenMint,
-    user
-  )
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {PublicKey} tokenMint
+   * @param {PublicKey} tokenFaucet
+   * @param {PublicKey} tokenAccount
+   * @memberof Airdrop
+   */
+  private static async withAirdrop(
+    instructions: TransactionInstruction[],
+    tokenMint: PublicKey,
+    tokenFaucet: PublicKey,
+    tokenAccount: PublicKey
+  ) {
+    const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", "utf8")], this.FAUCET_PROGRAM_ID)
 
-  const tokenInfo = await connection.getAccountInfo(tokenAddress)
+    const keys = [
+      { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
+      {
+        pubkey: tokenMint,
+        isSigner: false,
+        isWritable: true
+      },
+      { pubkey: tokenAccount, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: tokenFaucet, isSigner: false, isWritable: false }
+    ]
 
-  let createAccountIx: TransactionInstruction | undefined
-  if (tokenInfo === null) {
-    createAccountIx = Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenMint,
-      tokenAddress,
-      user,
-      user
-    )
+    const faucetIx = new TransactionInstruction({
+      programId: this.FAUCET_PROGRAM_ID,
+      data: Buffer.from([1, ...new BN(10000000000000).toArray("le", 8)]),
+      keys
+    })
+
+    instructions.push(faucetIx)
   }
 
-  const pubkeyNonce = await PublicKey.findProgramAddress([Buffer.from("faucet", "utf8")], FAUCET_PROGRAM_ID)
+  /**
+   * TODO:
+   * @static
+   * @param {Provider} provider
+   * @param {PublicKey} faucet
+   * @param {PublicKey} user
+   * @param {PublicKey} mint
+   * @returns {Promise<string>}
+   * @memberof Airdrop
+   */
+  static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey): Promise<string> {
+    const instructions: TransactionInstruction[] = []
 
-  const keys = [
-    { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
-    {
-      pubkey: tokenMint,
-      isSigner: false,
-      isWritable: true
-    },
-    { pubkey: tokenAddress, isSigner: false, isWritable: true },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    { pubkey: tokenFaucet, isSigner: false, isWritable: false }
-  ]
+    // Check for user token account
+    // If it doesn't exist add instructions to create it
+    const address = await AssociatedToken.withCreate(instructions, provider, user, mint)
 
-  const faucetIx = new TransactionInstruction({
-    programId: FAUCET_PROGRAM_ID,
-    data: Buffer.from([1, ...new BN(10000000000000).toArray("le", 8)]),
-    keys
-  })
+    // Create airdrop instructions
+    await this.withAirdrop(instructions, mint, faucet, address)
 
-  return [createAccountIx, faucetIx].filter(ix => ix) as TransactionInstruction[]
+    // Execute airdrop
+    return provider.send(new Transaction().add(...instructions))
+  }
 }

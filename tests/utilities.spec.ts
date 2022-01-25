@@ -16,9 +16,9 @@
  */
 
 import { BN, web3 } from "@project-serum/anchor"
-import { TokenAmount, DerivedAccount } from "../src"
-import { NumberField, pubkeyField, PubkeyField, u64Field } from "../src/pools/util"
+import { DerivedAccount, TokenAmount } from "../src"
 import { Amount } from "../src"
+import { pubkeyField, u64Field } from "../src/common/accountParser"
 
 describe("Amount", () => {
   test("properly instantiates", () => {
@@ -81,13 +81,13 @@ describe("DerivedAccount", () => {
   })
 
   test("sets the correct bump seed", () => {
-    expect(d.bumpSeed).toStrictEqual(200)
+    expect(d.bump).toStrictEqual(200)
   })
 })
 
 describe("NumberField BL.Layout", () => {
   test("initializes correct span and property name", () => {
-    const num = new NumberField(8, "testU64")
+    const num = u64Field("testU64")
     expect(num.getSpan()).toStrictEqual(8)
     expect(num.property).toStrictEqual("testU64")
   })
@@ -117,7 +117,7 @@ describe("NumberField BL.Layout", () => {
 
 describe("PubkeyField BL.Layout", () => {
   test("initializes correct span and property name", () => {
-    const pub = new PubkeyField("testKey")
+    const pub = pubkeyField("testKey")
     expect(pub.getSpan()).toStrictEqual(32)
     expect(pub.property).toStrictEqual("testKey")
   })
