@@ -5,7 +5,7 @@
 
 import { JetClient, JetMarket, JetObligation, JetReserve, JetUser, JET_MARKET_ADDRESS_DEVNET } from "../src"
 import { Provider, Wallet } from "@project-serum/anchor"
-import { Connection, Keypair, PublicKey } from "@solana/web3.js"
+import { Connection, PublicKey } from "@solana/web3.js"
 
 export type CollateralizedPosition = {
   mint: string;
@@ -23,7 +23,8 @@ async function getBitcoinPosition() {
   const options = Provider.defaultOptions();
   const connection = new Connection("https://api.devnet.solana.com", options);
   //wallet for fee payer
-  const wallet = new Wallet(Keypair.generate());
+  // const wallet = new Wallet(Keypair.generate());
+  const wallet = undefined as any as typeof Wallet;
   const provider = new Provider(connection, wallet, options);
 
   // Load the Anchor IDL from RPC
