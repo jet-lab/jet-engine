@@ -111,7 +111,7 @@ export interface ReserveData {
   dexMarket: PublicKey
   state: ReserveStateData
   config: ReserveConfig
-  availableLiquidity: BN
+  availableLiquidity: TokenAmount
   marketSize: TokenAmount
   utilizationRate: number
   ccRate: number
