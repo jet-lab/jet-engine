@@ -166,7 +166,7 @@ export class JetObligation implements Obligation {
     // calculate collateral ratio
     const collateralRatio = loanedValue === 0 ? 0 : collateralValue / loanedValue
     //calculate utilization ratio
-    const utilizationRate = collateralValue=== 0 ? 0 : loanedValue / collateralValue
+    const utilizationRate = collateralValue === 0 ? 0 : loanedValue / collateralValue
 
     return new JetObligation(balances, depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate)
   }
