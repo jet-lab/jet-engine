@@ -24,7 +24,9 @@ async function getBitcoinPosition() {
   const connection = new Connection("https://api.devnet.solana.com", options);
   //wallet for fee payer
   // const wallet = new Wallet(Keypair.generate());
-  // make wallet undefined temporarily before anchor wallet is fixed 
+  // make wallet undefined temporarily before anchor wallet is fi
+  // A wallet is not required in this example
+
   const wallet = undefined as any as typeof Wallet;
   const provider = new Provider(connection, wallet, options);
 
