@@ -128,7 +128,6 @@ export class JetObligation implements Obligation {
         throw new Error("market reserves do not match reserve list.")
       }
       const depositNotes = deposits.find(deposit => deposit.mint.equals(reserve.depositNoteMint))
-
       const collateralNotes = collateral.find(collateral => collateral.mint.equals(reserve.depositNoteMint))
       const loanNotes = loans.find(loan => loan.mint.equals(reserve.loanNoteMint))
 
@@ -164,8 +163,9 @@ export class JetObligation implements Obligation {
       balances[i] = balance
     }
 
-    // Utilization Rate
+    // calculate collateral ratio
     const collateralRatio = loanedValue === 0 ? 0 : collateralValue / loanedValue
+    //calculate utilization ratio
     const utilizationRate = depositedValue === 0 ? 0 : loanedValue / collateralValue
 
     return new JetObligation(balances, depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate)
