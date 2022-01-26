@@ -3,7 +3,7 @@ import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { bnToNumber, findDerivedAccount } from "../common"
-import { AssociatedToken } from "../common/associatedToken"
+import { AssociatedToken, DerivedAccount } from "../common/associatedToken"
 import { useEffect, useState } from "react"
 
 export interface StakeAccountInfo {
@@ -34,11 +34,29 @@ export interface StakeBalance {
 }
 
 export class StakeAccount {
-  static async deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
-    return await findDerivedAccount(stakeProgram.programId, stakePool, owner)
+  /**
+   * TODO:
+   * @static
+   * @param {Program} stakeProgram
+   * @param {PublicKey} stakePool
+   * @param {PublicKey} owner
+   * @returns {Promise<DerivedAccount>}
+   * @memberof StakeAccount
+   */
+  static deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<DerivedAccount> {
+    return findDerivedAccount(stakeProgram.programId, stakePool, owner)
   }
 
-  static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} stakeProgram
+   * @param {PublicKey} stakePool
+   * @param {PublicKey} owner
+   * @returns {Promise<StakeAccount>}
+   * @memberof StakeAccount
+   */
+  static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
     const { address: address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
@@ -46,19 +64,41 @@ export class StakeAccount {
     return new StakeAccount(stakeProgram, address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
   }
 
-  static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} stakeProgram
+   * @param {PublicKey} stakePool
+   * @param {PublicKey} owner
+   * @returns {Promise<boolean>}
+   * @memberof StakeAccount
+   */
+  static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<boolean> {
     const { address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
     const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(address)
     return stakeAccount !== null
   }
 
+  /**
+   * Creates an instance of StakeAccount.
+   * @private
+   * @param {Program} program
+   * @param {PublicKey} address
+   * @param {StakeAccountInfo} stakeAccount
+   * @memberof StakeAccount
+   */
   private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
 
-  static use(
-    stakeProgram: Program | undefined,
-    stakePool: StakePool | undefined,
-    wallet: PublicKey | undefined | null
-  ) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} [stakeProgram]
+   * @param {StakePool} [stakePool]
+   * @param {(PublicKey | null)} [wallet]
+   * @returns {(StakeAccount | undefined)}
+   * @memberof StakeAccount
+   */
+  static use(stakeProgram?: Program, stakePool?: StakePool, wallet?: PublicKey | null): StakeAccount | undefined {
     const [stakeAccount, setStakeAccount] = useState<StakeAccount | undefined>()
     useEffect(() => {
       let abort = false
@@ -78,7 +118,15 @@ export class StakeAccount {
     return stakeAccount
   }
 
-  static useBalance(stakeAccount: StakeAccount | undefined, stakePool: StakePool | undefined): StakeBalance {
+  /**
+   * TODO:
+   * @static
+   * @param {StakeAccount} [stakeAccount]
+   * @param {StakePool} [stakePool]
+   * @returns {StakeBalance}
+   * @memberof StakeAccount
+   */
+  static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
     const unlockedVoteLamports = AssociatedToken.use(
       stakePool?.program.provider,
       stakePool?.addresses.stakeVoteMint.address,
@@ -110,16 +158,40 @@ export class StakeAccount {
     }
   }
 
-  static async create(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} stakeProgram
+   * @param {PublicKey} stakePool
+   * @param {PublicKey} owner
+   * @returns {Promise<string>}
+   * @memberof StakeAccount
+   */
+  static async create(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<string> {
     const instructions: TransactionInstruction[] = []
     const { address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     await this.withCreate(instructions, stakeProgram, address, owner)
 
-    return await stakeProgram.provider.send(new Transaction().add(...instructions))
+    return stakeProgram.provider.send(new Transaction().add(...instructions))
   }
 
-  static async addStake(stakePool: StakePool, owner: PublicKey, collateralTokenAccount: PublicKey, amount: BN) {
+  /**
+   * TODO:
+   * @static
+   * @param {StakePool} stakePool
+   * @param {PublicKey} owner
+   * @param {PublicKey} collateralTokenAccount
+   * @param {BN} amount
+   * @returns {Promise<string>}
+   * @memberof StakeAccount
+   */
+  static async addStake(
+    stakePool: StakePool,
+    owner: PublicKey,
+    collateralTokenAccount: PublicKey,
+    amount: BN
+  ): Promise<string> {
     const instructions: TransactionInstruction[] = []
 
     const voterTokenAccount = await AssociatedToken.withCreate(
@@ -132,9 +204,18 @@ export class StakeAccount {
     await this.withAddStake(instructions, stakePool, owner, collateralTokenAccount, amount)
     await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
 
-    return await stakePool.program.provider.send(new Transaction().add(...instructions))
+    return stakePool.program.provider.send(new Transaction().add(...instructions))
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {Program} stakeProgram
+   * @param {PublicKey} stakePool
+   * @param {PublicKey} owner
+   * @memberof StakeAccount
+   */
   static async withCreate(
     instructions: TransactionInstruction[],
     stakeProgram: Program,
@@ -166,6 +247,16 @@ export class StakeAccount {
     }
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {StakePool} stakePool
+   * @param {PublicKey} owner
+   * @param {PublicKey} tokenAccount
+   * @param {BN} amount
+   * @memberof StakeAccount
+   */
   static async withAddStake(
     instructions: TransactionInstruction[],
     stakePool: StakePool,
@@ -195,6 +286,16 @@ export class StakeAccount {
     instructions.push(ix)
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {StakePool} stakePool
+   * @param {PublicKey} owner
+   * @param {PublicKey} voterTokenAccount
+   * @param {BN} amount
+   * @memberof StakeAccount
+   */
   static async withMintVotes(
     instructions: TransactionInstruction[],
     stakePool: StakePool,
@@ -225,6 +326,17 @@ export class StakeAccount {
     instructions.push(ix)
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {StakePool} stakePool
+   * @param {StakeAccount} stakeAccount
+   * @param {PublicKey} owner
+   * @param {PublicKey} voterTokenAccount
+   * @param {BN} amount
+   * @memberof StakeAccount
+   */
   static async withBurnVotes(
     instructions: TransactionInstruction[],
     stakePool: StakePool,

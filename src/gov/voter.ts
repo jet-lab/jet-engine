@@ -29,6 +29,16 @@ export interface GovVoterData {
 }
 
 export class GovVoter implements GovVoterData {
+  /**
+   * Creates an instance of GovVoter.
+   * @private
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {PublicKey} owner
+   * @param {BN} deposited
+   * @param {number} activeVotes
+   * @memberof GovVoter
+   */
   private constructor(
     private client: GovClient,
     public address: PublicKey,
@@ -37,21 +47,42 @@ export class GovVoter implements GovVoterData {
     public activeVotes: number
   ) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @returns {Promise<GovVoter>}
+   * @memberof GovVoter
+   */
   static async load(client: GovClient, address: PublicKey): Promise<GovVoter> {
     const data = await client.program.account.voter.fetch(address)
     return this.decode(client, address, data)
   }
 
+  /**
+   * TODO:
+   * @memberof GovVoter
+   */
   async refresh() {
     const voter = await GovVoter.load(this.client, this.address)
-
     this.address = voter.address
     this.owner = voter.owner
     this.deposited = voter.deposited
     this.activeVotes = voter.activeVotes
   }
 
-  private static decode(client: GovClient, address: PublicKey, data: any) {
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {any} data
+   * @returns {GovVoter}
+   * @memberof GovVoter
+   */
+  private static decode(client: GovClient, address: PublicKey, data: any): GovVoter {
     return new GovVoter(client, address, data.owner, data.deposited, data.activeVotes)
   }
 }
@@ -71,6 +102,17 @@ export type VoteAbstain = { abstain: Record<string, never> }
 export type Vote = VoteYes | VoteNo | VoteAbstain
 
 export class GovVoteRecord implements GovVoteRecordData {
+  /**
+   * Creates an instance of GovVoteRecord.
+   * @private
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {PublicKey} proposal
+   * @param {PublicKey} owner
+   * @param {BN} weight
+   * @param {Vote} vote
+   * @memberof GovVoteRecord
+   */
   private constructor(
     private client: GovClient,
     public address: PublicKey,
@@ -80,21 +122,42 @@ export class GovVoteRecord implements GovVoteRecordData {
     public vote: Vote
   ) {}
 
+  /**
+   * TODO:
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @returns {Promise<GovVoteRecord>}
+   * @memberof GovVoteRecord
+   */
   static async load(client: GovClient, address: PublicKey): Promise<GovVoteRecord> {
     const data = await client.program.account.voteRecord.fetch(address)
     return this.decode(client, address, data)
   }
 
+  /**
+   * TODO:
+   * @memberof GovVoteRecord
+   */
   async refresh() {
     const voteRecord = await GovVoteRecord.load(this.client, this.address)
-
     this.address = voteRecord.address
     this.owner = voteRecord.owner
     this.weight = voteRecord.weight
     this.vote = voteRecord.vote
   }
 
-  private static decode(client: GovClient, address: PublicKey, data: any) {
+  /**
+   * TODO:
+   * @private
+   * @static
+   * @param {GovClient} client
+   * @param {PublicKey} address
+   * @param {any} data
+   * @returns {GovVoteRecord}
+   * @memberof GovVoteRecord
+   */
+  private static decode(client: GovClient, address: PublicKey, data: any): GovVoteRecord {
     return new GovVoteRecord(client, address, data.proposal, data.owner, data.weight, data.vote)
   }
 

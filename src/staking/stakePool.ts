@@ -85,7 +85,15 @@ export class StakePool {
   /** The official Jet Stake Pool seed */
   public static readonly CANONICAL_SEED = "JPLock" // FIXME!
 
-  static async load(program: Program, seed: string) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} program
+   * @param {string} seed
+   * @returns {Promise<StakePool>}
+   * @memberof StakePool
+   */
+  static async load(program: Program, seed: string): Promise<StakePool> {
     const addresses = await this.deriveAccounts(program.programId, seed)
 
     const stakePool = (await program.account.StakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
@@ -110,6 +118,17 @@ export class StakePool {
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
 
+  /**
+   * Creates an instance of StakePool.
+   * @param {Program} program
+   * @param {StakePoolAccounts} addresses
+   * @param {StakePoolInfo} stakePool
+   * @param {MintInfo} voteMint
+   * @param {MintInfo} collateralMint
+   * @param {TokenAccountInfo} vault
+   * @param {MintInfo} tokenMint
+   * @memberof StakePool
+   */
   constructor(
     public program: Program,
     public addresses: StakePoolAccounts,
@@ -120,7 +139,14 @@ export class StakePool {
     public tokenMint: MintInfo
   ) {}
 
-  static use(stakeProgram: Program | undefined) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} [stakeProgram]
+   * @returns {*}  {(StakePool | undefined)}
+   * @memberof StakePool
+   */
+  static use(stakeProgram?: Program): StakePool | undefined {
     const [pool, setPool] = useState<StakePool | undefined>()
     useEffect(() => {
       let abort = false
@@ -140,6 +166,14 @@ export class StakePool {
     return pool
   }
 
+  /**
+   * TODO:
+   * @static
+   * @param {PublicKey} programId
+   * @param {string} seed
+   * @returns {Promise<StakePoolAccounts>}
+   * @memberof StakePool
+   */
   static async deriveAccounts(programId: PublicKey, seed: string): Promise<StakePoolAccounts> {
     const stakePool = await findDerivedAccount(programId, seed)
     const stakeVoteMint = await findDerivedAccount(programId, seed, "vote-mint")
@@ -165,7 +199,15 @@ export class StakePool {
     }
   }
 
-  static async create(program: Program, params: CreateStakePoolParams) {
+  /**
+   * TODO:
+   * @static
+   * @param {Program} program
+   * @param {CreateStakePoolParams} params
+   * @returns {Promise<string>}
+   * @memberof StakePool
+   */
+  static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = await this.deriveAccounts(program.programId, params.args.seed)
     const accounts = {
       ...params.accounts,
@@ -175,7 +217,7 @@ export class StakePool {
       rent: SYSVAR_RENT_PUBKEY
     }
 
-    return await program.rpc.initPool(
+    return program.rpc.initPool(
       params.args.seed,
       derivedAccounts.bumps,
       { unbondPeriod: params.args.unbondPeriod },
