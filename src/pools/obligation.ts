@@ -150,22 +150,23 @@ export class JetObligation implements Obligation {
       const price = reserve.priceData.price
       if (price != undefined) {
         if (balance.depositBalance) {
-          depositedValue += parseFloat(balance.depositBalance.muln(price).toString())
+          depositedValue += balance.depositBalance.muln(price).tokens
         }
         if (balance.collateralBalance) {
-          collateralValue += parseFloat(balance.collateralBalance.muln(price).toString())
+          collateralValue += balance.collateralBalance.muln(price).tokens
         }
         if (balance.loanBalance) {
-          loanedValue += parseFloat(balance.loanBalance.muln(price).toString())
+          loanedValue += balance.loanBalance.muln(price).tokens
         }
       }
 
       balances[i] = balance
     }
 
-    // Utilization Rate
-    const collateralRatio = loanedValue === 0 ? 0 : depositedValue / loanedValue
-    const utilizationRate = depositedValue === 0 ? 0 : loanedValue / depositedValue
+    // calculate collateral ratio
+    const collateralRatio = loanedValue === 0 ? 0 : collateralValue / loanedValue
+    //calculate utilization ratio
+    const utilizationRate = collateralValue === 0 ? 0 : loanedValue / collateralValue
 
     return new JetObligation(balances, depositedValue, collateralValue, loanedValue, collateralRatio, utilizationRate)
   }
