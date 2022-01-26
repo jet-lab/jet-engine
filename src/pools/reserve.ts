@@ -357,7 +357,7 @@ export class JetReserve {
       availableLiquidity
     }
     // Derive market reserve values
-    reserve.marketSize = reserve.state.outstandingDebt.addb(reserve.availableLiquidity)
+    reserve.marketSize = reserve.state.outstandingDebt.add(reserve.availableLiquidity)
     reserve.utilizationRate = reserve.marketSize.isZero()
       ? 0
       : reserve.state.outstandingDebt.tokens / reserve.marketSize.tokens
