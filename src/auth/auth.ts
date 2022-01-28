@@ -47,6 +47,28 @@ export class Auth {
   }
 
   /**
+   * Creates an instance of Auth.
+   * @param {UserAuthentication} userAuthentication
+   * @param {PublicKey} address
+   * @memberof Auth
+   */
+  constructor(public userAuthentication: UserAuthentication, public address: PublicKey) {}
+
+  /**
+   * Load and return the user authentication account from the argued public key.
+   * @static
+   * @param {Program} authProgram
+   * @param {PublicKey} user
+   * @returns {Promise<Auth>}
+   * @memberof Auth
+   */
+  static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<Auth> {
+    const { address } = await this.deriveUserAuthentication(user)
+    const userAuthentication = (await authProgram.account.userAuthentication.fetch(address)) as UserAuthentication
+    return new Auth(userAuthentication, address)
+  }
+
+  /**
    * Custom React hook to use the authentication program as state.
    * @static
    * @param {Provider} provider
@@ -78,11 +100,8 @@ export class Auth {
    * @returns {{ authAccount?: UserAuthentication; loading: boolean }}
    * @memberof Auth
    */
-  static useAuthAccount(
-    authProgram?: Program,
-    wallet?: PublicKey | null
-  ): { authAccount?: UserAuthentication; loading: boolean } {
-    const [authAccount, setAuthAccount] = useState<UserAuthentication | undefined>()
+  static useAuthAccount(authProgram?: Program, wallet?: PublicKey | null): { authAccount?: Auth; loading: boolean } {
+    const [authAccount, setAuthAccount] = useState<Auth | undefined>()
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -93,8 +112,7 @@ export class Auth {
           setAuthAccount(undefined)
           return
         }
-        if (authAccount && authAccount.complete) {
-          console.log("Authization complete, allowed? ", authAccount.allowed)
+        if (authAccount && authAccount.userAuthentication.complete) {
           clearInterval(interval)
           return
         }
@@ -119,19 +137,6 @@ export class Auth {
     }, [wallet, authProgram, authAccount])
 
     return { authAccount, loading }
-  }
-
-  /**
-   * Load and return the user authentication account from the argued public key.
-   * @static
-   * @param {Program} authProgram
-   * @param {PublicKey} user
-   * @returns {Promise<UserAuthentication>}
-   * @memberof Auth
-   */
-  static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<UserAuthentication> {
-    const { address: auth } = await this.deriveUserAuthentication(user)
-    return (await authProgram.account.userAuthentication.fetch(auth)) as UserAuthentication
   }
 
   /**
