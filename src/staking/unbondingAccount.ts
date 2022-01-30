@@ -2,7 +2,7 @@ import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "
 import { BN, Program } from "@project-serum/anchor"
 import { DerivedAccount, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
-import { useEffect, useState } from "react"
+import { Hooks } from "../common/hooks"
 
 export interface UnbondingAccountInfo {
   /// The related account requesting to unstake
@@ -62,7 +62,7 @@ export class UnbondingAccount {
    * @returns {Promise<DerivedAccount>}
    * @memberof UnbondingAccount
    */
-  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN): Promise<DerivedAccount> {
+  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN): DerivedAccount {
     return findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
   }
 
@@ -76,7 +76,7 @@ export class UnbondingAccount {
    * @memberof UnbondingAccount
    */
   static async load(program: Program, stakeAccount: PublicKey, seed: BN): Promise<UnbondingAccount> {
-    const { address: address } = await this.deriveUnbondingAccount(program, stakeAccount, seed)
+    const { address: address } = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.UnbondingAccount.fetch(address)
 
@@ -120,25 +120,15 @@ export class UnbondingAccount {
    * @returns {(UnbondingAccount[] | undefined)}
    * @memberof UnbondingAccount
    */
-  static useByStakeAccount(stakeProgram?: Program, stakeAccount?: StakeAccount): UnbondingAccount[] | undefined {
-    const [unbondingAccounts, setUnbondingAccounts] = useState<UnbondingAccount[] | undefined>()
-    useEffect(() => {
-      let abort = false
-
-      if (stakeProgram && stakeAccount) {
-        UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address)
-          .then(newUnbondingAccounts => !abort && setUnbondingAccounts(newUnbondingAccounts))
-          .catch(console.error)
-      } else {
-        setUnbondingAccounts(undefined)
-      }
-
-      return () => {
-        abort = true
-      }
-    }, [stakeProgram, stakeAccount])
-
-    return unbondingAccounts
+  static useByStakeAccount(
+    stakeProgram: Program | undefined,
+    stakeAccount: StakeAccount | undefined
+  ): UnbondingAccount[] | undefined {
+    return Hooks.usePromise(
+      async () =>
+        stakeProgram && stakeAccount && UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address),
+      [stakeProgram, stakeAccount?.address]
+    )
   }
 
   /**
@@ -158,7 +148,7 @@ export class UnbondingAccount {
     unbondingSeed: BN,
     amount: BN
   ) {
-    const { address, bump } = await UnbondingAccount.deriveUnbondingAccount(
+    const { address, bump } = UnbondingAccount.deriveUnbondingAccount(
       stakePool.program,
       stakeAccount.address,
       unbondingSeed

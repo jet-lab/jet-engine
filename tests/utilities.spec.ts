@@ -73,7 +73,7 @@ describe("DerivedAccount", () => {
   let d: DerivedAccount
 
   test("properly instantiates", () => {
-    d = new DerivedAccount(web3.PublicKey.default, 200)
+    d = { address: web3.PublicKey.default, bump: 200 }
   })
 
   test("sets the proper public key", () => {

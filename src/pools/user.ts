@@ -95,7 +95,7 @@ export class JetUser implements JetUserData {
     reserves: JetReserve[],
     address: PublicKey
   ): Promise<JetUser> {
-    const obligationAccount = await market.getAssociatedObligationAddress(address)
+    const obligationAccount = market.getAssociatedObligationAddress(address)
     const user = new JetUser(client, market, reserves, address, obligationAccount)
 
     await user.refresh()
@@ -173,8 +173,8 @@ export class JetUser implements JetUserData {
   async makeLiquidateDexTx(loanReserve: JetReserve, collateralReserve: JetReserve): Promise<Transaction> {
     const loanDexAccounts = await loanReserve.loadDexMarketAccounts()
     const collateralDexAccounts = await collateralReserve.loadDexMarketAccounts()
-    const loanAccounts = await this.findReserveAccounts(loanReserve)
-    const collateralAccounts = await this.findReserveAccounts(collateralReserve)
+    const loanAccounts = this.findReserveAccounts(loanReserve)
+    const collateralAccounts = this.findReserveAccounts(collateralReserve)
 
     const tx = new Transaction()
     tx.add(loanReserve.makeRefreshIx())
@@ -283,8 +283,8 @@ export class JetUser implements JetUserData {
     amount: Amount,
     minCollateral: anchor.BN
   ): Promise<Transaction> {
-    const { loan } = await this.findReserveAccounts(loanReserve)
-    const { collateral } = await this.findReserveAccounts(collateralReserve)
+    const { loan } = this.findReserveAccounts(loanReserve)
+    const { collateral } = this.findReserveAccounts(collateralReserve)
 
     const tx = new Transaction()
     tx.add(loanReserve.makeRefreshIx())
@@ -357,7 +357,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeRepayTx(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
-    const { loan } = await this.findReserveAccounts(reserve)
+    const { loan } = this.findReserveAccounts(reserve)
     const tx = new Transaction()
     tx.add(reserve.makeRefreshIx())
     tx.add(this.makeRepayIx(reserve, loan, tokenAccount, amount))
@@ -415,7 +415,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeWithdrawCollateralTx(reserve: JetReserve, amount: Amount): Promise<Transaction> {
-    const { collateral, deposits } = await this.findReserveAccounts(reserve)
+    const { collateral, deposits } = this.findReserveAccounts(reserve)
     const bumpSeeds = {
       collateralAccount: collateral.bump,
       depositAccount: deposits.bump
@@ -479,7 +479,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeWithdrawTx(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
     tx.add(reserve.makeRefreshIx())
     tx.add(this.makeWithdrawIx(reserve, accounts.deposits, tokenAccount, amount))
@@ -538,7 +538,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeDepositTx(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
-    const { deposits } = await this.findReserveAccounts(reserve)
+    const { deposits } = this.findReserveAccounts(reserve)
     const depositAccountInfo = await this.conn.getAccountInfo(deposits.address)
 
     const tx = new Transaction()
@@ -604,7 +604,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeDepositCollateralTx(reserve: JetReserve, amount: Amount): Promise<Transaction> {
-    const { collateral, deposits } = await this.findReserveAccounts(reserve)
+    const { collateral, deposits } = this.findReserveAccounts(reserve)
     const obligationAccountInfo = await this.conn.getAccountInfo(this.obligation.address)
     const collateralAccountInfo = await this.conn.getAccountInfo(collateral.address)
 
@@ -675,7 +675,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   async makeBorrowTx(reserve: JetReserve, receiver: PublicKey, amount: Amount): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
     const loanAccountInfo = await this.conn.getAccountInfo(accounts.loan.address)
 
     const tx = new Transaction()
@@ -694,7 +694,7 @@ export class JetUser implements JetUserData {
     return await this.client.program.provider.send(tx)
   }
   async closeDepositAccountTx(reserve: JetReserve, receiver: PublicKey): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
     tx.add(reserve.makeRefreshIx())
     tx.add(
@@ -720,7 +720,7 @@ export class JetUser implements JetUserData {
     return await this.client.program.provider.send(tx)
   }
   async closeCollateralAccountTx(reserve: JetReserve): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
     tx.add(
       this.client.program.instruction.closeCollateralAccount(accounts.collateral.bump, {
@@ -743,7 +743,7 @@ export class JetUser implements JetUserData {
     return await this.client.program.provider.send(tx)
   }
   async closeLoanAccountTx(reserve: JetReserve): Promise<Transaction> {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
     tx.add(
       this.client.program.instruction.closeLoanAccount(accounts.loan.bump, {
@@ -930,7 +930,7 @@ export class JetUser implements JetUserData {
    * @memberof JetUser
    */
   private async refreshReserve(reserve: JetMarketReserveInfo) {
-    const accounts = await this.findReserveAccounts(reserve)
+    const accounts = this.findReserveAccounts(reserve)
 
     await this.refreshAccount(this._deposits, accounts.deposits)
     await this.refreshAccount(this._loans, accounts.loan)
@@ -978,18 +978,18 @@ export class JetUser implements JetUserData {
    * @returns {Promise<UserReserveAccounts>}
    * @memberof JetUser
    */
-  private async findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): Promise<UserReserveAccounts> {
+  private findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): UserReserveAccounts {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = await findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
-    const loan = await findDerivedAccount(
+    const deposits = findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
+    const loan = findDerivedAccount(
       this.client.program.programId,
       "loan",
       reserveAddress,
       this.obligation.address,
       this.address
     )
-    const collateral = await findDerivedAccount(
+    const collateral = findDerivedAccount(
       this.client.program.programId,
       "collateral",
       reserveAddress,

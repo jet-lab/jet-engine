@@ -5,7 +5,7 @@ import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { DerivedAccount } from "../common/associatedToken"
-import { useEffect, useState } from "react"
+import { Hooks } from "../common/hooks"
 
 export interface StakePoolAccounts {
   accounts: {
@@ -94,7 +94,7 @@ export class StakePool {
    * @memberof StakePool
    */
   static async load(program: Program, seed: string): Promise<StakePool> {
-    const addresses = await this.deriveAccounts(program.programId, seed)
+    const addresses = this.deriveAccounts(program.programId, seed)
 
     const stakePool = (await program.account.StakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
 
@@ -146,24 +146,11 @@ export class StakePool {
    * @returns {*}  {(StakePool | undefined)}
    * @memberof StakePool
    */
-  static use(stakeProgram?: Program): StakePool | undefined {
-    const [pool, setPool] = useState<StakePool | undefined>()
-    useEffect(() => {
-      let abort = false
-      if (stakeProgram) {
-        StakePool.load(stakeProgram, StakePool.CANONICAL_SEED)
-          .then(newPool => !abort && setPool(newPool))
-          .catch(console.error)
-      } else {
-        setPool(undefined)
-      }
-
-      return () => {
-        abort = true
-      }
-    }, [stakeProgram])
-
-    return pool
+  static use(stakeProgram: Program | undefined): StakePool | undefined {
+    return Hooks.usePromise(
+      async () => stakeProgram && StakePool.load(stakeProgram, StakePool.CANONICAL_SEED),
+      [stakeProgram]
+    )
   }
 
   /**
@@ -174,11 +161,11 @@ export class StakePool {
    * @returns {Promise<StakePoolAccounts>}
    * @memberof StakePool
    */
-  static async deriveAccounts(programId: PublicKey, seed: string): Promise<StakePoolAccounts> {
-    const stakePool = await findDerivedAccount(programId, seed)
-    const stakeVoteMint = await findDerivedAccount(programId, seed, "vote-mint")
-    const stakeCollateralMint = await findDerivedAccount(programId, seed, "collateral-mint")
-    const stakePoolVault = await findDerivedAccount(programId, seed, "vault")
+  static deriveAccounts(programId: PublicKey, seed: string): StakePoolAccounts {
+    const stakePool = findDerivedAccount(programId, seed)
+    const stakeVoteMint = findDerivedAccount(programId, seed, "vote-mint")
+    const stakeCollateralMint = findDerivedAccount(programId, seed, "collateral-mint")
+    const stakePoolVault = findDerivedAccount(programId, seed, "vault")
     return {
       accounts: {
         stakePool: stakePool.address,
@@ -208,7 +195,7 @@ export class StakePool {
    * @memberof StakePool
    */
   static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
-    const derivedAccounts = await this.deriveAccounts(program.programId, params.args.seed)
+    const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
     const accounts = {
       ...params.accounts,
       ...derivedAccounts.accounts,

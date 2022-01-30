@@ -1,10 +1,11 @@
 import { Idl, Program, Provider } from "@project-serum/anchor"
+import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
 import { useMemo } from "react"
 import { DerivedAccount } from "./associatedToken"
 
 export * from "./tokenAmount"
-export { Airdrop } from "./airdrop"
+export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
 export { DerivedAccount } from "./associatedToken"
@@ -19,10 +20,7 @@ export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: Public
  * @returns {Promise<DerivedAccount>}
  * @memberof JetClient
  */
-export async function findDerivedAccount(
-  programId: PublicKey,
-  ...seeds: DerivedAccountSeed[]
-): Promise<DerivedAccount> {
+export function findDerivedAccount(programId: PublicKey, ...seeds: DerivedAccountSeed[]): DerivedAccount {
   const seedBytes = seeds.map(s => {
     if (typeof s == "string") {
       return Buffer.from(s)
@@ -35,8 +33,8 @@ export async function findDerivedAccount(
     }
   })
 
-  const [address, bumpSeed] = await PublicKey.findProgramAddress(seedBytes, programId)
-  return new DerivedAccount(address, bumpSeed)
+  const [address, bump] = findProgramAddressSync(seedBytes, programId)
+  return { address, bump }
 }
 
 /**
@@ -46,7 +44,7 @@ export async function findDerivedAccount(
  * @returns {Promise<Program<Idl>>} The client
  * @memberof JetClient
  */
-export async function connect(provider: Provider, programId: PublicKey): Promise<Program<Idl>> {
+export async function connect(programId: PublicKey, provider: Provider): Promise<Program<Idl>> {
   const idl = await Program.fetchIdl(programId, provider)
 
   if (!idl) {

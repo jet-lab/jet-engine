@@ -455,15 +455,15 @@ export class JetReserve {
    * @returns {Promise<ReserveAccounts>}
    * @memberof JetReserve
    */
-  static async deriveAccounts(client: JetClient, address: PublicKey, tokenMint: PublicKey): Promise<ReserveAccounts> {
+  static deriveAccounts(client: JetClient, address: PublicKey, tokenMint: PublicKey): ReserveAccounts {
     return {
-      vault: await findDerivedAccount(client.program.programId, StaticSeeds.Vault, address),
-      feeNoteVault: await findDerivedAccount(client.program.programId, StaticSeeds.FeeVault, address),
-      dexSwapTokens: await findDerivedAccount(client.program.programId, StaticSeeds.DexSwapTokens, address),
-      dexOpenOrders: await findDerivedAccount(client.program.programId, StaticSeeds.DexOpenOrders, address),
+      vault: findDerivedAccount(client.program.programId, StaticSeeds.Vault, address),
+      feeNoteVault: findDerivedAccount(client.program.programId, StaticSeeds.FeeVault, address),
+      dexSwapTokens: findDerivedAccount(client.program.programId, StaticSeeds.DexSwapTokens, address),
+      dexOpenOrders: findDerivedAccount(client.program.programId, StaticSeeds.DexOpenOrders, address),
 
-      loanNoteMint: await findDerivedAccount(client.program.programId, StaticSeeds.Loans, address, tokenMint),
-      depositNoteMint: await findDerivedAccount(client.program.programId, StaticSeeds.Deposits, address, tokenMint)
+      loanNoteMint: findDerivedAccount(client.program.programId, StaticSeeds.Loans, address, tokenMint),
+      depositNoteMint: findDerivedAccount(client.program.programId, StaticSeeds.Deposits, address, tokenMint)
     }
   }
 
