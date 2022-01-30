@@ -4,6 +4,7 @@ import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js"
 import { useEffect, useState } from "react"
 import { connect, DerivedAccount, findDerivedAccount } from "../common"
 import { PubkeyField } from "../common/accountParser"
+import { Hooks } from "../common/hooks"
 
 export interface UserAuthentication {
   /** The relevant user address */
@@ -31,7 +32,7 @@ export class Auth {
    * @returns {Promise<DerivedAccount>}
    * @memberof Auth
    */
-  static deriveUserAuthentication(user: PublicKey): Promise<DerivedAccount> {
+  static deriveUserAuthentication(user: PublicKey): DerivedAccount {
     return findDerivedAccount(Auth.PROGRAM_ID, user)
   }
 
@@ -43,7 +44,7 @@ export class Auth {
    * @memberof Auth
    */
   static connect(provider: Provider): Promise<Program<Idl>> {
-    return connect(provider, Auth.PROGRAM_ID)
+    return connect(Auth.PROGRAM_ID, provider)
   }
 
   /**
@@ -63,7 +64,7 @@ export class Auth {
    * @memberof Auth
    */
   static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<Auth> {
-    const { address } = await this.deriveUserAuthentication(user)
+    const { address } = this.deriveUserAuthentication(user)
     const userAuthentication = (await authProgram.account.userAuthentication.fetch(address)) as UserAuthentication
     return new Auth(userAuthentication, address)
   }
@@ -76,20 +77,7 @@ export class Auth {
    * @memberof Auth
    */
   static useAuthProgram(provider: Provider): Program<Idl> | undefined {
-    const [program, setProgram] = useState<Program | undefined>()
-
-    useEffect(() => {
-      let abort = false
-      Auth.connect(provider)
-        .then(newProgram => !abort && setProgram(newProgram))
-        .catch(console.error)
-
-      return () => {
-        abort = true
-      }
-    }, [provider])
-
-    return program
+    return Hooks.usePromise(async () => Auth.connect(provider), [provider])
   }
 
   /**
@@ -150,7 +138,7 @@ export class Auth {
    * @memberof Auth
    */
   static async createUserAuth(authProgram: Program, user: PublicKey, payer: PublicKey): Promise<Transaction> {
-    const { address: auth, bump } = await this.deriveUserAuthentication(user)
+    const { address: auth, bump } = this.deriveUserAuthentication(user)
     return authProgram.transaction.createUserAuth(bump, {
       accounts: {
         user,

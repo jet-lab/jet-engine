@@ -4,7 +4,7 @@ import BN from "bn.js"
 import { AssociatedToken } from "./associatedToken"
 import { Provider } from "@project-serum/anchor"
 
-export class Airdrop {
+export class TokenFaucet {
   /**
    * Airdrop faucet program public key.
    * @static

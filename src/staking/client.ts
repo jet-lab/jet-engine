@@ -16,8 +16,9 @@
  */
 
 import { Idl, Program, Provider } from "@project-serum/anchor"
-import { useEffect, useState } from "react"
 import { JET_STAKE_ID } from "."
+import { connect } from "../common"
+import { Hooks } from "../common/hooks"
 
 /**
  * TODO:
@@ -26,26 +27,13 @@ import { JET_STAKE_ID } from "."
  */
 export class StakeClient {
   /**
-   * Creates an instance of StakeClient.
-   * @param {Program<Jet>} program
-   * @param {boolean} [devnet]
-   * @memberof JetClient
-   */
-  private constructor(public program: Program) {}
-
-  /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
-   * @returns {Promise<JetClient>} The client
-   * @memberof JetClient
+   * @returns {Promise<Program>} The client
+   * @memberof StakeClient
    */
   static async connect(provider: Provider): Promise<Program> {
-    const idl = await Program.fetchIdl(JET_STAKE_ID, provider)
-
-    if (!idl) {
-      throw new Error("Program lacks an IDL account.")
-    }
-    const program = new Program(idl, JET_STAKE_ID, provider)
+    const program = await connect(JET_STAKE_ID, provider)
 
     // FIXME! this is a workaround for bad types
     const acc = program.account
@@ -64,19 +52,6 @@ export class StakeClient {
    * @memberof StakeClient
    */
   static use(provider: Provider): Program<Idl> | undefined {
-    const [program, setProgram] = useState<Program | undefined>()
-
-    useEffect(() => {
-      let abort = false
-      StakeClient.connect(provider)
-        .then(newProgram => !abort && setProgram(newProgram))
-        .catch(console.error)
-
-      return () => {
-        abort = true
-      }
-    }, [provider])
-
-    return program
+    return Hooks.usePromise(async () => StakeClient.connect(provider), [provider])
   }
 }

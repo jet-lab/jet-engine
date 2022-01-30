@@ -257,7 +257,7 @@ export class JetMarket implements JetMarketData {
    * @returns {Promise<DerivedAccount>}
    * @memberof JetClient
    */
-  async getAssociatedObligationAddress(borrower: PublicKey): Promise<DerivedAccount> {
+  getAssociatedObligationAddress(borrower: PublicKey): DerivedAccount {
     return findDerivedAccount(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
   }
 }
