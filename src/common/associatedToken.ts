@@ -19,6 +19,7 @@ export interface DerivedAccount {
 }
 
 export class AssociatedToken {
+  address: PublicKey
   /**
    * Get the address for the associated token account
    * @static
@@ -55,7 +56,21 @@ export class AssociatedToken {
       return undefined
     }
     const info = parseTokenAccount(account.data, address)
-    return new AssociatedToken(address, account, info)
+    return new AssociatedToken(account, info)
+  }
+
+  static async loadMultipleAux(
+    connection: Connection,
+    addresses: PublicKey[]
+  ): Promise<(AssociatedToken | undefined)[]> {
+    const accounts = await connection.getMultipleAccountsInfo(addresses)
+    return accounts.map((account, i) => {
+      if (!account) {
+        return undefined
+      }
+      const info = parseTokenAccount(account.data, addresses[i])
+      return new AssociatedToken(account, info)
+    })
   }
 
   /**
@@ -81,8 +96,8 @@ export class AssociatedToken {
    * @param {TokenAccountInfo} info
    * @memberof AssociatedToken
    */
-  constructor(public address: PublicKey, public account: AccountInfo<Buffer>, public info: TokenAccountInfo) {
-    return
+  constructor(public account: AccountInfo<Buffer>, public info: TokenAccountInfo) {
+    this.address = info.address
   }
 
   /**

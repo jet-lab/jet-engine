@@ -78,7 +78,7 @@ export class UnbondingAccount {
   static async load(program: Program, stakeAccount: PublicKey, seed: BN): Promise<UnbondingAccount> {
     const { address: address } = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
-    const unbondingAccount = await program.account.UnbondingAccount.fetch(address)
+    const unbondingAccount = await program.account.unbondingAccount.fetch(address)
 
     return new UnbondingAccount(address, unbondingAccount as any)
   }

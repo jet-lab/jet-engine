@@ -4,6 +4,7 @@ import BN from "bn.js"
 import { AssociatedToken, DerivedAccount, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
+import { AirdropTargetsStruct } from "./layout"
 
 export interface AirdropInfo {
   /**
@@ -144,6 +145,8 @@ export interface AirdropTarget {
 }
 
 export class Airdrop {
+  targetInfo: AirdropTargetInfo
+
   /**
    * Derives the reward vault for the airdrop
    *
@@ -172,7 +175,34 @@ export class Airdrop {
     if (!rewardsVault) {
       throw new Error("Rewards vault is undefined")
     }
-    return new Airdrop(airdropAddress, rewardsVaultAddress, airdrop, rewardsVault)
+    return new Airdrop(airdropAddress, rewardsVaultAddress.address, airdrop, rewardsVault)
+  }
+
+  static async loadAll(rewardsProgram: Program): Promise<Airdrop[]> {
+    const airdropInfos = await rewardsProgram.account.airdrop.all()
+    const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey).address)
+    const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
+    const airdrops: Airdrop[] = []
+    for (let i = 0; i < airdropInfos.length; i++) {
+      const airdropInfo = airdropInfos[i]
+      const rewardVaultAddress = rewardVaultAddresses[i]
+      const rewardVault = rewardVaults[i]
+      if (!rewardVault) {
+        throw new Error(`Rewards vault at ${rewardVaultAddress.toBase58()} is undefined`)
+      }
+      const airdrop = new Airdrop(
+        airdropInfo.publicKey,
+        rewardVaultAddress,
+        airdropInfo.account as AirdropInfo,
+        rewardVault
+      )
+      airdrops.push(airdrop)
+    }
+    return airdrops
+  }
+
+  private static decodeTargetInfo(targetInfo: number[]) {
+    return AirdropTargetsStruct.decode(new Uint8Array(targetInfo)) as AirdropTargetInfo
   }
 
   /**
@@ -185,10 +215,12 @@ export class Airdrop {
    */
   constructor(
     public airdropAddress: PublicKey,
-    public rewardsVaultAddress: DerivedAccount,
+    public rewardsVaultAddress: PublicKey,
     public airdrop: AirdropInfo,
     public rewardsVault: AssociatedToken
-  ) {}
+  ) {
+    this.targetInfo = Airdrop.decodeTargetInfo(airdrop.targetInfo)
+  }
 
   /**
    * React hook to use the airdrop account and its hook
@@ -204,5 +236,13 @@ export class Airdrop {
       async () => rewardsProgram && airdrop && Airdrop.load(rewardsProgram, airdrop),
       [rewardsProgram, airdrop]
     )
+  }
+
+  static useAll(rewardsProgram: Program | undefined): Airdrop[] | undefined {
+    return Hooks.usePromise(async () => rewardsProgram && Airdrop.loadAll(rewardsProgram), [rewardsProgram])
+  }
+
+  getRecipient(wallet: PublicKey) {
+    return this.targetInfo.recipients.find(recipient => wallet.equals(recipient.recipient))
   }
 }

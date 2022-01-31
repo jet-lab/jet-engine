@@ -96,7 +96,7 @@ export class StakePool {
   static async load(program: Program, seed: string): Promise<StakePool> {
     const addresses = this.deriveAccounts(program.programId, seed)
 
-    const stakePool = (await program.account.StakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
+    const stakePool = (await program.account.stakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
 
     const [voteMintInfo, collateralMintInfo, vaultInfo, tokenMintInfo] =
       await program.provider.connection.getMultipleAccountsInfo([

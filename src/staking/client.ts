@@ -33,15 +33,7 @@ export class StakeClient {
    * @memberof StakeClient
    */
   static async connect(provider: Provider): Promise<Program> {
-    const program = await connect(JET_STAKE_ID, provider)
-
-    // FIXME! this is a workaround for bad types
-    const acc = program.account
-    acc.StakePool = (acc as any).stakePool
-    acc.StakeAccount = (acc as any).stakeAccount
-    acc.UnbondingAccount = (acc as any).unbondingAccount
-
-    return program
+    return await connect(JET_STAKE_ID, provider)
   }
 
   /**
