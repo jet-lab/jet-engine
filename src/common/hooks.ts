@@ -8,8 +8,7 @@ export class Hooks {
       let abort = false
       promiseFactory()
         .then(newState => !abort && setState(newState))
-        .catch(err => {
-          console.log(err)
+        .catch(() => {
           !abort && setState(undefined)
         })
       return () => {

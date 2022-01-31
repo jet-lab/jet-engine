@@ -57,11 +57,11 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
-    const { address: address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const { address: address } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
 
-    return new StakeAccount(stakeProgram, address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
+    return new StakeAccount(stakeProgram, address, stakeAccount as StakeAccountInfo)
   }
 
   /**
