@@ -5,6 +5,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { AssociatedToken, DerivedAccount } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
+import { Auth } from "../auth"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -218,7 +219,7 @@ export class StakeAccount {
     stakePool: PublicKey,
     owner: PublicKey
   ) {
-    const { address: stakeAccount, bump: bumpSeed } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const { address: stakeAccount, bump } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const info = await stakeProgram.provider.connection.getAccountInfo(stakeAccount)
 
@@ -229,13 +230,16 @@ export class StakeAccount {
     // 4) If the account exists, should we error or not
 
     if (!info) {
-      console.log("Creating the stake account.")
-      const ix = stakeProgram.instruction.initStakeAccount(bumpSeed, {
+      const { address: auth } = Auth.deriveUserAuthentication(owner)
+      const payer = stakeProgram.provider.wallet.publicKey
+
+      const ix = stakeProgram.instruction.initStakeAccount(bump, {
         accounts: {
           owner,
-          payer: stakeProgram.provider.wallet.publicKey,
-          stakeAccount,
+          auth,
           stakePool,
+          stakeAccount,
+          payer,
           systemProgram: SystemProgram.programId
         }
       })
