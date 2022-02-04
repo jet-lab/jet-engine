@@ -151,7 +151,7 @@ export class Distribution {
    */
   static async load(rewardsProgram: Program, seed: string): Promise<Distribution> {
     const addresses = Distribution.derive(seed)
-    const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault.address)
+    const vault = await AssociatedToken.loadBy(rewardsProgram.provider.connection, addresses.vault.address)
     const distribution = (await rewardsProgram.account.distribution.fetch(
       addresses.distribution.address
     )) as DistributionInfo

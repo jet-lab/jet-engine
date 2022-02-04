@@ -89,7 +89,7 @@ export class Award {
   static async load(rewardsProgram: Program, stakeAccount: PublicKey, seed: string): Promise<Award> {
     const addresses = this.derive(stakeAccount, seed)
     const award = (await rewardsProgram.account.award.fetch(addresses.award.address)) as AwardInfo
-    const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault.address)
+    const vault = await AssociatedToken.loadBy(rewardsProgram.provider.connection, addresses.vault.address)
     if (!vault) {
       throw new Error("Vault is undefined")
     }

@@ -47,10 +47,10 @@ export class AssociatedToken {
    */
   static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
     const address = this.derive(mint, owner)
-    return await this.loadAux(connection, address)
+    return await this.loadBy(connection, address)
   }
 
-  static async loadAux(connection: Connection, address: PublicKey) {
+  static async loadBy(connection: Connection, address: PublicKey) {
     const account = await connection.getAccountInfo(address)
     if (!account) {
       return undefined
@@ -125,9 +125,9 @@ export class AssociatedToken {
    * @returns {(TokenAccountInfo | undefined)}
    * @memberof AssociatedToken
    */
-  static useAux(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
+  static useATA(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
     return Hooks.usePromise(
-      async () => connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
+      async () => connection && tokenAddress && AssociatedToken.loadBy(connection, tokenAddress),
       [connection, tokenAddress]
     )
   }
@@ -147,7 +147,7 @@ export class AssociatedToken {
     owner: PublicKey | undefined
   ): AssociatedToken | undefined {
     const tokenAddress = this.useAddress(mint, owner)
-    const tokenAccount = this.useAux(connection, tokenAddress)
+    const tokenAccount = this.useATA(connection, tokenAddress)
     return tokenAccount
   }
 
