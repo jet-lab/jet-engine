@@ -310,7 +310,7 @@ export class StakeAccount {
     )
 
     const ix = stakePool.program.instruction.mintVotes(
-      { kind: { tokens: {} }, amount },
+      { kind: { tokens: {} }, value: amount },
       {
         accounts: {
           owner: owner,
