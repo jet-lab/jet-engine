@@ -131,24 +131,19 @@ export class UnbondingAccount {
     )
   }
 
-    /**
+  /**
    * TODO:
    * @static
    * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
    * @returns {number}
    * @memberof UnbondingAccount
    */
-     static useUnbondingAmountTotal(
-      unbondingAccounts: UnbondingAccount[] | undefined,
-    ): number {
-      const unbondingTokens: BN[] = []
-
-      unbondingAccounts?.forEach(acc => unbondingTokens.push(acc.unbondingAccount.amount.tokens))
-
-      const unbondingAmountTotal = unbondingAccounts && bnToNumber(unbondingTokens.reduce((a, b) => a.iadd(b)))
-
-      return unbondingAmountTotal ?? 0
-    }
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
+    const unbondingTokens: BN[] = []
+    unbondingAccounts?.forEach(acc => unbondingTokens.push(acc.unbondingAccount.amount.tokens))
+    const unbondingAmountTotal = unbondingAccounts && bnToNumber(unbondingTokens.reduce((a, b) => a.iadd(b)))
+    return unbondingAmountTotal ?? 0
+  }
 
   /**
    * TODO:
