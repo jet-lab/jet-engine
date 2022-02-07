@@ -18,7 +18,7 @@ const cluster = mainnet ?
   "https://api.mainnet.solana.com" :
   "https://api.devnet.solana.com"
 
-const seed = "JET"
+const seed = StakePool.CANONICAL_SEED
 
 /** The address allowed to sign for changes to the pool,
     and management of the token balance. */
