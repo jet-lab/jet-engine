@@ -64,9 +64,6 @@ export interface StakePoolInfo {
 
 interface CreateStakePoolParams {
   accounts: {
-    /** The address paying to create this pool */
-    payer: PublicKey
-
     /** The address allowed to sign for changes to the pool,
      and management of the token balance. */
     authority: PublicKey
@@ -197,6 +194,7 @@ export class StakePool {
   static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
     const accounts = {
+      payer: program.provider.wallet.publicKey,
       ...params.accounts,
       ...derivedAccounts.accounts,
       tokenProgram: TOKEN_PROGRAM_ID,
