@@ -80,7 +80,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "JPLock" // FIXME!
+  public static readonly CANONICAL_SEED = "JET"
 
   /**
    * TODO:
