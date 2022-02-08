@@ -89,7 +89,7 @@ export class JetClient {
   /**
    * @static
    * @param {Provider} provider
-   * @returns {(Program<Idl> | undefined)}
+   * @returns {(JetClient | undefined)} JetClient | undefined
    * @memberof JetClient
    */
   static use(provider: Provider): JetClient | undefined {

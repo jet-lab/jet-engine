@@ -179,7 +179,6 @@ export class JetReserve {
    * @returns {JetReserve[]} JetReserve[]
    * @memberof JetReserve
    */
-
   static use(client: JetClient, market: JetMarket): JetReserve[] | undefined {
     return Hooks.usePromise(async () => client && market && JetReserve.loadMultiple(client, market), [client, market])
   }
