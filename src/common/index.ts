@@ -9,6 +9,7 @@ export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
 export { DerivedAccount } from "./associatedToken"
+export { Hooks } from "./hooks"
 
 export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
 
