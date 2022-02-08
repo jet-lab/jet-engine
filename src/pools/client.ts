@@ -86,13 +86,13 @@ export class JetClient {
     return this.program.coder.accounts.encode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
   }
 
-   /**
+  /**
    * @static
    * @param {Provider} provider
    * @returns {(Program<Idl> | undefined)}
    * @memberof JetClient
    */
-    static use(provider: Provider): JetClient | undefined {
-      return Hooks.usePromise(async () => provider &&JetClient.connect(provider), [provider])
-    }
+  static use(provider: Provider): JetClient | undefined {
+    return Hooks.usePromise(async () => provider && JetClient.connect(provider), [provider])
+  }
 }
