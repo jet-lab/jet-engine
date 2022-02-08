@@ -1,6 +1,6 @@
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { DerivedAccount, findDerivedAccount } from "../common"
+import { bnToNumber, DerivedAccount, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
 
@@ -129,6 +129,20 @@ export class UnbondingAccount {
         stakeProgram && stakeAccount && UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address),
       [stakeProgram, stakeAccount?.address]
     )
+  }
+
+  /**
+   * TODO:
+   * @static
+   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
+   * @returns {number}
+   * @memberof UnbondingAccount
+   */
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
+    const unbondingTokens: BN[] = []
+    unbondingAccounts?.forEach(acc => unbondingTokens.push(acc.unbondingAccount.amount.tokens))
+    const unbondingAmountTotal = unbondingAccounts && bnToNumber(unbondingTokens.reduce((a, b) => a.add(b)))
+    return unbondingAmountTotal ?? 0
   }
 
   /**
