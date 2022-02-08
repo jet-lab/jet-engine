@@ -64,9 +64,6 @@ export interface StakePoolInfo {
 
 interface CreateStakePoolParams {
   accounts: {
-    /** The address paying to create this pool */
-    payer: PublicKey
-
     /** The address allowed to sign for changes to the pool,
      and management of the token balance. */
     authority: PublicKey
@@ -83,7 +80,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "JPLock" // FIXME!
+  public static readonly CANONICAL_SEED = "JET"
 
   /**
    * TODO:
@@ -197,6 +194,7 @@ export class StakePool {
   static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
     const accounts = {
+      payer: program.provider.wallet.publicKey,
       ...params.accounts,
       ...derivedAccounts.accounts,
       tokenProgram: TOKEN_PROGRAM_ID,

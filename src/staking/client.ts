@@ -38,7 +38,7 @@ export class StakeClient {
     return await connect(JET_STAKE_ID, provider)
     // const program = await connect(StakeClient.PROGRAM_ID, provider)
 
-    // // FIXME! this is a workaround for bad types
+    // FIXME! this is a workaround for bad types
     // const acc = program.account
     // acc.StakePool = (acc as any).stakePool
     // acc.StakeAccount = (acc as any).stakeAccount
