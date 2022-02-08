@@ -32,6 +32,7 @@ import { TokenAmount } from ".."
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { findDerivedAccount } from "../common"
 import { DerivedAccount } from "../common/associatedToken"
+import { Hooks } from "../common"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -96,6 +97,8 @@ export interface CreateReserveParams {
 }
 
 export interface ReserveData {
+  name: string, //added name of the reserve
+  symbol: string 
   address: PublicKey
   index: number
   market: PublicKey
@@ -117,7 +120,6 @@ export interface ReserveData {
   ccRate: number
   borrowApr: number
   depositApy: number
-
   priceData: PriceData
   productData: ProductData
 }
@@ -169,6 +171,19 @@ export class JetReserve {
   constructor(public client: JetClient, public market: JetMarket, public data: ReserveData) {
     this.conn = this.client.program.provider.connection
   }
+
+  /**
+   * @static
+   * @param {JetClient} client 
+   * @param {JetMarket} market 
+   * @returns {JetReserve[]} JetReserve[]
+   * @memberof JetReserve
+   */
+
+  static use(client: JetClient, market:JetMarket): JetReserve[] | undefined {
+    return Hooks.usePromise(async() => client && market && JetReserve.loadMultiple(client, market), [client, market])
+  }
+
 
   /**
    * Load a `Reserve` program account.

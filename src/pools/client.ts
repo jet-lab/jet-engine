@@ -22,6 +22,7 @@ import { ObligationAccount } from "./types"
 import { JET_ID } from "."
 import { PositionInfoStructList } from "./layout"
 import { parsePosition } from "./util"
+import { Hooks } from "../common/hooks"
 
 /**
  * TODO:
@@ -84,4 +85,14 @@ export class JetClient {
   encodeObligation(o: ObligationAccount): Promise<Buffer> {
     return this.program.coder.accounts.encode<ObligationAccount>(JetClient.OBLIGATION_ACCOUNT_NAME, o)
   }
+
+   /**
+   * @static
+   * @param {Provider} provider
+   * @returns {(Program<Idl> | undefined)}
+   * @memberof JetClient
+   */
+    static use(provider: Provider): JetClient | undefined {
+      return Hooks.usePromise(async () => provider &&JetClient.connect(provider), [provider])
+    }
 }
