@@ -82,10 +82,10 @@ export class JetUser implements JetUserData {
 
   /**
    * @static
-   * @param {JetClient} client 
-   * @param {JetMarket} market 
-   * @param {JetReserve[]} reserves 
-   * @param {PublicKey} address 
+   * @param {JetClient} client
+   * @param {JetMarket} market
+   * @param {JetReserve[]} reserves
+   * @param {PublicKey} address
    * @returns {(JetUser | undefined)} JetUser | undefined
    * @memberof JetUser
    */
