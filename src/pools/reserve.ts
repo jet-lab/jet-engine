@@ -97,8 +97,8 @@ export interface CreateReserveParams {
 }
 
 export interface ReserveData {
-  name: string, //added name of the reserve
-  symbol: string 
+  name: string //added name of the reserve
+  symbol: string
   address: PublicKey
   index: number
   market: PublicKey
@@ -174,16 +174,15 @@ export class JetReserve {
 
   /**
    * @static
-   * @param {JetClient} client 
-   * @param {JetMarket} market 
+   * @param {JetClient} client
+   * @param {JetMarket} market
    * @returns {JetReserve[]} JetReserve[]
    * @memberof JetReserve
    */
 
-  static use(client: JetClient, market:JetMarket): JetReserve[] | undefined {
-    return Hooks.usePromise(async() => client && market && JetReserve.loadMultiple(client, market), [client, market])
+  static use(client: JetClient, market: JetMarket): JetReserve[] | undefined {
+    return Hooks.usePromise(async () => client && market && JetReserve.loadMultiple(client, market), [client, market])
   }
-
 
   /**
    * Load a `Reserve` program account.

@@ -36,7 +36,7 @@ export type Position = {
   maxWithdrawAmount: TokenAmount
   maxBorrowAmount: TokenAmount
   maxRepayAmount: TokenAmount
-  walletBalances: Record<string, Asset> //create Asset 
+  walletBalances: Record<string, Asset> //create Asset
 }
 
 export interface Obligation {
@@ -75,27 +75,45 @@ export class JetObligation implements Obligation {
   ) {}
 
   /**
-   * 
-   * @param {JetClient} client 
-   * @param {PublicKey} marketAddress 
-   * @param {JetReserve[]} jetReserves 
-   * @param {PublicKey} userAddress 
+   *
+   * @param {JetClient} client
+   * @param {PublicKey} marketAddress
+   * @param {JetReserve[]} jetReserves
+   * @param {PublicKey} userAddress
    * @returns {(JetObligation | undefined)} JetObligation | undefined
    * @memberof JetObligation
    */
-  static use(client: JetClient, marketAddress: PublicKey, jetReserves: JetReserve[], userAddress: PublicKey): JetObligation | undefined {
-    return Hooks.usePromise(async () => client && marketAddress && jetReserves && userAddress && JetObligation.load(client,marketAddress, jetReserves, userAddress), [client, marketAddress, jetReserves, userAddress])
+  static use(
+    client: JetClient,
+    marketAddress: PublicKey,
+    jetReserves: JetReserve[],
+    userAddress: PublicKey
+  ): JetObligation | undefined {
+    return Hooks.usePromise(
+      async () =>
+        client &&
+        marketAddress &&
+        jetReserves &&
+        userAddress &&
+        JetObligation.load(client, marketAddress, jetReserves, userAddress),
+      [client, marketAddress, jetReserves, userAddress]
+    )
   }
 
   /**
-   * 
-   * @param {JetClient} client 
-   * @param {PublicKey} marketAddress 
-   * @param {JetReserve[]} jetReserves 
-   * @param {PublicKey} userAddress 
+   *
+   * @param {JetClient} client
+   * @param {PublicKey} marketAddress
+   * @param {JetReserve[]} jetReserves
+   * @param {PublicKey} userAddress
    * @returns {Promise<JetObligation>}
    */
-  static async load(client: JetClient, marketAddress: PublicKey, jetReserves: JetReserve[], userAddress: PublicKey): Promise<JetObligation> {
+  static async load(
+    client: JetClient,
+    marketAddress: PublicKey,
+    jetReserves: JetReserve[],
+    userAddress: PublicKey
+  ): Promise<JetObligation> {
     const market = await JetMarket.load(client, marketAddress)
     const [user, reserves] = await Promise.all([
       JetUser.load(client, market, jetReserves, userAddress),
@@ -159,7 +177,7 @@ export class JetObligation implements Obligation {
         loanBalance:
           loanNotes?.mulb(reserveCache.loanNoteExchangeRate).divb(new BN(1e15)) ??
           TokenAmount.zero(0, reserve.loanNoteMint),
-          //todo fixme
+        //todo fixme
         maxDepositAmount: undefined as any as TokenAmount,
         maxWithdrawAmount: undefined as any as TokenAmount,
         maxBorrowAmount: undefined as any as TokenAmount,

@@ -80,8 +80,11 @@ export class JetUser implements JetUserData {
     this.conn = this.client.program.provider.connection
   }
 
-  static use(client: JetClient, market:JetMarket, reserves: JetReserve[], address: PublicKey): JetUser | undefined {
-    return Hooks.usePromise(async () => client && market && JetUser.load(client, market, reserves, address), [client, market, reserves, address])
+  static use(client: JetClient, market: JetMarket, reserves: JetReserve[], address: PublicKey): JetUser | undefined {
+    return Hooks.usePromise(
+      async () => client && market && JetUser.load(client, market, reserves, address),
+      [client, market, reserves, address]
+    )
   }
 
   /**
