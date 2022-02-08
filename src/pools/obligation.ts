@@ -75,7 +75,7 @@ export class JetObligation implements Obligation {
   ) {}
 
   /**
-   *
+   * @static
    * @param {JetClient} client
    * @param {PublicKey} marketAddress
    * @param {JetReserve[]} jetReserves

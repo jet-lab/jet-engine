@@ -76,7 +76,7 @@ export class JetMarket implements JetMarketData {
   ) {}
 
   /**
-   *
+   * @static
    * @param {JetClient} client The program client
    * @param {PublicKey} address The address of the market
    * @returns {(JetMarket | undefined)} JetMarket | undefined
