@@ -5,6 +5,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { AssociatedToken, DerivedAccount } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
+import { Auth } from "../auth"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -57,11 +58,11 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
-    const { address: address } = await this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const { address: address } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
 
-    return new StakeAccount(stakeProgram, address, stakeAccount as any) // FIXME! Looks like the IDL in ./idl is out of date
+    return new StakeAccount(stakeProgram, address, stakeAccount as StakeAccountInfo)
   }
 
   /**
@@ -218,7 +219,7 @@ export class StakeAccount {
     stakePool: PublicKey,
     owner: PublicKey
   ) {
-    const { address: stakeAccount, bump: bumpSeed } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const { address: stakeAccount, bump } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const info = await stakeProgram.provider.connection.getAccountInfo(stakeAccount)
 
@@ -229,13 +230,16 @@ export class StakeAccount {
     // 4) If the account exists, should we error or not
 
     if (!info) {
-      console.log("Creating the stake account.")
-      const ix = stakeProgram.instruction.initStakeAccount(bumpSeed, {
+      const { address: auth } = Auth.deriveUserAuthentication(owner)
+      const payer = stakeProgram.provider.wallet.publicKey
+
+      const ix = stakeProgram.instruction.initStakeAccount(bump, {
         accounts: {
           owner,
-          payer: stakeProgram.provider.wallet.publicKey,
-          stakeAccount,
+          auth,
           stakePool,
+          stakeAccount,
+          payer,
           systemProgram: SystemProgram.programId
         }
       })
@@ -306,7 +310,7 @@ export class StakeAccount {
     )
 
     const ix = stakePool.program.instruction.mintVotes(
-      { kind: { tokens: {} }, amount },
+      { kind: { tokens: {} }, value: amount },
       {
         accounts: {
           owner: owner,

@@ -18,10 +18,7 @@ const cluster = mainnet ?
   "https://api.mainnet.solana.com" :
   "https://api.devnet.solana.com"
 
-const seed = "usadhiushfa"
-
-/** The address paying to create this pool */
-const payer = new PublicKey("EjvPni9o9ku9oeNBdXwEAY4YxzyNi5E335wQP97YQmdM")
+const seed = StakePool.CANONICAL_SEED
 
 /** The address allowed to sign for changes to the pool,
     and management of the token balance. */
@@ -35,8 +32,11 @@ const tokenMint = mainnet ?
 /** The time period for unbonding staked tokens from the pool.
  
 Unit is seconds. */
-const unbondPeriod = new BN(2551443);
-// 29.53059 Days
+const unbondPeriod = mainnet ?
+  // 29.53059 Days
+  new BN(2551443) : 
+  // 1 Minute
+  new BN(60)
 
 // ------ Main ------
 
@@ -47,7 +47,6 @@ async function main() {
   const client = await StakeClient.connect(provider)
   await StakePool.create(client, {
     accounts: {
-      payer,
       authority,
       tokenMint,
     },
@@ -63,10 +62,10 @@ async function main() {
   console.log(JSON.stringify(Object.entries(pool.addresses.accounts).map(([key, value]) => [key, value.toBase58()])))
   /**
    * [
-   *   ["stakePool","F8JjUkKBnYECxTZvNhqvpmAKhNkrpp1mxsgJfdSJPsZA"],
-   *   ["stakeVoteMint","8WPjDrATG3q6gRzk3Md6pKWTmAZyLUZKqra7t44QdUY4"],
-   *   ["stakeCollateralMint","BDA1g9hzLfU18CHRRm1BDYBknehQtVzhMbpRNsS6Z3zh"],
-   *   ["stakePoolVault","6iGYHbR3dzMCdq4wEgsPGD9uXqmUfhkaEMex9Zj7egC2"]
+   *   ["stakePool","83bqcdNH5G7kUwxczSd5WkJWf76f68SEMNiUd3sNLBQH"],
+   *   ["stakeVoteMint","ESxCuVFgh88UR3DWuq5JKwb15ppEw67tnZnedCTERV6M"],
+   *   ["stakeCollateralMint","F47rk1FL92z7Pdy5NaCCQbd9j6FmipWskkbFBExttX5X"],
+   *   ["stakePoolVault","CBMNo5LGWY3gksekivwd3uY42VMpa5tTcPJgAwWuig9P"]
    * ]
    */
 }

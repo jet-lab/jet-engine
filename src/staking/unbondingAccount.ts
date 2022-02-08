@@ -1,6 +1,6 @@
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { DerivedAccount, findDerivedAccount } from "../common"
+import { bnToNumber, DerivedAccount, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
 
@@ -21,7 +21,7 @@ export interface FullAmount {
 }
 
 export class UnbondingAccount {
-  private static UINT32_MAXVALUE = 0xffffffff
+  private static readonly UINT32_MAXVALUE = 2 ** 32
 
   /**
    * TODO:
@@ -31,14 +31,10 @@ export class UnbondingAccount {
    * @returns {Buffer}
    * @memberof UnbondingAccount
    */
-  private static toBuffer(seed: BN): Buffer {
-    if (seed.gtn(UnbondingAccount.UINT32_MAXVALUE)) {
-      throw new Error(`Seed must not exceed ${this.UINT32_MAXVALUE}`)
-    }
-    if (seed.ltn(0)) {
-      throw new Error(`Seed must not be negative`)
-    }
-    return seed.toBuffer("le", 4)
+  private static toBuffer(seed: number): Buffer {
+    const buffer = Buffer.alloc(4)
+    buffer.writeUInt32LE(seed)
+    return buffer
   }
 
   /**
@@ -47,10 +43,10 @@ export class UnbondingAccount {
    * @returns {BN}
    * @memberof UnbondingAccount
    */
-  static randomSeed(): BN {
+  static randomSeed(): number {
     const min = 0
     const max = this.UINT32_MAXVALUE
-    return new BN(Math.random() * (max - min) + min)
+    return Math.floor(Math.random() * (max - min) + min)
   }
 
   /**
@@ -62,7 +58,7 @@ export class UnbondingAccount {
    * @returns {Promise<DerivedAccount>}
    * @memberof UnbondingAccount
    */
-  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN): DerivedAccount {
+  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: number): DerivedAccount {
     return findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
   }
 
@@ -75,10 +71,10 @@ export class UnbondingAccount {
    * @returns {Promise<UnbondingAccount>}
    * @memberof UnbondingAccount
    */
-  static async load(program: Program, stakeAccount: PublicKey, seed: BN): Promise<UnbondingAccount> {
+  static async load(program: Program, stakeAccount: PublicKey, seed: number): Promise<UnbondingAccount> {
     const { address: address } = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
-    const unbondingAccount = await program.account.UnbondingAccount.fetch(address)
+    const unbondingAccount = await program.account.unbondingAccount.fetch(address)
 
     return new UnbondingAccount(address, unbondingAccount as any)
   }
@@ -134,6 +130,20 @@ export class UnbondingAccount {
   /**
    * TODO:
    * @static
+   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
+   * @returns {number}
+   * @memberof UnbondingAccount
+   */
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
+    const unbondingTokens: BN[] = []
+    unbondingAccounts?.forEach(acc => unbondingTokens.push(acc.unbondingAccount.amount.tokens))
+    const unbondingAmountTotal = unbondingAccounts && bnToNumber(unbondingTokens.reduce((a, b) => a.add(b)))
+    return unbondingAmountTotal ?? 0
+  }
+
+  /**
+   * TODO:
+   * @static
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
    * @param {StakeAccount} stakeAccount
@@ -145,7 +155,7 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     stakeAccount: StakeAccount,
-    unbondingSeed: BN,
+    unbondingSeed: number,
     amount: BN
   ) {
     const { address, bump } = UnbondingAccount.deriveUnbondingAccount(
@@ -155,8 +165,8 @@ export class UnbondingAccount {
     )
     const ix = stakePool.program.instruction.unbondStake(
       bump,
-      this.toBuffer(unbondingSeed),
-      { kind: { tokens: {} }, amount },
+      unbondingSeed,
+      { kind: { tokens: {} }, value: amount },
       {
         accounts: {
           owner: stakeAccount.stakeAccount.owner,
