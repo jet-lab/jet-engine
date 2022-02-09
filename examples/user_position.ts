@@ -57,12 +57,13 @@ async function getBitcoinPosition() {
 
     console.log(position);
     /**
-    {
+   {
       mint: '5ym2kCTCcqCHutbQXnPdsGAGFMEVQBQzTQ1CPun9W5A5',
-      deposited: 0.097909,
-      borrowed: 0,
-      borrowApr: 0.006383020864653607,
-      depositApy: 0.00012890705890383522
+      deposited: 2.000009,
+      borrowed: 0.500125,
+      borrowApr: 0.00638284671447752,
+      depositApy: 0.00012888670151030092,
+      collateralRatio: 2.2676541147165414
     }
     */
   }
