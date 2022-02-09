@@ -1,7 +1,7 @@
 import { Provider } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token"
-import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction, ParsedAccountData } from '@solana/web3.js';
+import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction, ParsedAccountData } from "@solana/web3.js"
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
@@ -68,7 +68,7 @@ export class AssociatedToken {
       if (!account) {
         return undefined
       }
-      //TODO - FIXME cast it as any for now 
+      //TODO - FIXME cast it as any for now
       const info = parseTokenAccount(account.data as any, addresses[i])
       return new AssociatedToken(account, info)
     })
