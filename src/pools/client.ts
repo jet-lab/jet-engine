@@ -92,7 +92,7 @@ export class JetClient {
    * @returns {(JetClient | undefined)} JetClient | undefined
    * @memberof JetClient
    */
-  static use(provider: Provider): JetClient | undefined {
-    return Hooks.usePromise(async () => provider && JetClient.connect(provider), [provider])
+  static use(provider: Provider, devnet?: boolean): JetClient | undefined {
+    return Hooks.usePromise(async () => provider && JetClient.connect(provider, devnet), [provider])
   }
 }
