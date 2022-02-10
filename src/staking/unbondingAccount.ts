@@ -135,7 +135,12 @@ export class UnbondingAccount {
    * @memberof UnbondingAccount
    */
   static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
-    const unbondingTokens = unbondingAccounts && unbondingAccounts?.reduce<BN>((acc: BN, curr: UnbondingAccount) => acc.add(curr.unbondingAccount.amount.tokens), new BN(0))
+    const unbondingTokens =
+      unbondingAccounts &&
+      unbondingAccounts?.reduce<BN>(
+        (acc: BN, curr: UnbondingAccount) => acc.add(curr.unbondingAccount.amount.tokens),
+        new BN(0)
+      )
 
     return bnToNumber(unbondingTokens) ?? 0
   }
