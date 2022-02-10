@@ -8,8 +8,11 @@ export class Hooks {
       let abort = false
       promiseFactory()
         .then(newState => !abort && setState(newState))
-        .catch(() => {
+        .catch((err: Error) => {
           !abort && setState(undefined)
+          if (!err.message.includes(`Account does not exist `)) {
+            console.log(err)
+          }
         })
       return () => {
         abort = false
