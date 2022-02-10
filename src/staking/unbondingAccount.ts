@@ -76,7 +76,7 @@ export class UnbondingAccount {
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
 
-    return new UnbondingAccount(address, unbondingAccount as any)
+    return new UnbondingAccount(program, address, unbondingAccount as any)
   }
 
   /**
@@ -96,8 +96,8 @@ export class UnbondingAccount {
       }
     }
 
-    const unbondingAccounts = await program.account.UnbondingAccount.all([stakeAccountFilter])
-    return unbondingAccounts.map(info => new UnbondingAccount(info.publicKey, info as any))
+    const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
+    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any))
   }
 
   /**
@@ -106,7 +106,7 @@ export class UnbondingAccount {
    * @param {UnbondingAccountInfo} unbondingAccount
    * @memberof UnbondingAccount
    */
-  constructor(public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
+  constructor(public program: Program, public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
 
   /**
    * TODO:
@@ -184,5 +184,29 @@ export class UnbondingAccount {
       }
     )
     instructions.push(ix)
+  }
+
+  static async withCancelUnbond(
+    instructions: TransactionInstruction[],
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    rentReceiver: PublicKey
+  ) {
+    const ix = unbondingAccount.program.instruction.cancelUnbond({
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        receiver: rentReceiver,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakeAccount.stakeAccount.stakePool,
+        unbondingAccount: unbondingAccount.address
+      }
+    })
+    instructions.push(ix)
+  }
+
+  static async cancelUnbond(unbondingAccount: UnbondingAccount, stakeAccount: StakeAccount, rentReceiver: PublicKey) {
+    const ix: TransactionInstruction[] = []
+    this.withCancelUnbond(ix, unbondingAccount, stakeAccount, rentReceiver)
+    return ix
   }
 }
