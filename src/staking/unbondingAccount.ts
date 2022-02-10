@@ -96,7 +96,7 @@ export class UnbondingAccount {
       }
     }
 
-    const unbondingAccounts = await program.account.UnbondingAccount.all([stakeAccountFilter])
+    const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
     return unbondingAccounts.map(info => new UnbondingAccount(info.publicKey, info as any))
   }
 
