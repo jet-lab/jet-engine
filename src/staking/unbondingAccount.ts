@@ -137,14 +137,15 @@ export class UnbondingAccount {
    * @memberof UnbondingAccount
    */
   static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
-    const unbondingTokens =
-      unbondingAccounts &&
-      unbondingAccounts?.reduce<BN>(
-        (acc: BN, curr: UnbondingAccount) => acc.add(curr.unbondingAccount.amount.tokens),
-        new BN(0)
-      )
+    if (!unbondingAccounts || unbondingAccounts.length === 0) {
+      return 0
+    }
+    const unbondingTotal = unbondingAccounts.reduce<BN>(
+      (total: BN, curr: UnbondingAccount) => total.add(curr.unbondingAccount.amount.tokens),
+      new BN(0)
+    )
 
-    return bnToNumber(unbondingTokens) ?? 0
+    return bnToNumber(unbondingTotal)
   }
 
   /**
