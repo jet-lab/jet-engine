@@ -1,8 +1,10 @@
+import { AssociatedToken } from "./../common/associatedToken"
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { bnToNumber, DerivedAccount, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export interface UnbondingAccountInfo {
   /// The related account requesting to unstake
@@ -184,6 +186,47 @@ export class UnbondingAccount {
       }
     )
     instructions.push(ix)
+  }
+
+  static async withWithdrawUnbonded(
+    instructions: TransactionInstruction[],
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    stakePool: StakePool,
+    tokenReceiver: PublicKey,
+    rentReceiver: PublicKey
+  ) {
+    const ix = stakeAccount.program.instruction.unbondStake({
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        closer: rentReceiver,
+        tokenReceiver: tokenReceiver,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakeAccount.stakeAccount.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault.address,
+        unbondingAccount: unbondingAccount.address,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+    instructions.push(ix)
+  }
+
+  static async withdrawUnbonded(
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    stakePool: StakePool,
+    rentReceiver: PublicKey
+  ) {
+    const provider = unbondingAccount.program.provider
+    const ix: TransactionInstruction[] = []
+    const tokenReceiver = await AssociatedToken.withCreate(
+      ix,
+      provider,
+      provider.wallet.publicKey,
+      stakePool.stakePool.tokenMint
+    )
+    await this.withWithdrawUnbonded(ix, unbondingAccount, stakeAccount, stakePool, tokenReceiver, rentReceiver)
+    return ix
   }
 
   static async withCancelUnbond(
