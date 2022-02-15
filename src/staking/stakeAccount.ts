@@ -3,7 +3,7 @@ import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { bnToNumber, findDerivedAccount } from "../common"
-import { AssociatedToken, DerivedAccount } from "../common/associatedToken"
+import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
 
@@ -41,10 +41,10 @@ export class StakeAccount {
    * @param {Program} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
-   * @returns {Promise<DerivedAccount>}
+   * @returns {Promise<PublicKey>}
    * @memberof StakeAccount
    */
-  static deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): DerivedAccount {
+  static deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): PublicKey {
     return findDerivedAccount(stakeProgram.programId, stakePool, owner)
   }
 
@@ -58,7 +58,7 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
-    const { address: address } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
 
@@ -75,7 +75,7 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<boolean> {
-    const { address } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
     const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(address)
     return stakeAccount !== null
   }
@@ -106,11 +106,8 @@ export class StakeAccount {
   ): StakeAccount | undefined {
     return Hooks.usePromise(
       async () =>
-        stakeProgram &&
-        stakePool &&
-        wallet &&
-        StakeAccount.load(stakeProgram, stakePool.addresses.stakePool.address, wallet),
-      [stakeProgram, stakePool?.addresses.stakePool.address, wallet]
+        stakeProgram && stakePool && wallet && StakeAccount.load(stakeProgram, stakePool.addresses.stakePool, wallet),
+      [stakeProgram, stakePool?.addresses.stakePool, wallet]
     )
   }
 
@@ -125,7 +122,7 @@ export class StakeAccount {
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
     const unlockedVoteLamports = AssociatedToken.use(
       stakePool?.program.provider.connection,
-      stakePool?.addresses.stakeVoteMint.address,
+      stakePool?.addresses.stakeVoteMint,
       stakeAccount?.stakeAccount.owner
     )
     const unstakedJetLamports = AssociatedToken.use(
@@ -166,7 +163,7 @@ export class StakeAccount {
    */
   static async create(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<string> {
     const instructions: TransactionInstruction[] = []
-    const { address } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     await this.withCreate(instructions, stakeProgram, address, owner)
 
@@ -195,9 +192,9 @@ export class StakeAccount {
       instructions,
       stakePool.program.provider,
       owner,
-      stakePool.addresses.stakeVoteMint.address
+      stakePool.addresses.stakeVoteMint
     )
-    await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool.address, owner)
+    await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner)
     await this.withAddStake(instructions, stakePool, owner, collateralTokenAccount, amount)
     await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
 
@@ -219,7 +216,7 @@ export class StakeAccount {
     stakePool: PublicKey,
     owner: PublicKey
   ) {
-    const { address: stakeAccount, bump } = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const stakeAccount = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const info = await stakeProgram.provider.connection.getAccountInfo(stakeAccount)
 
@@ -230,10 +227,10 @@ export class StakeAccount {
     // 4) If the account exists, should we error or not
 
     if (!info) {
-      const { address: auth } = Auth.deriveUserAuthentication(owner)
+      const auth = Auth.deriveUserAuthentication(owner)
       const payer = stakeProgram.provider.wallet.publicKey
 
-      const ix = stakeProgram.instruction.initStakeAccount(bump, {
+      const ix = stakeProgram.instruction.initStakeAccount({
         accounts: {
           owner,
           auth,
@@ -264,18 +261,14 @@ export class StakeAccount {
     tokenAccount: PublicKey,
     amount: BN
   ) {
-    const { address: stakeAccount } = this.deriveStakeAccount(
-      stakePool.program,
-      stakePool.addresses.accounts.stakePool,
-      owner
-    )
+    const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
 
     const ix = stakePool.program.instruction.addStake(
       { kind: { tokens: {} }, value: amount },
       {
         accounts: {
-          stakePool: stakePool.addresses.stakePool.address,
-          stakePoolVault: stakePool.addresses.accounts.stakePoolVault,
+          stakePool: stakePool.addresses.stakePool,
+          stakePoolVault: stakePool.addresses.stakePoolVault,
           stakeAccount,
           payer: stakePool.program.provider.wallet.publicKey,
           payerTokenAccount: tokenAccount,
@@ -303,20 +296,16 @@ export class StakeAccount {
     voterTokenAccount: PublicKey,
     amount: BN
   ) {
-    const { address: stakeAccount } = this.deriveStakeAccount(
-      stakePool.program,
-      stakePool.addresses.stakePool.address,
-      owner
-    )
+    const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
 
     const ix = stakePool.program.instruction.mintVotes(
       { kind: { tokens: {} }, value: amount },
       {
         accounts: {
           owner: owner,
-          stakePool: stakePool.addresses.stakePool.address,
-          stakePoolVault: stakePool.addresses.stakePoolVault.address,
-          stakeVoteMint: stakePool.addresses.stakeVoteMint.address,
+          stakePool: stakePool.addresses.stakePool,
+          stakePoolVault: stakePool.addresses.stakePoolVault,
+          stakeVoteMint: stakePool.addresses.stakeVoteMint,
           stakeAccount,
           voterTokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID
@@ -348,8 +337,8 @@ export class StakeAccount {
     const ix = stakePool.program.instruction.burnVotes(amount, {
       accounts: {
         owner,
-        stakePool: stakePool.addresses.stakePool.address,
-        stakeVoteMint: stakePool.addresses.stakeVoteMint.address,
+        stakePool: stakePool.addresses.stakePool,
+        stakeVoteMint: stakePool.addresses.stakeVoteMint,
         stakeAccount: stakeAccount.address,
         voterTokenAccount,
         voter: owner,

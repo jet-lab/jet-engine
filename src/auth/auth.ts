@@ -2,7 +2,7 @@ import { Idl, Program, Provider } from "@project-serum/anchor"
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js"
 import { useEffect, useState } from "react"
-import { connect, DerivedAccount, findDerivedAccount } from "../common"
+import { connect, findDerivedAccount } from "../common"
 import { PubkeyField } from "../common/accountParser"
 import { Hooks } from "../common/hooks"
 
@@ -29,10 +29,10 @@ export class Auth {
    * Dervices the user authentication account from the argued public key.
    * @static
    * @param {PublicKey} user
-   * @returns {Promise<DerivedAccount>}
+   * @returns {Promise<PublicKey>}
    * @memberof Auth
    */
-  static deriveUserAuthentication(user: PublicKey): DerivedAccount {
+  static deriveUserAuthentication(user: PublicKey): PublicKey {
     return findDerivedAccount(Auth.PROGRAM_ID, user)
   }
 
@@ -64,7 +64,7 @@ export class Auth {
    * @memberof Auth
    */
   static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<Auth> {
-    const { address } = this.deriveUserAuthentication(user)
+    const address = this.deriveUserAuthentication(user)
     const userAuthentication = (await authProgram.account.userAuthentication.fetch(address)) as UserAuthentication
     return new Auth(userAuthentication, address)
   }
@@ -138,8 +138,8 @@ export class Auth {
    * @memberof Auth
    */
   static async createUserAuth(authProgram: Program, user: PublicKey, payer: PublicKey): Promise<Transaction> {
-    const { address: auth, bump } = this.deriveUserAuthentication(user)
-    return authProgram.transaction.createUserAuth(bump, {
+    const auth = this.deriveUserAuthentication(user)
+    return authProgram.transaction.createUserAuth({
       accounts: {
         user,
         payer,

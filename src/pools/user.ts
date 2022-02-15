@@ -33,8 +33,8 @@ import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
 import { TokenAmount } from ".."
 import { parseTokenAccount } from "../common/accountParser"
-import { findDerivedAccount, Hooks } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
+import { findDerivedAccountWithBump, Hooks } from "../common"
+import { DerivedAccount } from "../common"
 
 export interface JetUserData {
   address: PublicKey
@@ -997,15 +997,15 @@ export class JetUser implements JetUserData {
   private findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): UserReserveAccounts {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
-    const loan = findDerivedAccount(
+    const deposits = findDerivedAccountWithBump(this.client.program.programId, "deposits", reserveAddress, this.address)
+    const loan = findDerivedAccountWithBump(
       this.client.program.programId,
       "loan",
       reserveAddress,
       this.obligation.address,
       this.address
     )
-    const collateral = findDerivedAccount(
+    const collateral = findDerivedAccountWithBump(
       this.client.program.programId,
       "collateral",
       reserveAddress,

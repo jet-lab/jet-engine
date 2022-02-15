@@ -30,8 +30,8 @@ import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythn
 import { BN } from "@project-serum/anchor"
 import { TokenAmount } from ".."
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { findDerivedAccount } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
+import { findDerivedAccountWithBump } from "../common"
+import { DerivedAccount } from "../common"
 import { Hooks } from "../common"
 
 export interface ReserveConfig {
@@ -470,13 +470,13 @@ export class JetReserve {
    */
   static deriveAccounts(client: JetClient, address: PublicKey, tokenMint: PublicKey): ReserveAccounts {
     return {
-      vault: findDerivedAccount(client.program.programId, StaticSeeds.Vault, address),
-      feeNoteVault: findDerivedAccount(client.program.programId, StaticSeeds.FeeVault, address),
-      dexSwapTokens: findDerivedAccount(client.program.programId, StaticSeeds.DexSwapTokens, address),
-      dexOpenOrders: findDerivedAccount(client.program.programId, StaticSeeds.DexOpenOrders, address),
+      vault: findDerivedAccountWithBump(client.program.programId, StaticSeeds.Vault, address),
+      feeNoteVault: findDerivedAccountWithBump(client.program.programId, StaticSeeds.FeeVault, address),
+      dexSwapTokens: findDerivedAccountWithBump(client.program.programId, StaticSeeds.DexSwapTokens, address),
+      dexOpenOrders: findDerivedAccountWithBump(client.program.programId, StaticSeeds.DexOpenOrders, address),
 
-      loanNoteMint: findDerivedAccount(client.program.programId, StaticSeeds.Loans, address, tokenMint),
-      depositNoteMint: findDerivedAccount(client.program.programId, StaticSeeds.Deposits, address, tokenMint)
+      loanNoteMint: findDerivedAccountWithBump(client.program.programId, StaticSeeds.Loans, address, tokenMint),
+      depositNoteMint: findDerivedAccountWithBump(client.program.programId, StaticSeeds.Deposits, address, tokenMint)
     }
   }
 
