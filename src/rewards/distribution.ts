@@ -1,8 +1,10 @@
-import { BN, Program } from "@project-serum/anchor"
+import { utf8ToString } from "./../common/accountParser"
+import { BN, Program, ProgramAccount } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
+import _ from "lodash"
 
 /**
  * A distribution account from the rewards program.
@@ -135,7 +137,10 @@ export class Distribution {
    * @returns {DistributionAddresses}
    * @memberof Distribution
    */
-  static derive(seed: string): DistributionAddresses {
+  static derive(seed: string | number[]): DistributionAddresses {
+    if (seed instanceof Array) {
+      seed = utf8ToString(seed)
+    }
     const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, seed)
     const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, distribution, "vault")
     return { distribution, vault }
@@ -157,6 +162,26 @@ export class Distribution {
       throw new Error("Vault is undefined")
     }
     return new Distribution(addresses, distribution, vault)
+  }
+
+  static async loadAll(rewardsProgram: Program): Promise<Distribution[]> {
+    const distributions = (await rewardsProgram.account.distribution.all()) as ProgramAccount<DistributionInfo>[]
+    const addresses = distributions.map(dist => Distribution.derive(dist.account.seed))
+    const vaultAddresses = addresses.map(address => address.vault.address)
+    const vaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, vaultAddresses)
+
+    return _.zip(addresses, distributions, vaults).map(([address, distribution, vault]) => {
+      if (!address) {
+        throw new Error("Address is undefined")
+      }
+      if (!distribution) {
+        throw new Error("Distribution is undefined")
+      }
+      if (!vault) {
+        throw new Error("Vault is undefined")
+      }
+      return new Distribution(address, distribution.account, vault)
+    })
   }
 
   /**
@@ -185,5 +210,15 @@ export class Distribution {
       async () => rewardsProgram && Distribution.load(rewardsProgram, seed),
       [rewardsProgram, seed]
     )
+  }
+  /**
+   * React hook to load all the distribution accounts and their vaults
+   * @static
+   * @param {(Program | undefined)} rewardsProgram
+   * @returns {Distribution[] | undefined}
+   * @memberof Distribution
+   */
+  static useAll(rewardsProgram: Program | undefined): Distribution[] | undefined {
+    return Hooks.usePromise(async () => rewardsProgram && Distribution.loadAll(rewardsProgram), [rewardsProgram])
   }
 }
