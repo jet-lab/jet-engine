@@ -30,17 +30,15 @@ describe("JetClient", () => {
     client = await JetClient.connect(provider, true)
   })
 
-  describe("can calculate derived account addresses and bump nonces", () => {
+  describe("can calculate derived account addresses", () => {
     test("using buffer seeds", async () => {
       const derived = await findDerivedAccount(client.program.programId, Buffer.from("test"))
-      expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bump).toBeLessThan(256)
+      expect(derived.toBytes()).toHaveLength(32)
     })
 
     test("using string seeds", async () => {
       const derived = await findDerivedAccount(client.program.programId, "test")
-      expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bump).toBeLessThan(256)
+      expect(derived.toBytes()).toHaveLength(32)
     })
 
     test("using public key seeds", async () => {
@@ -48,14 +46,12 @@ describe("JetClient", () => {
         client.program.programId,
         new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
       )
-      expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bump).toBeLessThan(256)
+      expect(derived.toBytes()).toHaveLength(32)
     })
 
     test("using keypair seeds", async () => {
       const derived = await findDerivedAccount(client.program.programId, Keypair.generate())
-      expect(derived.address.toBytes()).toHaveLength(32)
-      expect(derived.bump).toBeLessThan(256)
+      expect(derived.toBytes()).toHaveLength(32)
     })
   })
 

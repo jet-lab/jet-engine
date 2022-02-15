@@ -4,19 +4,8 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, AccountInfo as TokenAccountInfo, Mi
 import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction, ParsedAccountData } from "@solana/web3.js"
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
-import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 import { Hooks } from "./hooks"
-
-/**
- * Utility class to store a calculated PDA and
- * the bump nonce associated with it.
- * @export
- * @class DerivedAccount
- */
-export interface DerivedAccount {
-  address: PublicKey
-  bump: number
-}
+import { findDerivedAccount } from "."
 
 export class AssociatedToken {
   address: PublicKey
@@ -29,11 +18,7 @@ export class AssociatedToken {
    * @memberof AssociatedToken
    */
   static derive(mint: PublicKey, owner: PublicKey): PublicKey {
-    const [address] = findProgramAddressSync(
-      [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )
-    return address
+    return findDerivedAccount(ASSOCIATED_TOKEN_PROGRAM_ID, owner, TOKEN_PROGRAM_ID, mint)
   }
 
   /**

@@ -1,6 +1,6 @@
 import { BN, Program } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import { AssociatedToken, DerivedAccount, findDerivedAccount } from "../common"
+import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
 
@@ -123,8 +123,8 @@ export class DistributionKind {
 }
 
 export interface DistributionAddresses {
-  distribution: DerivedAccount
-  vault: DerivedAccount
+  distribution: PublicKey
+  vault: PublicKey
 }
 
 export class Distribution {
@@ -137,7 +137,7 @@ export class Distribution {
    */
   static derive(seed: string): DistributionAddresses {
     const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, seed)
-    const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, distribution.address, "vault")
+    const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, distribution, "vault")
     return { distribution, vault }
   }
 
@@ -151,10 +151,8 @@ export class Distribution {
    */
   static async load(rewardsProgram: Program, seed: string): Promise<Distribution> {
     const addresses = Distribution.derive(seed)
-    const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault.address)
-    const distribution = (await rewardsProgram.account.distribution.fetch(
-      addresses.distribution.address
-    )) as DistributionInfo
+    const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault)
+    const distribution = (await rewardsProgram.account.distribution.fetch(addresses.distribution)) as DistributionInfo
     if (!vault) {
       throw new Error("Vault is undefined")
     }

@@ -4,26 +4,13 @@ import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 
 export interface StakePoolAccounts {
-  accounts: {
-    stakePool: PublicKey
-    stakeVoteMint: PublicKey
-    stakeCollateralMint: PublicKey
-    stakePoolVault: PublicKey
-  }
-  bumps: {
-    stakePool: number
-    stakeVoteMint: number
-    stakeCollateralMint: number
-    stakePoolVault: number
-  }
-  stakePool: DerivedAccount
-  stakeVoteMint: DerivedAccount
-  stakeCollateralMint: DerivedAccount
-  stakePoolVault: DerivedAccount
+  stakePool: PublicKey
+  stakeVoteMint: PublicKey
+  stakeCollateralMint: PublicKey
+  stakePoolVault: PublicKey
 }
 
 // ----- Account Info -----
@@ -93,13 +80,13 @@ export class StakePool {
   static async load(program: Program, seed: string): Promise<StakePool> {
     const addresses = this.deriveAccounts(program.programId, seed)
 
-    const stakePool = (await program.account.stakePool.fetch(addresses.stakePool.address)) as StakePoolInfo
+    const stakePool = (await program.account.stakePool.fetch(addresses.stakePool)) as StakePoolInfo
 
     const [voteMintInfo, collateralMintInfo, vaultInfo, tokenMintInfo] =
       await program.provider.connection.getMultipleAccountsInfo([
-        addresses.stakeVoteMint.address,
-        addresses.stakeCollateralMint.address,
-        addresses.stakePoolVault.address,
+        addresses.stakeVoteMint,
+        addresses.stakeCollateralMint,
+        addresses.stakePoolVault,
         stakePool.tokenMint
       ])
 
@@ -109,7 +96,7 @@ export class StakePool {
 
     const voteMint = parseMintAccount(voteMintInfo.data as Buffer)
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
-    const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault.address)
+    const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
 
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
@@ -164,18 +151,6 @@ export class StakePool {
     const stakeCollateralMint = findDerivedAccount(programId, seed, "collateral-mint")
     const stakePoolVault = findDerivedAccount(programId, seed, "vault")
     return {
-      accounts: {
-        stakePool: stakePool.address,
-        stakeVoteMint: stakeVoteMint.address,
-        stakeCollateralMint: stakeCollateralMint.address,
-        stakePoolVault: stakePoolVault.address
-      },
-      bumps: {
-        stakePool: stakePool.bump,
-        stakeVoteMint: stakeVoteMint.bump,
-        stakeCollateralMint: stakeCollateralMint.bump,
-        stakePoolVault: stakePoolVault.bump
-      },
       stakePool,
       stakeVoteMint,
       stakeCollateralMint,
@@ -196,17 +171,12 @@ export class StakePool {
     const accounts = {
       payer: program.provider.wallet.publicKey,
       ...params.accounts,
-      ...derivedAccounts.accounts,
+      ...derivedAccounts,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY
     }
 
-    return program.rpc.initPool(
-      params.args.seed,
-      derivedAccounts.bumps,
-      { unbondPeriod: params.args.unbondPeriod },
-      { accounts }
-    )
+    return program.rpc.initPool(params.args.seed, { unbondPeriod: params.args.unbondPeriod }, { accounts })
   }
 }
