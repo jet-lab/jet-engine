@@ -219,3 +219,13 @@ export const parseMintAccount = (mint: Buffer): MintInfo => {
 export const bnToNumber = (bn: BN | null | undefined): number => {
   return bn ? parseFloat(bn.toString()) : 0
 }
+
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder("utf-8")
+
+export const utf8ToString = (bytes: number[]) => {
+  return textDecoder.decode(new Uint8Array(bytes))
+}
+export const stringToUtf8 = (string: string) => {
+  return Array.from(textEncoder.encode(string))
+}
