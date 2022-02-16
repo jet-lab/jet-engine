@@ -23,8 +23,8 @@ import { CreateReserveParams, JetReserve } from "./reserve"
 import { parsePosition, StaticSeeds } from "./util"
 import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
-import { findDerivedAccount } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
+import { DerivedAccount } from "../common"
+import { findDerivedAccountWithBump, Hooks } from "../common"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey
@@ -47,7 +47,7 @@ export interface JetMarketData {
 }
 
 /**
- * TODO:
+ * TODO: convert instructions and txns into static members
  * @export
  * @class JetMarket
  * @implements {JetMarketData}
@@ -75,9 +75,20 @@ export class JetMarket implements JetMarketData {
   ) {}
 
   /**
+   * @static
+   * @param {JetClient} client The program client
+   * @param {PublicKey} address The address of the market
+   * @returns {(JetMarket | undefined)} JetMarket | undefined
+   * @memberof JetMarket
+   */
+  static use(client: JetClient, address: PublicKey): JetMarket | undefined {
+    return Hooks.usePromise(async () => client && address && JetMarket.load(client, address), [client, address])
+  }
+
+  /**
    * Load the market account data from the network.
    * @param {JetClient} client The program client
-   * @param {PublicKey} address The address of the market.
+   * @param {PublicKey} address The address of the market
    * @returns {Promise<JetMarket>} An object for interacting with the Jet market.
    * @memberof JetMarket
    */
@@ -258,7 +269,7 @@ export class JetMarket implements JetMarketData {
    * @memberof JetClient
    */
   getAssociatedObligationAddress(borrower: PublicKey): DerivedAccount {
-    return findDerivedAccount(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
+    return findDerivedAccountWithBump(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
   }
 }
 

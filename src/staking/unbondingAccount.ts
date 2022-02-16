@@ -1,8 +1,10 @@
+import { AssociatedToken } from "./../common/associatedToken"
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { DerivedAccount, findDerivedAccount } from "../common"
+import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export interface UnbondingAccountInfo {
   /// The related account requesting to unstake
@@ -21,7 +23,7 @@ export interface FullAmount {
 }
 
 export class UnbondingAccount {
-  private static UINT32_MAXVALUE = 0xffffffff
+  private static readonly UINT32_MAXVALUE = 2 ** 32
 
   /**
    * TODO:
@@ -31,14 +33,10 @@ export class UnbondingAccount {
    * @returns {Buffer}
    * @memberof UnbondingAccount
    */
-  private static toBuffer(seed: BN): Buffer {
-    if (seed.gtn(UnbondingAccount.UINT32_MAXVALUE)) {
-      throw new Error(`Seed must not exceed ${this.UINT32_MAXVALUE}`)
-    }
-    if (seed.ltn(0)) {
-      throw new Error(`Seed must not be negative`)
-    }
-    return seed.toBuffer("le", 4)
+  private static toBuffer(seed: number): Buffer {
+    const buffer = Buffer.alloc(4)
+    buffer.writeUInt32LE(seed)
+    return buffer
   }
 
   /**
@@ -47,10 +45,10 @@ export class UnbondingAccount {
    * @returns {BN}
    * @memberof UnbondingAccount
    */
-  static randomSeed(): BN {
+  static randomSeed(): number {
     const min = 0
     const max = this.UINT32_MAXVALUE
-    return new BN(Math.random() * (max - min) + min)
+    return Math.floor(Math.random() * (max - min) + min)
   }
 
   /**
@@ -59,10 +57,10 @@ export class UnbondingAccount {
    * @param {Program} program
    * @param {PublicKey} stakeAccount
    * @param {BN} seed
-   * @returns {Promise<DerivedAccount>}
+   * @returns {Promise<PublicKey>}
    * @memberof UnbondingAccount
    */
-  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: BN): DerivedAccount {
+  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: number): PublicKey {
     return findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
   }
 
@@ -75,12 +73,12 @@ export class UnbondingAccount {
    * @returns {Promise<UnbondingAccount>}
    * @memberof UnbondingAccount
    */
-  static async load(program: Program, stakeAccount: PublicKey, seed: BN): Promise<UnbondingAccount> {
-    const { address: address } = this.deriveUnbondingAccount(program, stakeAccount, seed)
+  static async load(program: Program, stakeAccount: PublicKey, seed: number): Promise<UnbondingAccount> {
+    const address = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
 
-    return new UnbondingAccount(address, unbondingAccount as any)
+    return new UnbondingAccount(program, address, unbondingAccount as any)
   }
 
   /**
@@ -100,8 +98,8 @@ export class UnbondingAccount {
       }
     }
 
-    const unbondingAccounts = await program.account.UnbondingAccount.all([stakeAccountFilter])
-    return unbondingAccounts.map(info => new UnbondingAccount(info.publicKey, info as any))
+    const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
+    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any))
   }
 
   /**
@@ -110,7 +108,7 @@ export class UnbondingAccount {
    * @param {UnbondingAccountInfo} unbondingAccount
    * @memberof UnbondingAccount
    */
-  constructor(public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
+  constructor(public program: Program, public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
 
   /**
    * TODO:
@@ -134,6 +132,25 @@ export class UnbondingAccount {
   /**
    * TODO:
    * @static
+   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
+   * @returns {number}
+   * @memberof UnbondingAccount
+   */
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
+    if (!unbondingAccounts || unbondingAccounts.length === 0) {
+      return 0
+    }
+    const unbondingTotal = unbondingAccounts.reduce<BN>(
+      (total: BN, curr: UnbondingAccount) => total.add(curr.unbondingAccount.amount.tokens),
+      new BN(0)
+    )
+
+    return bnToNumber(unbondingTotal)
+  }
+
+  /**
+   * TODO:
+   * @static
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
    * @param {StakeAccount} stakeAccount
@@ -145,30 +162,90 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     stakeAccount: StakeAccount,
-    unbondingSeed: BN,
+    unbondingSeed: number,
     amount: BN
   ) {
-    const { address, bump } = UnbondingAccount.deriveUnbondingAccount(
-      stakePool.program,
-      stakeAccount.address,
-      unbondingSeed
-    )
+    const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
     const ix = stakePool.program.instruction.unbondStake(
-      bump,
-      this.toBuffer(unbondingSeed),
-      { kind: { tokens: {} }, amount },
+      unbondingSeed,
+      { kind: { tokens: {} }, value: amount },
       {
         accounts: {
           owner: stakeAccount.stakeAccount.owner,
           payer: stakePool.program.provider.wallet.publicKey,
           stakeAccount: stakeAccount.address,
-          stakePool: stakePool.addresses.stakePool.address,
-          stakePoolVault: stakePool.addresses.stakePoolVault.address,
+          stakePool: stakePool.addresses.stakePool,
+          stakePoolVault: stakePool.addresses.stakePoolVault,
           unbondingAccount: address,
           systemProgram: SystemProgram.programId
         }
       }
     )
     instructions.push(ix)
+  }
+
+  static async withWithdrawUnbonded(
+    instructions: TransactionInstruction[],
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    stakePool: StakePool,
+    tokenReceiver: PublicKey,
+    rentReceiver: PublicKey
+  ) {
+    const ix = stakeAccount.program.instruction.unbondStake({
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        closer: rentReceiver,
+        tokenReceiver: tokenReceiver,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakeAccount.stakeAccount.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        unbondingAccount: unbondingAccount.address,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+    instructions.push(ix)
+  }
+
+  static async withdrawUnbonded(
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    stakePool: StakePool,
+    rentReceiver: PublicKey
+  ) {
+    const provider = unbondingAccount.program.provider
+    const ix: TransactionInstruction[] = []
+    const tokenReceiver = await AssociatedToken.withCreate(
+      ix,
+      provider,
+      provider.wallet.publicKey,
+      stakePool.stakePool.tokenMint
+    )
+    await this.withWithdrawUnbonded(ix, unbondingAccount, stakeAccount, stakePool, tokenReceiver, rentReceiver)
+    return ix
+  }
+
+  static async withCancelUnbond(
+    instructions: TransactionInstruction[],
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    rentReceiver: PublicKey
+  ) {
+    const ix = unbondingAccount.program.instruction.cancelUnbond({
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        receiver: rentReceiver,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakeAccount.stakeAccount.stakePool,
+        unbondingAccount: unbondingAccount.address
+      }
+    })
+    instructions.push(ix)
+  }
+
+  static async cancelUnbond(unbondingAccount: UnbondingAccount, stakeAccount: StakeAccount, rentReceiver: PublicKey) {
+    const ix: TransactionInstruction[] = []
+    this.withCancelUnbond(ix, unbondingAccount, stakeAccount, rentReceiver)
+    return ix
   }
 }

@@ -1,22 +1,11 @@
 import { Provider } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token"
-import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction } from "@solana/web3.js"
+import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction, ParsedAccountData } from "@solana/web3.js"
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
-import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 import { Hooks } from "./hooks"
-
-/**
- * Utility class to store a calculated PDA and
- * the bump nonce associated with it.
- * @export
- * @class DerivedAccount
- */
-export interface DerivedAccount {
-  address: PublicKey
-  bump: number
-}
+import { findDerivedAccount } from "."
 
 export class AssociatedToken {
   address: PublicKey
@@ -29,11 +18,7 @@ export class AssociatedToken {
    * @memberof AssociatedToken
    */
   static derive(mint: PublicKey, owner: PublicKey): PublicKey {
-    const [address] = findProgramAddressSync(
-      [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )
-    return address
+    return findDerivedAccount(ASSOCIATED_TOKEN_PROGRAM_ID, owner, TOKEN_PROGRAM_ID, mint)
   }
 
   /**
@@ -47,10 +32,10 @@ export class AssociatedToken {
    */
   static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
     const address = this.derive(mint, owner)
-    return await this.loadBy(connection, address)
+    return await this.loadAux(connection, address)
   }
 
-  static async loadBy(connection: Connection, address: PublicKey) {
+  static async loadAux(connection: Connection, address: PublicKey) {
     const account = await connection.getAccountInfo(address)
     if (!account) {
       return undefined
@@ -68,7 +53,8 @@ export class AssociatedToken {
       if (!account) {
         return undefined
       }
-      const info = parseTokenAccount(account.data, addresses[i])
+      //TODO - FIXME cast it as any for now
+      const info = parseTokenAccount(account.data as any, addresses[i])
       return new AssociatedToken(account, info)
     })
   }
@@ -96,7 +82,7 @@ export class AssociatedToken {
    * @param {TokenAccountInfo} info
    * @memberof AssociatedToken
    */
-  constructor(public account: AccountInfo<Buffer>, public info: TokenAccountInfo) {
+  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: TokenAccountInfo) {
     this.address = info.address
   }
 
@@ -127,7 +113,7 @@ export class AssociatedToken {
    */
   static useATA(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
     return Hooks.usePromise(
-      async () => connection && tokenAddress && AssociatedToken.loadBy(connection, tokenAddress),
+      async () => connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
       [connection, tokenAddress]
     )
   }

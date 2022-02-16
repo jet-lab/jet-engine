@@ -1,6 +1,6 @@
 import { Program } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import { AssociatedToken, DerivedAccount, findDerivedAccount } from "../common"
+import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
 import { TokenDistribution } from "./distribution"
@@ -56,8 +56,8 @@ export interface AwardInfo {
 }
 
 export interface AwardAddresses {
-  award: DerivedAccount
-  vault: DerivedAccount
+  award: PublicKey
+  vault: PublicKey
 }
 
 export class Award {
@@ -72,7 +72,7 @@ export class Award {
    */
   static derive(stakeAccount: PublicKey, seed: string): AwardAddresses {
     const award = findDerivedAccount(RewardsClient.PROGRAM_ID, stakeAccount, seed)
-    const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, award.address, "vault")
+    const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, award, "vault")
     return { award, vault }
   }
 
@@ -88,8 +88,8 @@ export class Award {
    */
   static async load(rewardsProgram: Program, stakeAccount: PublicKey, seed: string): Promise<Award> {
     const addresses = this.derive(stakeAccount, seed)
-    const award = (await rewardsProgram.account.award.fetch(addresses.award.address)) as AwardInfo
-    const vault = await AssociatedToken.loadBy(rewardsProgram.provider.connection, addresses.vault.address)
+    const award = (await rewardsProgram.account.award.fetch(addresses.award)) as AwardInfo
+    const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault)
     if (!vault) {
       throw new Error("Vault is undefined")
     }

@@ -2,25 +2,59 @@ import { Idl, Program, Provider } from "@project-serum/anchor"
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
 import { useMemo } from "react"
-import { DerivedAccount } from "./associatedToken"
 
 export * from "./tokenAmount"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
-export { DerivedAccount } from "./associatedToken"
+export { Hooks } from "./hooks"
 
-export type DerivedAccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
+export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
+
+/**
+ * Utility class to store a calculated PDA and
+ * the bump nonce associated with it.
+ * @export
+ * @class DerivedAccount
+ */
+export interface DerivedAccount {
+  address: PublicKey
+  bump: number
+}
+
+/**
+ * Derive a PDA from the argued list of seeds.
+ * @param {PublicKey} programId
+ * @param {AccountSeed[]} seeds
+ * @returns {Promise<PublicKey>}
+ * @memberof JetClient
+ */
+export function findDerivedAccount(programId: PublicKey, ...seeds: AccountSeed[]): PublicKey {
+  const seedBytes = seeds.map(s => {
+    if (typeof s == "string") {
+      return Buffer.from(s)
+    } else if ("publicKey" in s) {
+      return s.publicKey.toBytes()
+    } else if ("toBytes" in s) {
+      return s.toBytes()
+    } else {
+      return s
+    }
+  })
+
+  const [address] = findProgramAddressSync(seedBytes, programId)
+  return address
+}
 
 /**
  * Derive a PDA and associated bump nonce from
  * the argued list of seeds.
  * @param {PublicKey} programId
- * @param {DerivedAccountSeed[]} seeds
+ * @param {AccountSeed[]} seeds
  * @returns {Promise<DerivedAccount>}
  * @memberof JetClient
  */
-export function findDerivedAccount(programId: PublicKey, ...seeds: DerivedAccountSeed[]): DerivedAccount {
+export function findDerivedAccountWithBump(programId: PublicKey, ...seeds: AccountSeed[]): DerivedAccount {
   const seedBytes = seeds.map(s => {
     if (typeof s == "string") {
       return Buffer.from(s)

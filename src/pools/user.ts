@@ -33,8 +33,8 @@ import { JetReserve } from "./reserve"
 import { Amount, DEX_ID, DEX_ID_DEVNET, ReserveDexMarketAccounts } from "."
 import { TokenAmount } from ".."
 import { parseTokenAccount } from "../common/accountParser"
-import { findDerivedAccount } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
+import { findDerivedAccountWithBump, Hooks } from "../common"
+import { DerivedAccount } from "../common"
 
 export interface JetUserData {
   address: PublicKey
@@ -78,6 +78,22 @@ export class JetUser implements JetUserData {
     public obligation: DerivedAccount
   ) {
     this.conn = this.client.program.provider.connection
+  }
+
+  /**
+   * @static
+   * @param {JetClient} client
+   * @param {JetMarket} market
+   * @param {JetReserve[]} reserves
+   * @param {PublicKey} address
+   * @returns {(JetUser | undefined)} JetUser | undefined
+   * @memberof JetUser
+   */
+  static use(client: JetClient, market: JetMarket, reserves: JetReserve[], address: PublicKey): JetUser | undefined {
+    return Hooks.usePromise(
+      async () => client && market && JetUser.load(client, market, reserves, address),
+      [client, market, reserves, address]
+    )
   }
 
   /**
@@ -981,15 +997,15 @@ export class JetUser implements JetUserData {
   private findReserveAccounts(reserve: JetMarketReserveInfo | JetReserve): UserReserveAccounts {
     const reserveAddress = (reserve as any).reserve ?? (reserve as any).data?.address
 
-    const deposits = findDerivedAccount(this.client.program.programId, "deposits", reserveAddress, this.address)
-    const loan = findDerivedAccount(
+    const deposits = findDerivedAccountWithBump(this.client.program.programId, "deposits", reserveAddress, this.address)
+    const loan = findDerivedAccountWithBump(
       this.client.program.programId,
       "loan",
       reserveAddress,
       this.obligation.address,
       this.address
     )
-    const collateral = findDerivedAccount(
+    const collateral = findDerivedAccountWithBump(
       this.client.program.programId,
       "collateral",
       reserveAddress,

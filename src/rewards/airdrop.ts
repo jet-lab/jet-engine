@@ -187,10 +187,10 @@ export class Airdrop {
    *
    * @static
    * @param {PublicKey} airdrop
-   * @returns {DerivedAccount}
+   * @returns {PublicKey}
    * @memberof Airdrop
    */
-  static deriveRewardsVault(airdrop: PublicKey): DerivedAccount {
+  static deriveRewardsVault(airdrop: PublicKey): PublicKey {
     return findDerivedAccount(RewardsClient.PROGRAM_ID, airdrop, "vault")
   }
 
@@ -205,17 +205,17 @@ export class Airdrop {
    */
   static async load(rewardsProgram: Program, airdropAddress: PublicKey): Promise<Airdrop> {
     const rewardsVaultAddress = this.deriveRewardsVault(airdropAddress)
-    const rewardsVault = await AssociatedToken.loadBy(rewardsProgram.provider.connection, rewardsVaultAddress.address)
+    const rewardsVault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, rewardsVaultAddress)
     const airdrop = (await rewardsProgram.account.airdrop.fetch(airdropAddress)) as AirdropInfo
     if (!rewardsVault) {
       throw new Error("Rewards vault is undefined")
     }
-    return new Airdrop(airdropAddress, rewardsVaultAddress.address, airdrop, rewardsVault)
+    return new Airdrop(airdropAddress, rewardsVaultAddress, airdrop, rewardsVault)
   }
 
   static async loadAll(rewardsProgram: Program): Promise<Airdrop[]> {
     const airdropInfos = await rewardsProgram.account.airdrop.all()
-    const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey).address)
+    const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
     const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
     const airdrops: Airdrop[] = []
     for (let i = 0; i < airdropInfos.length; i++) {
