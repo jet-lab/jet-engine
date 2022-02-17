@@ -19,7 +19,7 @@ import { BN, Program } from "@project-serum/anchor"
 import { PublicKey, TransactionInstruction } from "@solana/web3.js"
 import { StakeAccount, StakePool, JET_STAKE_ID } from "../staking"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { AssociatedToken, DerivedAccount, findDerivedAccount } from "../common"
+import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
 import { AirdropTargetsStruct } from "./layout"
@@ -281,7 +281,6 @@ export class Airdrop {
     return this.targetInfo.recipients.find(recipient => wallet.equals(recipient.recipient))
   }
 
-
   // claim
   // TODO - now: airdrop_claim.rs
 
@@ -319,7 +318,7 @@ export class Airdrop {
           stakeAccount: stakeAccount.address,
           stakingProgram: JET_STAKE_ID,
           tokenProgram: TOKEN_PROGRAM_ID
-       }
+        }
       })
       instructions.push(ix)
     }
