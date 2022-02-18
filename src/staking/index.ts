@@ -15,12 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PublicKey } from "@solana/web3.js"
-
 export { StakeClient } from "./client"
 export { StakeIdl } from "./idl"
 export { StakeAccount, StakeBalance } from "./stakeAccount"
 export { StakePool } from "./stakePool"
 export { UnbondingAccount } from "./unbondingAccount"
-
-export const JET_STAKE_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
