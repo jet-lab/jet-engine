@@ -32,7 +32,11 @@ export class AssociatedToken {
    */
   static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
     const address = this.derive(mint, owner)
-    return await this.loadAux(connection, address)
+    const token = await this.loadAux(connection, address)
+    if (token && !token.info.owner.equals(owner)) {
+      throw new Error("Unexpected owner of the associated token")
+    }
+    return token
   }
 
   static async loadAux(connection: Connection, address: PublicKey) {
