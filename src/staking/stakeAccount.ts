@@ -88,7 +88,7 @@ export class StakeAccount {
    * @param {StakeAccountInfo} stakeAccount
    * @memberof StakeAccount
    */
-  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) { }
+  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
 
   /**
    * TODO:
