@@ -88,7 +88,7 @@ export class StakeAccount {
    * @param {StakeAccountInfo} stakeAccount
    * @memberof StakeAccount
    */
-  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
+  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) { }
 
   /**
    * TODO:
@@ -125,29 +125,23 @@ export class StakeAccount {
       stakePool?.addresses.stakeVoteMint,
       stakeAccount?.stakeAccount.owner
     )
-    const unstakedJetLamports = AssociatedToken.use(
-      stakePool?.program.provider.connection,
-      stakePool?.stakePool.tokenMint,
-      stakeAccount?.stakeAccount.owner
-    )
-
-    const decimals = stakePool?.collateralMint.decimals
     const voteDecimals = stakePool?.voteMint.decimals
+
+    const jetPerStakedShare = bnToNumber(stakePool?.vault.amount.div(stakePool?.stakePool.sharesBonded))
+
+    const stakedJet = bnToNumber(stakeAccount?.stakeAccount.shares) * jetPerStakedShare
+
+    const unbondingJet = bnToNumber(stakeAccount?.stakeAccount.unbonding) * jetPerStakedShare
+
+    const unstakedJet = -1
 
     const unlockedVotes =
       voteDecimals !== undefined ? bnToNumber(unlockedVoteLamports?.info.amount) / 10 ** voteDecimals : 0
 
-    const unstakedJet = decimals !== undefined ? bnToNumber(unstakedJetLamports?.info.amount) / 10 ** decimals : 0
-
-    const stakedJet =
-      stakeAccount && decimals !== undefined ? bnToNumber(stakeAccount.stakeAccount.shares) / 10 ** decimals : 0
-
-    const unbondingJet = -1
-
     return {
       stakedJet,
-      unstakedJet,
       unbondingJet,
+      unstakedJet,
       unlockedVotes
     }
   }
