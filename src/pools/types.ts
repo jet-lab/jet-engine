@@ -18,7 +18,6 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { ReserveConfig } from "./reserve"
-import { TokenAmount } from ".."
 
 export type MarketAccount = {
   version: number
@@ -72,34 +71,4 @@ export type ReserveAccount = {
   reserved1: number | number[]
   config: ReserveConfig
   state: number[]
-}
-
-export interface Asset {
-  tokenMintPubkey: PublicKey
-  walletTokenPubkey: PublicKey
-  walletTokenExists: boolean
-  walletTokenBalance: TokenAmount
-  depositNotePubkey: PublicKey
-  depositNoteBump: number
-  depositNoteExists: boolean
-  depositNoteBalance: TokenAmount
-  depositBalance: TokenAmount
-  depositNoteDestPubkey: PublicKey
-  depositNoteDestBump: number
-  depositNoteDestExists: boolean
-  depositNoteDestBalance: TokenAmount
-  loanNotePubkey: PublicKey
-  loanNoteBump: number
-  loanNoteExists: boolean
-  loanNoteBalance: TokenAmount
-  loanBalance: TokenAmount
-  collateralNotePubkey: PublicKey
-  collateralNoteBump: number
-  collateralNoteExists: boolean
-  collateralNoteBalance: TokenAmount
-  collateralBalance: TokenAmount
-  maxDepositAmount: number
-  maxWithdrawAmount: number
-  maxBorrowAmount: number
-  maxRepayAmount: number
 }
