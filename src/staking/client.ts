@@ -16,7 +16,7 @@
  */
 
 import { Idl, Program, Provider } from "@project-serum/anchor"
-import { JET_STAKE_ID } from "."
+import { PublicKey } from "@solana/web3.js"
 import { connect } from "../common"
 import { Hooks } from "../common/hooks"
 
@@ -26,6 +26,7 @@ import { Hooks } from "../common/hooks"
  * @class JetClient
  */
 export class StakeClient {
+  static PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
   /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
@@ -33,7 +34,7 @@ export class StakeClient {
    * @memberof StakeClient
    */
   static async connect(provider: Provider): Promise<Program> {
-    return await connect(JET_STAKE_ID, provider)
+    return await connect(StakeClient.PROGRAM_ID, provider)
   }
 
   /**

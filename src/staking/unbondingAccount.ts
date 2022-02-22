@@ -1,7 +1,7 @@
 import { AssociatedToken } from "./../common/associatedToken"
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { bnToNumber, DerivedAccount, findDerivedAccount } from "../common"
+import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
@@ -57,10 +57,10 @@ export class UnbondingAccount {
    * @param {Program} program
    * @param {PublicKey} stakeAccount
    * @param {BN} seed
-   * @returns {Promise<DerivedAccount>}
+   * @returns {Promise<PublicKey>}
    * @memberof UnbondingAccount
    */
-  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: number): DerivedAccount {
+  static deriveUnbondingAccount(program: Program, stakeAccount: PublicKey, seed: number): PublicKey {
     return findDerivedAccount(program.programId, stakeAccount, this.toBuffer(seed))
   }
 
@@ -74,7 +74,7 @@ export class UnbondingAccount {
    * @memberof UnbondingAccount
    */
   static async load(program: Program, stakeAccount: PublicKey, seed: number): Promise<UnbondingAccount> {
-    const { address: address } = this.deriveUnbondingAccount(program, stakeAccount, seed)
+    const address = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
 
@@ -165,13 +165,8 @@ export class UnbondingAccount {
     unbondingSeed: number,
     amount: BN
   ) {
-    const { address, bump } = UnbondingAccount.deriveUnbondingAccount(
-      stakePool.program,
-      stakeAccount.address,
-      unbondingSeed
-    )
+    const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
     const ix = stakePool.program.instruction.unbondStake(
-      bump,
       unbondingSeed,
       { kind: { tokens: {} }, value: amount },
       {
@@ -179,8 +174,8 @@ export class UnbondingAccount {
           owner: stakeAccount.stakeAccount.owner,
           payer: stakePool.program.provider.wallet.publicKey,
           stakeAccount: stakeAccount.address,
-          stakePool: stakePool.addresses.stakePool.address,
-          stakePoolVault: stakePool.addresses.stakePoolVault.address,
+          stakePool: stakePool.addresses.stakePool,
+          stakePoolVault: stakePool.addresses.stakePoolVault,
           unbondingAccount: address,
           systemProgram: SystemProgram.programId
         }
@@ -204,7 +199,7 @@ export class UnbondingAccount {
         tokenReceiver: tokenReceiver,
         stakeAccount: stakeAccount.address,
         stakePool: stakeAccount.stakeAccount.stakePool,
-        stakePoolVault: stakePool.addresses.stakePoolVault.address,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
         unbondingAccount: unbondingAccount.address,
         tokenProgram: TOKEN_PROGRAM_ID
       }

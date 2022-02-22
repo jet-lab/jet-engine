@@ -23,9 +23,8 @@ import { CreateReserveParams, JetReserve } from "./reserve"
 import { parsePosition, StaticSeeds } from "./util"
 import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
-import { findDerivedAccount } from "../common"
-import { DerivedAccount } from "../common/associatedToken"
-import { Hooks } from "../common"
+import { DerivedAccount } from "../common"
+import { findDerivedAccountWithBump, Hooks } from "../common"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey
@@ -270,7 +269,7 @@ export class JetMarket implements JetMarketData {
    * @memberof JetClient
    */
   getAssociatedObligationAddress(borrower: PublicKey): DerivedAccount {
-    return findDerivedAccount(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
+    return findDerivedAccountWithBump(this.client.program.programId, StaticSeeds.Obligation, this.address, borrower)
   }
 }
 
