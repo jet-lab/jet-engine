@@ -78,15 +78,14 @@ export function findDerivedAccountWithBump(programId: PublicKey, ...seeds: Accou
  * @returns {Promise<Program<Idl>>} The client
  * @memberof JetClient
  */
-export async function connect(programId: PublicKey, provider: Provider): Promise<Program<Idl>> {
-  const idl = await Program.fetchIdl(programId, provider)
+export async function connect<T extends Idl>(programId: PublicKey, provider: Provider): Promise<Program<T>> {
+  const idl: T | null = await Program.fetchIdl(programId, provider)
 
   if (!idl) {
     throw new Error("Program lacks an IDL account.")
   }
-  const program = new Program(idl, programId, provider)
 
-  return program
+  return new Program(idl, programId, provider)
 }
 
 const confirmOptions: ConfirmOptions = {

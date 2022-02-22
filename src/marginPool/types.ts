@@ -22,7 +22,7 @@ export interface MarginPoolConfig {
   managementFeeCollectThreshold: BN
 }
 
-type UnixTimeStamp = number
+type UnixTimeStamp = BN
 
 export interface MarginPoolAccount {
   version: number

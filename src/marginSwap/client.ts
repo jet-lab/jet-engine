@@ -1,4 +1,4 @@
-import { Program, Provider, Idl } from "@project-serum/anchor"
+import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
 import { JetMarginSwapIdl } from "./idl"
@@ -8,16 +8,10 @@ export class MarginSwapClient {
 
   /**
    *
-   * @param {Program<JetMarginMetaDataIdl>} program
-   */
-  constructor(public program: Program<JetMarginSwapIdl>) {}
-
-  /**
-   *
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider): Promise<Program> {
+  static async connect(provider: Provider): Promise<Program<JetMarginSwapIdl>> {
     return await connect(this.MARGIN_SWAP_PROGRAM_ID, provider)
   }
 
@@ -26,7 +20,7 @@ export class MarginSwapClient {
    * @param {Provider} provider
    * @returns
    */
-  static use(provider: Provider): Program<Idl> | undefined {
+  static use(provider: Provider): Program<JetMarginSwapIdl> | undefined {
     return Hooks.usePromise(async () => provider && MarginSwapClient.connect(provider), [provider])
   }
 }
