@@ -281,9 +281,6 @@ export class Airdrop {
     return this.targetInfo.recipients.find(recipient => wallet.equals(recipient.recipient))
   }
 
-  // claim
-  // TODO - now: airdrop_claim.rs
-
   static async withClaim(
     instructions: TransactionInstruction[],
     rewardsProgram: Program,
@@ -291,12 +288,6 @@ export class Airdrop {
     stakePool: StakePool,
     stakeAccount: StakeAccount
   ) {
-    // It would be nice to have seperate options
-    // 1) The account is from the right program. Relevant to non PDAs
-    // 2) The account is the right type. Relevant to non PDAs
-    // 3) If the account doesn't exist, should we create it. Relevant to caller
-    // 4) If the account exists, should we error or not
-
     if (stakeAccount.stakeAccount) {
       console.log("Claiming and staking the airdrop.")
       const ix = rewardsProgram.instruction.airdropClaim({
@@ -307,7 +298,6 @@ export class Airdrop {
           rewardVault: airdrop.rewardsVaultAddress,
           /// The address entitled to the airdrop, which must sign to claim
           recipient: stakeAccount.stakeAccount.owner,
-          /// TODO - question: is this jet token account or user's token account?
           /// The address to receive rent recovered from the claim account
           receiver: stakeAccount.stakeAccount.owner,
           /// The stake pool to deposit stake into
@@ -324,189 +314,10 @@ export class Airdrop {
     }
   }
 
-  // TODO: take a look to see if i need to use this pattern
-  // static use(
-  //   rewardsProgram: Program | undefined,
-  //   stakePool: StakePool | undefined,
-  //   wallet: PublicKey | undefined | null
-  // ) {
-  //   const [stakeAccount, setStakeAccount] = useState<StakeAccount | undefined>()
-  //   useEffect(() => {
-  //     let abort = false
-  //     if (rewardsProgram && stakePool && wallet) {
-  //       StakeAccount.load(rewardsProgram, stakePool.addresses.stakePool.address, wallet)
-  //         .then(newStakeAccount => !abort && setStakeAccount(newStakeAccount))
-  //         .catch(() => !abort && setStakeAccount(undefined))
-  //     } else {
-  //       setStakeAccount(undefined)
-  //     }
-  //     return () => {
-  //       abort = true
-  //     }
-  //   }, [rewardsProgram, stakePool, wallet])
-  //   return stakeAccount
-  // }
-  // static useBalance(stakeAccount: StakeAccount | undefined, stakePool: StakePool | undefined): StakeBalance {
-  //   const unlockedVoteLamports = AssociatedToken.use(
-  //     stakePool?.program.provider,
-  //     stakePool?.addresses.stakeVoteMint.address,
-  //     stakeAccount?.stakeAccount.owner
-  //   )
-  //   const unstakedJetLamports = AssociatedToken.use(
-  //     stakePool?.program.provider,
-  //     stakePool?.stakePool.tokenMint,
-  //     stakeAccount?.stakeAccount.owner
-  //   )
-  //   const decimals = stakePool?.collateralMint.decimals
-  //   const voteDecimals = stakePool?.voteMint.decimals
-  //   const unlockedVotes = voteDecimals !== undefined ? bnToNumber(unlockedVoteLamports?.amount) / 10 ** voteDecimals : 0
-  //   const unstakedJet = decimals !== undefined ? bnToNumber(unstakedJetLamports?.amount) / 10 ** decimals : 0
-  //   const stakedJet =
-  //     stakeAccount && decimals !== undefined ? bnToNumber(stakeAccount.stakeAccount.shares) / 10 ** decimals : 0
-  //   const unbondingJet = -1
-  //   return {
-  //     stakedJet,
-  //     unstakedJet,
-  //     unbondingJet,
-  //     unlockedVotes
-  //   }
-  // }
-
-  // static async create(rewardsProgram: Program, airdrop: PublicKey) {
-  //   const instructions: TransactionInstruction[] = []
-  //   const { address, bumpSeed } = await this.deriveRewardVault(rewardsProgram, airdrop)
-  //   await this.withCreate(instructions, rewardsProgram, address, owner)
-  //   return await rewardsProgram.provider.send(new Transaction().add(...instructions))
-  // }
-  // static async addStake(stakePool: StakePool, owner: PublicKey, collateralTokenAccount: PublicKey, amount: BN) {
-  //   const instructions: TransactionInstruction[] = []
-  //   const voterTokenAccount = await AssociatedToken.withCreate(
-  //     instructions,
-  //     stakePool.program.provider,
-  //     owner,
-  //     stakePool.addresses.stakeVoteMint.address
-  //   )
-  //   await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool.address, owner)
-  //   await this.withAddRecipients(instructions, stakePool, owner, collateralTokenAccount, amount)
-  //   return await stakePool.program.provider.send(new Transaction().add(...instructions))
-  // }
-  // static async withCreate(
-  //   instructions: TransactionInstruction[],
-  //   rewardsProgram: Program,
-  //   airdropAddress: PublicKey,
-  //   authority: PublicKey,
-  //   payer: PublicKey,
-  //   token_mint: PublicKey,
-  //   params: AirdropCreateParams
-  // ) {
-  //   const airdrop = await rewardsProgram.provider.connection.getAccountInfo(airdropAddress)
-  //   const { address } = Airdrop.deriveRewardVault(rewardsProgram, airdropAddress)
-  //   // It would be nice to have seperate options
-  //   // 1) The account is from the right program. Relevant to non PDAs
-  //   // 2) The account is the right type. Relevant to non PDAs
-  //   // 3) If the account doesn't exist, should we create it. Relevant to caller
-  //   // 4) If the account exists, should we error or not
-  //   if (!airdrop) {
-  //     console.log("Creating the airdrop.")
-  //     const ix = rewardsProgram.instruction.airdropCreate(params, {
-  //       accounts: {
-  //         airdrop: airdropAddress,
-  //         authority,
-  //         reward_vault: address,
-  //         payer,
-  //         token_mint,
-  //         token_program: TOKEN_PROGRAM_ID,
-  //         systemProgram: SystemProgram.programId,
-  //         rent: SYSVAR_RENT_PUBKEY,
-  //       }
-  //     })
-  //     instructions.push(ix)
-  //   }
-  // }
-
-  // static async withAddRecipients(
-  //   instructions: TransactionInstruction[],
-  //   stakePool: StakePool,
-  //   owner: PublicKey,
-  //   tokenAccount: PublicKey,
-  //   amount: BN
-  // ) {
-  //   const { address: stakeAccount } = await this.deriveStakeAccount(
-  //     stakePool.program,
-  //     stakePool.addresses.accounts.stakePool,
-  //     owner
-  //   )
-  //   const ix = stakePool.program.instruction.addStake(
-  //     { kind: { tokens: {} }, value: amount },
-  //     {
-  //       accounts: {
-  //         stakePool: stakePool.addresses.stakePool.address,
-  //         stakePoolVault: stakePool.addresses.accounts.stakePoolVault,
-  //         stakeAccount,
-  //         payer: stakePool.program.provider.wallet.publicKey,
-  //         payerTokenAccount: tokenAccount,
-  //         tokenProgram: TOKEN_PROGRAM_ID
-  //       }
-  //     }
-  //   )
-  //   instructions.push(ix)
-  // }
-
-  // static async withFinalize(
-  //   instructions: TransactionInstruction[],
-  //   stakePool: StakePool,
-  //   owner: PublicKey,
-  //   voterTokenAccount: PublicKey,
-  //   amount: BN
-  // ) {
-  //   const { address: stakeAccount } = await this.deriveStakeAccount(
-  //     stakePool.program,
-  //     stakePool.addresses.stakePool.address,
-  //     owner
-  //   )
-  //   const ix = stakePool.program.instruction.mintVotes(
-  //     { kind: { tokens: {} }, amount },
-  //     {
-  //       accounts: {
-  //         owner: owner,
-  //         stakePool: stakePool.addresses.stakePool.address,
-  //         stakePoolVault: stakePool.addresses.stakePoolVault.address,
-  //         stakeVoteMint: stakePool.addresses.stakeVoteMint.address,
-  //         stakeAccount,
-  //         voterTokenAccount,
-  //         tokenProgram: TOKEN_PROGRAM_ID
-  //       }
-  //     }
-  //   )
-  //   instructions.push(ix)
-  // }
-  // static async withClose(
-  //   instructions: TransactionInstruction[],
-  //   stakePool: StakePool,
-  //   stakeAccount: StakeAccount,
-  //   owner: PublicKey,
-  //   voterTokenAccount: PublicKey,
-  //   amount: BN
-  // ) {
-  //   const ix = stakePool.program.instruction.burnVotes(amount, {
-  //     accounts: {
-  //       owner,
-  //       stakePool: stakePool.addresses.stakePool.address,
-  //       stakeVoteMint: stakePool.addresses.stakeVoteMint.address,
-  //       stakeAccount: stakeAccount.address,
-  //       voterTokenAccount,
-  //       voter: owner,
-  //       tokenProgram: TOKEN_PROGRAM_ID
-  //     }
-  //   })
-  //   instructions.push(ix)
-  // }
-
-  // create
-  // TODO - later: airdrop_create.rs
-  // TODO - later: airdrop_add_recipients.rs
-  // finalize
-  // TODO - later: airdrop_finalize.rs
-  // close
-  // TODO - later: airdrop_close.rs
+  static async claim(rewardsProgram: Program, airdrop: Airdrop, stakePool: StakePool, stakeAccount: StakeAccount) {
+    const ix: TransactionInstruction[] = []
+    this.withClaim(ix, rewardsProgram, airdrop, stakePool, stakeAccount)
+    console.log("claim ix", ix)
+    return ix
+  }
 }
