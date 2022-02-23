@@ -1,6 +1,6 @@
 {
   "name": "@jet-lab/jet-engine",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "Library for interacting with the Jet on-chain programs",
   "keywords": [
     "solana",
@@ -38,6 +38,7 @@
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.33.0",
     "eventemitter3": "^4.0.7",
+    "lodash": "^4.17.21",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },

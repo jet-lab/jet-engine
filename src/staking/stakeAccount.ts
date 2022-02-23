@@ -29,9 +29,7 @@ export interface StakeAccountInfo {
 
 export interface StakeBalance {
   stakedJet: number
-  unstakedJet: number
   unbondingJet: number
-  unlockedVotes: number
 }
 
 export class StakeAccount {
@@ -120,35 +118,15 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    const unlockedVoteLamports = AssociatedToken.use(
-      stakePool?.program.provider.connection,
-      stakePool?.addresses.stakeVoteMint,
-      stakeAccount?.stakeAccount.owner
-    )
-    const unstakedJetLamports = AssociatedToken.use(
-      stakePool?.program.provider.connection,
-      stakePool?.stakePool.tokenMint,
-      stakeAccount?.stakeAccount.owner
-    )
+    const jetPerStakedShare = bnToNumber(stakePool?.vault.amount.div(stakePool?.stakePool.sharesBonded))
 
-    const decimals = stakePool?.collateralMint.decimals
-    const voteDecimals = stakePool?.voteMint.decimals
+    const stakedJet = bnToNumber(stakeAccount?.stakeAccount.shares) * jetPerStakedShare
 
-    const unlockedVotes =
-      voteDecimals !== undefined ? bnToNumber(unlockedVoteLamports?.info.amount) / 10 ** voteDecimals : 0
-
-    const unstakedJet = decimals !== undefined ? bnToNumber(unstakedJetLamports?.info.amount) / 10 ** decimals : 0
-
-    const stakedJet =
-      stakeAccount && decimals !== undefined ? bnToNumber(stakeAccount.stakeAccount.shares) / 10 ** decimals : 0
-
-    const unbondingJet = -1
+    const unbondingJet = bnToNumber(stakeAccount?.stakeAccount.unbonding) * jetPerStakedShare
 
     return {
       stakedJet,
-      unstakedJet,
-      unbondingJet,
-      unlockedVotes
+      unbondingJet
     }
   }
 

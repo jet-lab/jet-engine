@@ -17,11 +17,12 @@
 
 import { BN, Program } from "@project-serum/anchor"
 import { PublicKey, TransactionInstruction } from "@solana/web3.js"
-import { StakeAccount, StakePool, JET_STAKE_ID } from "../staking"
+import { StakeAccount, StakePool, StakeClient } from "../staking"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
+
 import { AirdropTargetsStruct } from "./layout"
 
 export interface AirdropInfo {
@@ -306,7 +307,7 @@ export class Airdrop {
           stakePoolVault: stakePool.vault.address,
           /// The account to own the stake being deposited
           stakeAccount: stakeAccount.address,
-          stakingProgram: JET_STAKE_ID,
+          stakingProgram: StakeClient.PROGRAM_ID,
           tokenProgram: TOKEN_PROGRAM_ID
         }
       })
