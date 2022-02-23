@@ -105,7 +105,7 @@ export class StakeAccount {
     return Hooks.usePromise(
       async () =>
         stakeProgram && stakePool && wallet && StakeAccount.load(stakeProgram, stakePool.addresses.stakePool, wallet),
-      [stakeProgram, stakePool?.addresses.stakePool, wallet]
+      [stakeProgram, stakePool?.addresses.stakePool?.toBase58(), wallet?.toBase58()]
     )
   }
 

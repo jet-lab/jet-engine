@@ -133,7 +133,7 @@ export class UnbondingAccount {
     return Hooks.usePromise(
       async () =>
         stakeProgram && stakeAccount && UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address),
-      [stakeProgram, stakeAccount?.address]
+      [stakeProgram, stakeAccount?.address?.toBase58()]
     )
   }
 

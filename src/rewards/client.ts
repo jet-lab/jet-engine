@@ -42,6 +42,6 @@ export class RewardsClient {
    * @memberof RewardsClient
    */
   static use(provider: Provider | undefined): Program | undefined {
-    return Hooks.usePromise(async () => provider && RewardsClient.connect(provider), [provider])
+    return Hooks.usePromise(async () => provider && RewardsClient.connect(provider), [provider?.connection])
   }
 }

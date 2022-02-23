@@ -45,6 +45,6 @@ export class StakeClient {
    * @memberof StakeClient
    */
   static use(provider: Provider): Program<Idl> | undefined {
-    return Hooks.usePromise(async () => StakeClient.connect(provider), [provider])
+    return Hooks.usePromise(async () => StakeClient.connect(provider), [provider.connection])
   }
 }
