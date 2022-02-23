@@ -163,23 +163,6 @@ export interface AirdropTarget {
   recipient: PublicKey
 }
 
-export interface AirdropCreateParams {
-  /// The expiration time for the airdrop
-  expire_at: BN
-
-  /// The stake pool that claimed rewards are deposited into.
-  stake_pool: PublicKey
-
-  /// A description for this airdrop
-  short_desc: string
-
-  /// The bump seed needed to generate the airdrop account address
-  vault_bump: number
-
-  /// Airdrop settings
-  flags: BN
-}
-
 export class Airdrop {
   targetInfo: AirdropTargetInfo
 
@@ -289,30 +272,28 @@ export class Airdrop {
     stakePool: StakePool,
     stakeAccount: StakeAccount
   ) {
-    if (stakeAccount.stakeAccount) {
-      console.log("Claiming and staking the airdrop.")
-      const ix = rewardsProgram.instruction.airdropClaim({
-        accounts: {
-          /// The airdrop to claim from
-          airdrop: airdrop.airdropAddress,
-          /// The token account to claim the rewarded tokens from
-          rewardVault: airdrop.rewardsVaultAddress,
-          /// The address entitled to the airdrop, which must sign to claim
-          recipient: stakeAccount.stakeAccount.owner,
-          /// The address to receive rent recovered from the claim account
-          receiver: stakeAccount.stakeAccount.owner,
-          /// The stake pool to deposit stake into
-          stakePool: airdrop.airdrop.stakePool,
-          /// The stake pool token vault
-          stakePoolVault: stakePool.vault.address,
-          /// The account to own the stake being deposited
-          stakeAccount: stakeAccount.address,
-          stakingProgram: StakeClient.PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID
-        }
-      })
-      instructions.push(ix)
-    }
+    console.log("Claiming and staking the airdrop.")
+    const ix = rewardsProgram.instruction.airdropClaim({
+      accounts: {
+        /** The airdrop to claim from */
+        airdrop: airdrop.airdropAddress,
+        /** The token account to claim the rewarded tokens from */
+        rewardVault: airdrop.rewardsVaultAddress,
+        /** The address entitled to the airdrop, which must sign to claim */
+        recipient: stakeAccount.stakeAccount.owner,
+        /** The address to receive rent recovered from the claim account */
+        receiver: stakeAccount.stakeAccount.owner,
+        /** The stake pool to deposit stake into */
+        stakePool: airdrop.airdrop.stakePool,
+        /** The stake pool token vault */
+        stakePoolVault: stakePool.vault.address,
+        /** The account to own the stake being deposited */
+        stakeAccount: stakeAccount.address,
+        stakingProgram: StakeClient.PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+    instructions.push(ix)
   }
 
   static async claim(rewardsProgram: Program, airdrop: Airdrop, stakePool: StakePool, stakeAccount: StakeAccount) {
