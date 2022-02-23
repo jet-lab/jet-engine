@@ -1,10 +1,10 @@
-import { MintInfo, AccountInfo as TokenAccountInfo } from '@solana/spl-token';
+import { MintInfo, AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
-import { MarginPoolAccountInfo } from './types'
+import { MarginPoolAccountInfo } from "./types"
 
 export interface MarginPoolAccounts {
   marginPool: PublicKey
@@ -22,7 +22,7 @@ derive accounts */
 
 export class MarginPool {
   //FIXME
-  static readonly CANONICAL_SEED = 'MAYBEJET'
+  static readonly CANONICAL_SEED = "MAYBEJET"
 
   constructor(
     public program: Program,
@@ -35,19 +35,20 @@ export class MarginPool {
   ) {}
 
   static async load(program: Program, seed: string): Promise<MarginPool> {
-    const pubkeys = this.deriveAccounts(program.programId, seed);
+    const pubkeys = this.deriveAccounts(program.programId, seed)
 
-    const marginPoolInfo = (await program.account.marginPool.fetch(pubkeys.marginPool)) as MarginPoolAccountInfo;
+    const marginPoolInfo = (await program.account.marginPool.fetch(pubkeys.marginPool)) as MarginPoolAccountInfo
 
-    const [ poolTokenMintInfo, vaultMintInfo, depositNoteMintInfo, loanNoteMintInfo ] = await program.provider.connection.getMultipleAccountsInfo([
-      marginPoolInfo.tokenMint,
-      pubkeys.vault,
-      pubkeys.depositNoteMint,
-      pubkeys.loanNoteMint,
-    ])
+    const [poolTokenMintInfo, vaultMintInfo, depositNoteMintInfo, loanNoteMintInfo] =
+      await program.provider.connection.getMultipleAccountsInfo([
+        marginPoolInfo.tokenMint,
+        pubkeys.vault,
+        pubkeys.depositNoteMint,
+        pubkeys.loanNoteMint
+      ])
 
-    if(!poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
-      throw new Error('Invalid mint')
+    if (!poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
+      throw new Error("Invalid mint")
     }
 
     const vault = parseTokenAccount(vaultMintInfo.data as Buffer, pubkeys.vault)
@@ -55,40 +56,31 @@ export class MarginPool {
     const loanNoteMint = parseMintAccount(loanNoteMintInfo.data as Buffer)
     const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer)
 
-    return new MarginPool(
-      program,
-      pubkeys,
-      marginPoolInfo,
-      vault,
-      depositNoteMint,
-      loanNoteMint,
-      poolTokenMint
-      )
+    return new MarginPool(program, pubkeys, marginPoolInfo, vault, depositNoteMint, loanNoteMint, poolTokenMint)
   }
 
   static use(program: Program | undefined): MarginPool | undefined {
-    return Hooks.usePromise(async() => program && MarginPool.load(program, MarginPool.CANONICAL_SEED ), [program])
+    return Hooks.usePromise(async () => program && MarginPool.load(program, MarginPool.CANONICAL_SEED), [program])
   }
 
   static deriveAccounts(programId: PublicKey, seed: string): MarginPoolAccounts {
-    const marginPool = findDerivedAccount(programId, seed);
-    const vault = findDerivedAccount(programId, seed, 'vault');
-    const depositNoteMint = findDerivedAccount(programId, seed, 'deposit-note-mint')
-    const loanNoteMint = findDerivedAccount(programId, seed, 'loan-note-mint')
+    const marginPool = findDerivedAccount(programId, seed)
+    const vault = findDerivedAccount(programId, seed, "vault")
+    const depositNoteMint = findDerivedAccount(programId, seed, "deposit-note-mint")
+    const loanNoteMint = findDerivedAccount(programId, seed, "loan-note-mint")
 
     return {
       marginPool,
       vault,
       depositNoteMint,
-      loanNoteMint,
+      loanNoteMint
     }
   }
 
-   //FIXME: unclear on params setup
+  //FIXME: unclear on params setup
   // static create(program: Program, params: CreatePoolParams): Promise<string> {
   //   const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
 
   //   return
   // }
-
 }

@@ -44,7 +44,7 @@ export interface MarginPoolAccountInfo {
   address: PublicKey
   /** The configuration of the pool */
   config: MarginPoolConfig
-  /** The total amount of tokens borrowed, that need to be repaid to the pool */  
+  /** The total amount of tokens borrowed, that need to be repaid to the pool */
   borrowedTokens: number[]
   /** The total amount of tokens in the pool that's reserved for collection as fees */
   uncollectedFees: number[]
