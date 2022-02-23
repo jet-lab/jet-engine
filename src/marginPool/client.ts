@@ -3,8 +3,7 @@ import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
 import { JetMarginPoolIdl } from "./idl"
 
-
-export class MarginPoolClient{
+export class MarginPoolClient {
   static readonly MARGIN_POOL_PROGRAM_ID = new PublicKey("JPMPcFm69yrCHFvzBJ5aVSxhq5mBHwH1N3axcEQW27G")
 
   /**

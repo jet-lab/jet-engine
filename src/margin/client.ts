@@ -4,7 +4,6 @@ import { connect, Hooks } from "../common"
 import { JetMarginIdl } from "./idl"
 
 export class MarginClient {
-
   static readonly MARGIN_PROGRAM_ID = new PublicKey("JPMvgcajw1LfsHphj4XKKR953DDBgRcbKi1ZWPcEPbk")
 
   /**

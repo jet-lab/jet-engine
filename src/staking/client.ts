@@ -19,7 +19,7 @@ import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect } from "../common"
 import { Hooks } from "../common/hooks"
-import { StakeIdl } from './idl'
+import { StakeIdl } from "./idl"
 
 /**
  * TODO:

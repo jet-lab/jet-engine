@@ -24,7 +24,7 @@ export interface MarginPoolConfig {
 
 type UnixTimeStamp = BN
 
-export interface MarginPoolAccount {
+export interface MarginPoolAccountInfo {
   version: number
   /** The bump seed used to create the pool address */
   poolBump: number
@@ -35,12 +35,8 @@ export interface MarginPoolAccount {
   /** The address of the mint for deposit notes */
   depositNoteMint: PublicKey
   /** The address of the oracle for deposit notes */
-  depositNoteOracle: PublicKey
-  /** The address of the mint for the loan notes */
   loanNoteMint: PublicKey
   /** The address of the oracle for loan notes */
-  loadNoteOracle: PublicKey
-  /** The token the pool allows lending and borrowing on */
   tokenMint: PublicKey
   /** The address of the pyth oracle with price information for the token */
   tokenPriceOracle: PublicKey
@@ -48,7 +44,7 @@ export interface MarginPoolAccount {
   address: PublicKey
   /** The configuration of the pool */
   config: MarginPoolConfig
-  /** The total amount of tokens borrowed, that need to be repaid to the pool */
+  /** The total amount of tokens borrowed, that need to be repaid to the pool */  
   borrowedTokens: number[]
   /** The total amount of tokens in the pool that's reserved for collection as fees */
   uncollectedFees: number[]
