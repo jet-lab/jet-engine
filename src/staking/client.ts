@@ -26,7 +26,7 @@ import { Hooks } from "../common/hooks"
  * @class JetClient
  */
 export class StakeClient {
-  static PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
+  static readonly PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
   /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
