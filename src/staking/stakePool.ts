@@ -1,4 +1,4 @@
-import { MintInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { MintInfo, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
@@ -40,11 +40,11 @@ export interface StakePoolInfo {
   unbondPeriod: BN
 
   /** The total amount of virtual stake tokens that can receive rewards */
-  sharesBonded: BN
+  sharesBonded: u64
 
   /** The total amount of virtual stake tokens that are ineligible for rewards
   /** because they are being unbonded for future withdrawal. */
-  sharesUnbonded: BN
+  sharesUnbonded: u64
 }
 
 // ----- Instructions -----

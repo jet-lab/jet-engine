@@ -1,8 +1,8 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { bnToNumber, findDerivedAccount } from "../common"
+import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
+import { findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
@@ -15,21 +15,21 @@ export interface StakeAccountInfo {
   stakePool: PublicKey
 
   /** The stake balance (in share units) */
-  shares: BN
+  shares: u64
 
   /** The token balance locked by existence of voting tokens */
-  mintedVotes: BN
+  mintedVotes: u64
 
   /** The stake balance locked by existence of collateral tokens */
-  mintedCollateral: BN
+  mintedCollateral: u64
 
   /** The total staked tokens currently unbonding so as to be withdrawn in the future */
-  unbonding: BN
+  unbonding: u64
 }
 
 export interface StakeBalance {
-  stakedJet: number
-  unbondingJet: number
+  stakedJet: u64
+  unbondingJet: u64
 }
 
 export class StakeAccount {
@@ -118,11 +118,15 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    const jetPerStakedShare = bnToNumber(stakePool?.vault.amount.div(stakePool?.stakePool.sharesBonded))
 
-    const stakedJet = bnToNumber(stakeAccount?.stakeAccount.shares) * jetPerStakedShare
+    let stakedJet: u64 = new u64(0);
+    let unbondingJet: u64 = new u64(0);
 
-    const unbondingJet = bnToNumber(stakeAccount?.stakeAccount.unbonding) * jetPerStakedShare
+    if (!!stakePool && !!stakeAccount) {
+      stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
+
+      unbondingJet = stakeAccount.stakeAccount.unbonding.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
+    }
 
     return {
       stakedJet,
