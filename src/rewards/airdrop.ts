@@ -253,7 +253,7 @@ export class Airdrop {
   static use(rewardsProgram: Program | undefined, airdrop: PublicKey | undefined): Airdrop | undefined {
     return Hooks.usePromise(
       async () => rewardsProgram && airdrop && Airdrop.load(rewardsProgram, airdrop),
-      [rewardsProgram, airdrop]
+      [rewardsProgram, airdrop?.toBase58()]
     )
   }
 

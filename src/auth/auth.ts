@@ -122,7 +122,7 @@ export class Auth {
         abort = true
         clearInterval(interval)
       }
-    }, [wallet, authProgram, authAccount])
+    }, [wallet?.toBase58(), authProgram, authAccount])
 
     return { authAccount, loading }
   }
