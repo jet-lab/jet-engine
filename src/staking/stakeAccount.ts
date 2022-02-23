@@ -118,14 +118,15 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-
-    let stakedJet: u64 = new u64(0);
-    let unbondingJet: u64 = new u64(0);
+    let stakedJet: u64 = new u64(0)
+    let unbondingJet: u64 = new u64(0)
 
     if (!!stakePool && !!stakeAccount) {
       stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
-      unbondingJet = stakeAccount.stakeAccount.unbonding.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
+      unbondingJet = stakeAccount.stakeAccount.unbonding
+        .mul(stakeAccount.stakeAccount.shares)
+        .div(stakePool.stakePool.sharesBonded)
     }
 
     return {
