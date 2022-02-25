@@ -30,6 +30,7 @@ export interface StakeAccountInfo {
 export interface StakeBalance {
   stakedJet: u64
   unbondingJet: u64
+  jetVotesPerShare: u64
 }
 
 export class StakeAccount {
@@ -120,8 +121,11 @@ export class StakeAccount {
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
     let stakedJet: u64 = new u64(0)
     let unbondingJet: u64 = new u64(0)
+    let jetVotesPerShare: u64 = new u64(0)
 
     if (!!stakePool && !!stakeAccount) {
+      jetVotesPerShare = stakePool.vault.amount.div(stakePool.stakePool.sharesBonded)
+
       stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
       unbondingJet = stakeAccount.stakeAccount.unbonding
@@ -131,7 +135,8 @@ export class StakeAccount {
 
     return {
       stakedJet,
-      unbondingJet
+      unbondingJet,
+      jetVotesPerShare
     }
   }
 
