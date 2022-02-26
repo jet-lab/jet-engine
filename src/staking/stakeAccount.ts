@@ -1,7 +1,7 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
-import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
@@ -15,22 +15,21 @@ export interface StakeAccountInfo {
   stakePool: PublicKey
 
   /** The stake balance (in share units) */
-  shares: u64
+  shares: BN
 
   /** The token balance locked by existence of voting tokens */
-  mintedVotes: u64
+  mintedVotes: BN
 
   /** The stake balance locked by existence of collateral tokens */
-  mintedCollateral: u64
+  mintedCollateral: BN
 
   /** The total staked tokens currently unbonding so as to be withdrawn in the future */
-  unbonding: u64
+  unbonding: BN
 }
 
 export interface StakeBalance {
-  stakedJet: u64
-  unbondingJet: u64
-  jetVotesPerShare: u64
+  stakedJet: BN | undefined
+  unbondingJet: BN | undefined
 }
 
 export class StakeAccount {
@@ -87,7 +86,7 @@ export class StakeAccount {
    * @param {StakeAccountInfo} stakeAccount
    * @memberof StakeAccount
    */
-  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
+  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) { }
 
   /**
    * TODO:
@@ -119,13 +118,10 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    let stakedJet: u64 = new u64(0)
-    let unbondingJet: u64 = new u64(0)
-    let jetVotesPerShare: u64 = new u64(0)
+    let stakedJet: BN | undefined;
+    let unbondingJet: BN | undefined;
 
     if (!!stakePool && !!stakeAccount) {
-      jetVotesPerShare = stakePool.vault.amount.div(stakePool.stakePool.sharesBonded)
-
       stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
       unbondingJet = stakeAccount.stakeAccount.unbonding
@@ -135,8 +131,7 @@ export class StakeAccount {
 
     return {
       stakedJet,
-      unbondingJet,
-      jetVotesPerShare
+      unbondingJet
     }
   }
 
