@@ -86,7 +86,7 @@ export class StakeAccount {
    * @param {StakeAccountInfo} stakeAccount
    * @memberof StakeAccount
    */
-  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) { }
+  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
 
   /**
    * TODO:
@@ -118,8 +118,8 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    let stakedJet: BN | undefined;
-    let unbondingJet: BN | undefined;
+    let stakedJet: BN | undefined
+    let unbondingJet: BN | undefined
 
     if (!!stakePool && !!stakeAccount) {
       stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
