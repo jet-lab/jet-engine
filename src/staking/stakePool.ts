@@ -45,6 +45,9 @@ export interface StakePoolInfo {
   /** The total amount of virtual stake tokens that are ineligible for rewards
   /** because they are being unbonded for future withdrawal. */
   sharesUnbonded: BN
+
+  /** Amount of stake tokens or votes equivalent to one share */
+  jetVotesPerShare: BN
 }
 
 // ----- Instructions -----
@@ -98,8 +101,9 @@ export class StakePool {
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
+    const jetVotesPerShare = vault.amount.div(stakePool.sharesBonded)
 
-    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
+    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint, jetVotesPerShare)
   }
 
   /**
@@ -120,7 +124,8 @@ export class StakePool {
     public voteMint: MintInfo,
     public collateralMint: MintInfo,
     public vault: TokenAccountInfo,
-    public tokenMint: MintInfo
+    public tokenMint: MintInfo,
+    public jetVotesPerShare: BN
   ) {}
 
   /**

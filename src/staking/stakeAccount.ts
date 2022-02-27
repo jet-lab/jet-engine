@@ -2,7 +2,7 @@ import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@
 import { BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { bnToNumber, findDerivedAccount } from "../common"
+import { findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
@@ -28,8 +28,8 @@ export interface StakeAccountInfo {
 }
 
 export interface StakeBalance {
-  stakedJet: number
-  unbondingJet: number
+  stakedJet: BN | undefined
+  unbondingJet: BN | undefined
 }
 
 export class StakeAccount {
@@ -118,11 +118,16 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    const jetPerStakedShare = bnToNumber(stakePool?.vault.amount.div(stakePool?.stakePool.sharesBonded))
+    let stakedJet: BN | undefined
+    let unbondingJet: BN | undefined
 
-    const stakedJet = bnToNumber(stakeAccount?.stakeAccount.shares) * jetPerStakedShare
+    if (!!stakePool && !!stakeAccount) {
+      stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
-    const unbondingJet = bnToNumber(stakeAccount?.stakeAccount.unbonding) * jetPerStakedShare
+      unbondingJet = stakeAccount.stakeAccount.unbonding
+        .mul(stakeAccount.stakeAccount.shares)
+        .div(stakePool.stakePool.sharesBonded)
+    }
 
     return {
       stakedJet,
