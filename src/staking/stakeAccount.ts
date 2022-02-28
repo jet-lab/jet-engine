@@ -125,8 +125,6 @@ export class StakeAccount {
       stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
       unbondingJet = stakeAccount.stakeAccount.unbonding
-        .mul(stakeAccount.stakeAccount.shares)
-        .div(stakePool.stakePool.sharesBonded)
     }
 
     return {

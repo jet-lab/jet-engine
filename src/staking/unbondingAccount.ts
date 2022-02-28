@@ -15,11 +15,19 @@ export interface UnbondingAccountInfo {
 
   /// The time after which the staked amount can be withdrawn
   unbondedAt: BN
+
+  /// If amount has completed unbonding and is available to withdraw
+  isUnbonded: boolean
 }
 
 export interface FullAmount {
   shares: BN
   tokens: BN
+}
+
+export interface UnbondingAmount {
+  unbondingQueue: BN
+  unbondingComplete: BN
 }
 
 export class UnbondingAccount {
@@ -132,20 +140,42 @@ export class UnbondingAccount {
   /**
    * TODO:
    * @static
-   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
-   * @returns {number}
+   * @param {UnbondingAccount} [unbondingAccount]
+   * @returns {boolean}
    * @memberof UnbondingAccount
    */
-  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): number {
-    if (!unbondingAccounts || unbondingAccounts.length === 0) {
-      return 0
-    }
-    const unbondingTotal = unbondingAccounts.reduce<BN>(
-      (total: BN, curr: UnbondingAccount) => total.add(curr.unbondingAccount.amount.tokens),
-      new BN(0)
-    )
+  static isUnbonded(unbondingAccount: UnbondingAccount): boolean {
+    const time = new Date().getTime() / 1000
+    const canWithdraw = time > bnToNumber(unbondingAccount?.unbondingAccount.unbondedAt)
 
-    return bnToNumber(unbondingTotal)
+    return canWithdraw
+  }
+
+  /**
+   * TODO:
+   * @static
+   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
+   * @returns {UnbondingAmount}
+   * @memberof UnbondingAccount
+   */
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): UnbondingAmount {
+    let unbondingQueue = new BN(0)
+    let unbondingComplete = new BN(0)
+
+    if (unbondingAccounts) {
+      unbondingQueue = unbondingAccounts.reduce<BN>(
+        (total: BN, curr: UnbondingAccount) =>
+          total.add(curr.unbondingAccount.isUnbonded ? new BN(0) : curr.unbondingAccount.amount.tokens),
+        new BN(0)
+      )
+
+      unbondingComplete = unbondingAccounts.reduce<BN>(
+        (total: BN, curr: UnbondingAccount) =>
+          total.add(curr.unbondingAccount.isUnbonded ? curr.unbondingAccount.amount.tokens : new BN(0)),
+        new BN(0)
+      )
+    }
+    return { unbondingQueue, unbondingComplete }
   }
 
   /**
