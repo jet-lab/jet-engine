@@ -15,8 +15,6 @@ export interface MarginPoolAddresses {
   loanNoteMint: PublicKey
 }
 
-
-
 // create marginPool
 // load margin pool,
 // use margin pool,
