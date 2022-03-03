@@ -1,16 +1,17 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 
-export interface MarginAccount {
+export interface MarginAccountInfo {
   version: number
   bumpSeed: number[]
+  userSeed: number[]
   reserve0: number[]
   /** The owner of this account, which generally has to sign for any changes to it */
   owner: PublicKey
   /**  The active liquidator for this account */
   liquidator: PublicKey
   /** The storage for tracking account balances */
-  position: number[]
+  positions: number[]
 }
 
 /** A fixed-point decimal number 128 bits wide */

@@ -4,7 +4,7 @@ import { connect, Hooks } from "../common"
 import { JetMarginSwapIdl } from "./idl"
 
 export class MarginSwapClient {
-  static readonly MARGIN_SWAP_PROGRAM_ID = new PublicKey("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS")
+  static readonly MARGIN_SWAP_PROGRAM_ID = new PublicKey("JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN")
 
   /**
    *

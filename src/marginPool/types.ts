@@ -87,3 +87,7 @@ export interface CreatePoolParams {
   /** The configuration for the pool */
   config: MarginPoolConfig
 }
+
+//plus seed - tokenmint
+
+// export interface CreatePoolInfo {}

@@ -1,115 +1,186 @@
 export type JetMarginMetaDataIdl = {
-  version: "0.1.0"
-  name: "jet_margin_metadata"
-  instructions: [
+  "version": "0.1.0",
+  "name": "jet_metadata",
+  "instructions": [
     {
-      name: "setEntry"
-      accounts: [
+      "name": "createEntry",
+      "accounts": [
         {
-          name: "keyAccount"
-          isMut: false
-          isSigner: false
+          "name": "keyAccount",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          name: "metadataAccount"
-          isMut: true
-          isSigner: false
+          "name": "metadataAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          name: "authority"
-          isMut: false
-          isSigner: true
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "seed",
+          "type": "string"
+        },
+        {
+          "name": "space",
+          "type": {
+            "defined": "usize"
+          }
         }
       ]
-      args: [
+    },
+    {
+      "name": "setEntry",
+      "accounts": [
         {
-          name: "data"
-          type: "bytes"
+          "name": "metadataAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "offset",
+          "type": {
+            "defined": "usize"
+          }
+        },
+        {
+          "name": "data",
+          "type": "bytes"
         }
       ]
     }
-  ]
-  accounts: [
+  ],
+  "accounts": [
     {
-      name: "TokenOracleMetadata"
-      type: {
-        kind: "struct"
-        fields: [
+      "name": "positionTokenMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "tokenMint"
-            type: "publicKey"
+            "name": "positionTokenMint",
+            "type": "publicKey"
           },
           {
-            name: "tokenOracle"
-            type: "publicKey"
+            "name": "underlyingTokenMint",
+            "type": "publicKey"
           },
           {
-            name: "tokenKind"
-            type: {
-              defined: "TokenKind"
+            "name": "adapterProgram",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenKind",
+            "type": {
+              "defined": "TokenKind"
             }
           },
           {
-            name: "weight"
-            type: "u16"
+            "name": "collateralWeight",
+            "type": "u16"
+          },
+          {
+            "name": "collateralMaxStaleness",
+            "type": "u64"
           }
         ]
       }
     },
     {
-      name: "MarginAdapterMetadata"
-      type: {
-        kind: "struct"
-        fields: [
+      "name": "tokenMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "adapterProgram"
-            type: "publicKey"
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "pythPrice",
+            "type": "publicKey"
+          },
+          {
+            "name": "pythProduct",
+            "type": "publicKey"
           }
         ]
       }
     },
     {
-      name: "LiquidatorAdapterMetadata"
-      type: {
-        kind: "struct"
-        fields: [
+      "name": "marginAdapterMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "adapterProgram"
-            type: "publicKey"
+            "name": "adapterProgram",
+            "type": "publicKey"
           }
         ]
       }
     },
     {
-      name: "LiquidatorMetadata"
-      type: {
-        kind: "struct"
-        fields: [
+      "name": "liquidatorAdapterMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "liquidator"
-            type: "publicKey"
+            "name": "adapterProgram",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "liquidatorMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "liquidator",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "TokenKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "NonCollateral"
+          },
+          {
+            "name": "Collateral"
+          },
+          {
+            "name": "Claim"
           }
         ]
       }
     }
   ]
-  types: [
-    {
-      name: "TokenKind"
-      type: {
-        kind: "enum"
-        variants: [
-          {
-            name: "NonCollateral"
-          },
-          {
-            name: "Collateral"
-          },
-          {
-            name: "Claim"
-          }
-        ]
-      }
-    }
-  ]
-}
+};

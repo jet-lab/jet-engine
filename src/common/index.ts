@@ -4,6 +4,7 @@ import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.
 import { useMemo } from "react"
 
 export * from "./tokenAmount"
+export * from "./tokenMintKeys"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
@@ -79,7 +80,7 @@ export function findDerivedAccountWithBump(programId: PublicKey, ...seeds: Accou
  * @memberof JetClient
  */
 export async function connect<T extends Idl>(programId: PublicKey, provider: Provider): Promise<Program<T>> {
-  const idl: T | null = await Program.fetchIdl(programId, provider)
+  const idl = await Program.fetchIdl<T>(programId, provider)
 
   if (!idl) {
     throw new Error("Program lacks an IDL account.")
