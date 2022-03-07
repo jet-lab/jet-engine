@@ -89,15 +89,19 @@ export class Auth {
    * @memberof Auth
    */
   static useAuthAccount(authProgram?: Program, wallet?: PublicKey | null): { authAccount?: Auth; loading: boolean } {
-    const [authAccount, setAuthAccount] = useState<Auth | undefined>()
-    const [loading, setLoading] = useState(true)
+    const [{ authAccount, loading }, setAuthAccount] = useState<{
+      authAccount: Auth | undefined
+      loading: boolean
+    }>({
+      authAccount: undefined,
+      loading: true
+    })
 
     useEffect(() => {
       let abort = false
       const interval = setInterval(() => {
         if (!wallet || !authProgram) {
-          setLoading(true)
-          setAuthAccount(undefined)
+          setAuthAccount({ authAccount: undefined, loading: true })
           return
         }
         if (authAccount && authAccount.userAuthentication.complete) {
@@ -108,13 +112,11 @@ export class Auth {
         Auth.loadUserAuth(authProgram, wallet)
           .then(newAccount => {
             if (!abort) {
-              setLoading(false)
-              setAuthAccount(newAccount)
+              setAuthAccount({ authAccount: newAccount, loading: false })
             }
           })
           .catch(() => {
-            setLoading(false)
-            setAuthAccount(undefined)
+            setAuthAccount({ authAccount: undefined, loading: false })
           })
       }, 1000)
 
