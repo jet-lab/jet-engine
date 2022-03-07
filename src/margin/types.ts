@@ -8,6 +8,8 @@ export interface MarginAccountInfo {
   reserve0: number[]
   /** The owner of this account, which generally has to sign for any changes to it */
   owner: PublicKey
+  /** The state of an active liquidation for this account */
+  liquidations: PublicKey
   /**  The active liquidator for this account */
   liquidator: PublicKey
   /** The storage for tracking account balances */
@@ -55,4 +57,16 @@ export interface AccountPosition {
 
 export interface AccountPositionList {
   positions: AccountPosition[]
+}
+
+export interface CreateMarginAccountInfo {
+  accounts: {
+    owner: PublicKey,
+    payer: PublicKey,
+    marginAccount: PublicKey,
+    systemProgram: PublicKey,
+  },
+  args: {
+    seed: number
+  }
 }

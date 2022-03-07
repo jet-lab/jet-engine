@@ -1,10 +1,11 @@
-import { MintInfo, AccountInfo as TokenAccountInfo, NATIVE_MINT } from "@solana/spl-token"
+import { MintInfo, AccountInfo as TokenAccountInfo, NATIVE_MINT, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { PublicKey } from "@solana/web3.js"
-import { Program } from "@project-serum/anchor"
-import { findDerivedAccount } from "../common"
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { Program } from '@project-serum/anchor';
+import { findDerivedAccount, checkNull } from "../common"
 import { Hooks } from "../common/hooks"
-import { MarginPoolAccountInfo } from "./types"
+import { CreatePoolParams, MarginPoolAccountInfo, CreatePoolInfo, MarginPoolConfig } from './types';
+import { TokenMetadata } from '../marginMetadata'
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -62,15 +63,16 @@ export class MarginPool {
         addresses.loanNoteMint
       ])
 
-    //make sure we know which ones gives error
-    if (!poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
-      throw new Error("Invalid mint")
-    }
+    checkNull(poolTokenMintInfo);
+    checkNull(vaultMintInfo);
+    checkNull(depositNoteMintInfo);
+    checkNull(loanNoteMintInfo)
 
-    const vault = parseTokenAccount(vaultMintInfo.data as Buffer, addresses.vault)
-    const depositNoteMint = parseMintAccount(depositNoteMintInfo.data as Buffer)
-    const loanNoteMint = parseMintAccount(loanNoteMintInfo.data as Buffer)
     const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer)
+    const vault = parseTokenAccount(vaultMintInfo?.data as Buffer, addresses.vault)
+    const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer)
+    const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer)
+
 
     return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint, payer)
   }
@@ -101,10 +103,84 @@ export class MarginPool {
     }
   }
 
-  //FIXME: unclear on params setup
-  // static create(program: Program, tokenMint: PublicKey, params: CreatePoolParams): Promise<string> {
-  //   const derivedAccounts = this.deriveAccounts(program.programId, tokenMint)
+  /**
+   *
+   * @param program
+   * @param tokenMetaData
+   * @param authority
+   * @param params
+   * @param feeDestination
+   * @param marginPoolConfig
+   * @returns
+   */
+  static create(
+    program: Program,
+    tokenMetaData: TokenMetadata,
+    authority: PublicKey,
+    params: CreatePoolParams,
+    feeDestination: PublicKey,
+    marginPoolConfig: MarginPoolConfig
+    ):Promise<string> {
+    //derive pool accounts
+    const addresses = this.deriveAccounts(program.programId, tokenMetaData.tokenMint)
+    //metatdata.load
 
-  //   return
+    // make an accounts object
+    const createPoolInfo: CreatePoolInfo = {
+      accounts: {
+        marginPool: addresses.marginPool,
+        vault: addresses.vault,
+        depositNoteMint: addresses.depositNoteMint,
+        loanNoteMint: addresses.loanNoteMint,
+        tokenMint: addresses.tokenMint,
+        pythProduct: tokenMetaData.pythProduct,
+        pythPrice: tokenMetaData.pythPrice,
+        authority: authority,
+        payer: program.provider.wallet.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
+      },
+      args:
+        {
+          params: params
+        }
+
+    }
+    return program.rpc.createPool(feeDestination, marginPoolConfig, createPoolInfo)
+  }
+
+  // static deposit(program: Program, tokenMint: PublicKey,source: PublicKey, amount: BN) {
+  //   const addresses = this.deriveAccounts(program.programId, tokenMint)
+  //   // creat or load margin account to deposit depositNotes? so we gotta mint depositNotes as well. we need to create margin accounts
+
+  //   const accounts: DepositInfo = {
+  //     accounts: {
+  //       marginPool: addresses.marginPool,
+  //       vault: addresses.vault,
+  //       depositNoteMint: addresses.depositNoteMint,
+  //       source: source,
+  //       destination: //token account from register
+  //     },
+  //     args: [
+  //       { amount }
+  //     ]
+
+  //   }
   // }
+
 }
+
+// //need to know the position of the user
+// // if not, create position
+// //
+
+// /*first deposit:
+
+// register position - ix
+// new token account to hold note
+// deposit USDC to marginpool
+// deposit USDC deposit note to new token account
+
+// //update position balance in  margin program -
+// // takes token account

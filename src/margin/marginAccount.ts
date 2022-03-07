@@ -1,12 +1,10 @@
-// import { MintInfo, AccountInfo as TokenAccountInfo } from "@solana/spl-token"
-// import { AccountInfo } from "@solana/web3.js"
-// import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { PublicKey } from "@solana/web3.js"
-import { Program } from "@project-serum/anchor"
+import { PublicKey, SystemProgram } from "@solana/web3.js"
+import { Program } from '@project-serum/anchor';
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
-import { MarginAccountInfo } from "./types"
+import { MarginAccountInfo, CreateMarginAccountInfo } from './types';
 // import { MarginPool } from '../marginPool/marginPool';
+
 
 //derive accounts
 //load
@@ -29,6 +27,7 @@ export class MarginAccount {
     public marginAccount: MarginAccountInfo
   ) {}
 
+    //load multiple accounts?
   /**
    *
    * @param {Program} marginProgram
@@ -36,7 +35,12 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns Promise<MarginAccount>
    */
-  static async load(marginProgram: Program, marginPoolAddress: PublicKey, owner: PublicKey): Promise<MarginAccount> {
+  static async load(
+    marginProgram: Program,
+    marginPoolAddress: PublicKey,
+    owner: PublicKey
+    ): Promise<MarginAccount> {
+
     const address = this.deriveMarginAccount(marginProgram.programId, marginPoolAddress, owner)
     const marginAccount = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
@@ -44,6 +48,7 @@ export class MarginAccount {
       throw Error(`Can't fetch Margin Account`)
     }
     return new MarginAccount(marginProgram, address, owner, marginAccount)
+
   }
 
   /**
@@ -53,15 +58,17 @@ export class MarginAccount {
    * @param {PublicKey | undefined} owner
    * @returns MarginAccount
    */
-  static use(
+  static use (
     program: Program | undefined,
     marginPoolAddress: PublicKey | undefined,
     owner: PublicKey | undefined
   ): MarginAccount | undefined {
+
     return Hooks.usePromise(
       async () => program && marginPoolAddress && owner && MarginAccount.load(program, marginPoolAddress, owner),
       [program, marginPoolAddress, owner]
     )
+
   }
 
   /**
@@ -76,6 +83,35 @@ export class MarginAccount {
     marginPoolAddress: PublicKey,
     owner: PublicKey
   ): PublicKey {
+
     return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
+
+  }
+
+  /**
+   *
+   * @param program
+   * @param marginPool
+   * @param owner
+   * @param seed
+   * @returns
+   */
+  static create (program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
+
+    const marginAccount = this.deriveMarginAccount(program.programId, marginPool, owner)
+
+    const createInfo: CreateMarginAccountInfo = {
+      accounts: {
+        owner: owner,
+        payer: program.provider.wallet.publicKey,
+        marginAccount: marginAccount,
+        systemProgram: SystemProgram.programId
+      },
+      args: {
+        seed: seed
+      }
+    }
+
+    return program.instruction.createAccount(seed, createInfo)
   }
 }
