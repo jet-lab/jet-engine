@@ -92,19 +92,19 @@ export interface CreatePoolParams {
 
 export interface CreatePoolInfo {
   accounts: {
-    marginPool: PublicKey,
-    vault: PublicKey,
-    depositNoteMint: PublicKey,
-    loanNoteMint: PublicKey,
-    tokenMint: PublicKey,
-    pythProduct: PublicKey,
-    pythPrice: PublicKey,
-    authority: PublicKey,
-    payer: PublicKey,
-    tokenProgram: PublicKey,
-    systemProgram: PublicKey,
+    marginPool: PublicKey
+    vault: PublicKey
+    depositNoteMint: PublicKey
+    loanNoteMint: PublicKey
+    tokenMint: PublicKey
+    pythProduct: PublicKey
+    pythPrice: PublicKey
+    authority: PublicKey
+    payer: PublicKey
+    tokenProgram: PublicKey
+    systemProgram: PublicKey
     rent: PublicKey
-  },
+  }
   args: {
     params: CreatePoolParams
   }
@@ -112,7 +112,7 @@ export interface CreatePoolInfo {
 
 export interface DepositInfo {
   accounts: {
-     /** The pool to deposit into */
+    /** The pool to deposit into */
     marginPool: PublicKey
     /** The vault for the pool, where tokens are held */
     vault: PublicKey
@@ -125,7 +125,7 @@ export interface DepositInfo {
     /** The destination of the deposit notes */
     destination: PublicKey
     tokenProgram: PublicKey
-  },
+  }
   args: {
     amount: BN
   }

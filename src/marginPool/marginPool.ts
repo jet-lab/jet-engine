@@ -1,11 +1,11 @@
-import { MintInfo, AccountInfo as TokenAccountInfo, NATIVE_MINT, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MintInfo, AccountInfo as TokenAccountInfo, NATIVE_MINT, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
-import { Program } from '@project-serum/anchor';
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
+import { Program } from "@project-serum/anchor"
 import { findDerivedAccount, checkNull } from "../common"
 import { Hooks } from "../common/hooks"
-import { CreatePoolParams, MarginPoolAccountInfo, CreatePoolInfo, MarginPoolConfig } from './types';
-import { TokenMetadata } from '../marginMetadata'
+import { CreatePoolParams, MarginPoolAccountInfo, CreatePoolInfo, MarginPoolConfig } from "./types"
+import { TokenMetadata } from "../marginMetadata"
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -63,16 +63,15 @@ export class MarginPool {
         addresses.loanNoteMint
       ])
 
-    checkNull(poolTokenMintInfo);
-    checkNull(vaultMintInfo);
-    checkNull(depositNoteMintInfo);
+    checkNull(poolTokenMintInfo)
+    checkNull(vaultMintInfo)
+    checkNull(depositNoteMintInfo)
     checkNull(loanNoteMintInfo)
 
     const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer)
     const vault = parseTokenAccount(vaultMintInfo?.data as Buffer, addresses.vault)
     const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer)
     const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer)
-
 
     return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint, payer)
   }
@@ -120,7 +119,7 @@ export class MarginPool {
     params: CreatePoolParams,
     feeDestination: PublicKey,
     marginPoolConfig: MarginPoolConfig
-    ):Promise<string> {
+  ): Promise<string> {
     //derive pool accounts
     const addresses = this.deriveAccounts(program.programId, tokenMetaData.tokenMint)
     //metatdata.load
@@ -141,11 +140,9 @@ export class MarginPool {
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
       },
-      args:
-        {
-          params: params
-        }
-
+      args: {
+        params: params
+      }
     }
     return program.rpc.createPool(feeDestination, marginPoolConfig, createPoolInfo)
   }
@@ -168,7 +165,6 @@ export class MarginPool {
 
   //   }
   // }
-
 }
 
 // //need to know the position of the user

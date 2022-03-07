@@ -106,8 +106,8 @@ export function useProvider(connection: Connection, wallet: any): Provider {
   return useMemo(() => new Provider(connection, wallet, confirmOptions), [connection, wallet, confirmOptions])
 }
 
-export function checkNull(value:any): void {
-  if(!value) {
+export function checkNull(value: any): void {
+  if (!value) {
     console.log(`Invalid ${value}`)
     throw new Error(`Invalid ${value}`)
   }
