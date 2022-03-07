@@ -44,7 +44,7 @@ export interface StakePoolInfo {
 
   /** The total amount of virtual stake tokens that are ineligible for rewards
   /** because they are being unbonded for future withdrawal. */
-  sharesUnbonded: BN
+  tokensUnbonding: BN
 
   /** Amount of stake tokens or votes equivalent to one share */
   jetVotesPerShare: BN

@@ -423,7 +423,7 @@ export type StakeIdl = {
             type: "u64"
           },
           {
-            name: "sharesUnbonded"
+            name: "tokensUnbonding"
             type: "u64"
           }
         ]

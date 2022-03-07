@@ -259,6 +259,7 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     unbondingAccount: UnbondingAccount,
     stakeAccount: StakeAccount,
+    stakePool: StakePool,
     rentReceiver: PublicKey
   ) {
     const ix = unbondingAccount.program.instruction.cancelUnbond({
@@ -267,15 +268,21 @@ export class UnbondingAccount {
         receiver: rentReceiver,
         stakeAccount: stakeAccount.address,
         stakePool: stakeAccount.stakeAccount.stakePool,
+        stakePoolVault: stakePool.vault.address,
         unbondingAccount: unbondingAccount.address
       }
     })
     instructions.push(ix)
   }
 
-  static async cancelUnbond(unbondingAccount: UnbondingAccount, stakeAccount: StakeAccount, rentReceiver: PublicKey) {
+  static async cancelUnbond(
+    unbondingAccount: UnbondingAccount,
+    stakeAccount: StakeAccount,
+    stakePool: StakePool,
+    rentReceiver: PublicKey
+  ) {
     const ix: TransactionInstruction[] = []
-    this.withCancelUnbond(ix, unbondingAccount, stakeAccount, rentReceiver)
+    this.withCancelUnbond(ix, unbondingAccount, stakeAccount, stakePool, rentReceiver)
     return ix
   }
 }
