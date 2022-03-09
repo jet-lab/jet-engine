@@ -1,6 +1,6 @@
 import { AssociatedToken } from "./../common/associatedToken"
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
-import { BN, Program } from "@project-serum/anchor"
+import { BN, Program, Provider } from "@project-serum/anchor"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { Hooks } from "../common/hooks"
@@ -184,6 +184,7 @@ export class UnbondingAccount {
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
    * @param {StakeAccount} stakeAccount
+   * @param {PublicKey} payer
    * @param {BN} unbondingSeed
    * @param {BN} amount
    * @memberof UnbondingAccount
@@ -192,6 +193,7 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     stakeAccount: StakeAccount,
+    payer: PublicKey,
     unbondingSeed: number,
     amount: BN
   ) {
@@ -202,7 +204,7 @@ export class UnbondingAccount {
       {
         accounts: {
           owner: stakeAccount.stakeAccount.owner,
-          payer: stakePool.program.provider.wallet.publicKey,
+          payer,
           stakeAccount: stakeAccount.address,
           stakePool: stakePool.addresses.stakePool,
           stakePoolVault: stakePool.addresses.stakePoolVault,
@@ -241,17 +243,23 @@ export class UnbondingAccount {
     unbondingAccount: UnbondingAccount,
     stakeAccount: StakeAccount,
     stakePool: StakePool,
-    rentReceiver: PublicKey
+    provider: Provider
   ) {
-    const provider = unbondingAccount.program.provider
     const ix: TransactionInstruction[] = []
     const tokenReceiver = await AssociatedToken.withCreate(
       ix,
       provider,
-      provider.wallet.publicKey,
+      stakeAccount.stakeAccount.owner,
       stakePool.stakePool.tokenMint
     )
-    await this.withWithdrawUnbonded(ix, unbondingAccount, stakeAccount, stakePool, tokenReceiver, rentReceiver)
+    await this.withWithdrawUnbonded(
+      ix,
+      unbondingAccount,
+      stakeAccount,
+      stakePool,
+      tokenReceiver,
+      provider.wallet.publicKey
+    )
     return ix
   }
 
