@@ -1,8 +1,8 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
-import { BN, Program } from "@project-serum/anchor"
+import { BN, Program, Provider } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { bnToNumber, findDerivedAccount } from "../common"
+import { findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
@@ -28,8 +28,8 @@ export interface StakeAccountInfo {
 }
 
 export interface StakeBalance {
-  stakedJet: number
-  unbondingJet: number
+  stakedJet: BN | undefined
+  unbondingJet: BN | undefined
 }
 
 export class StakeAccount {
@@ -105,7 +105,7 @@ export class StakeAccount {
     return Hooks.usePromise(
       async () =>
         stakeProgram && stakePool && wallet && StakeAccount.load(stakeProgram, stakePool.addresses.stakePool, wallet),
-      [stakeProgram, stakePool?.addresses.stakePool, wallet]
+      [stakeProgram, stakePool?.addresses.stakePool?.toBase58(), wallet?.toBase58()]
     )
   }
 
@@ -118,11 +118,14 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static useBalance(stakeAccount?: StakeAccount, stakePool?: StakePool): StakeBalance {
-    const jetPerStakedShare = bnToNumber(stakePool?.vault.amount.div(stakePool?.stakePool.sharesBonded))
+    let stakedJet: BN | undefined
+    let unbondingJet: BN | undefined
 
-    const stakedJet = bnToNumber(stakeAccount?.stakeAccount.shares) * jetPerStakedShare
+    if (!!stakePool && !!stakeAccount) {
+      stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
 
-    const unbondingJet = bnToNumber(stakeAccount?.stakeAccount.unbonding) * jetPerStakedShare
+      unbondingJet = stakeAccount.stakeAccount.unbonding
+    }
 
     return {
       stakedJet,
@@ -136,14 +139,20 @@ export class StakeAccount {
    * @param {Program} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
+   * @param {PublicKey} payer
    * @returns {Promise<string>}
    * @memberof StakeAccount
    */
-  static async create(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<string> {
+  static async create(
+    stakeProgram: Program,
+    stakePool: PublicKey,
+    owner: PublicKey,
+    payer: PublicKey
+  ): Promise<string> {
     const instructions: TransactionInstruction[] = []
     const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
-    await this.withCreate(instructions, stakeProgram, address, owner)
+    await this.withCreate(instructions, stakeProgram, address, owner, payer)
 
     return stakeProgram.provider.send(new Transaction().add(...instructions))
   }
@@ -151,6 +160,7 @@ export class StakeAccount {
   /**
    * TODO:
    * @static
+   * @param {Provider} provider
    * @param {StakePool} stakePool
    * @param {PublicKey} owner
    * @param {PublicKey} collateralTokenAccount
@@ -159,6 +169,7 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async addStake(
+    provider: Provider,
     stakePool: StakePool,
     owner: PublicKey,
     collateralTokenAccount: PublicKey,
@@ -168,15 +179,15 @@ export class StakeAccount {
 
     const voterTokenAccount = await AssociatedToken.withCreate(
       instructions,
-      stakePool.program.provider,
+      provider,
       owner,
       stakePool.addresses.stakeVoteMint
     )
-    await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner)
-    await this.withAddStake(instructions, stakePool, owner, collateralTokenAccount, amount)
+    await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner, owner)
+    await this.withAddStake(instructions, stakePool, owner, owner, collateralTokenAccount, amount)
     await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
 
-    return stakePool.program.provider.send(new Transaction().add(...instructions))
+    return provider.send(new Transaction().add(...instructions))
   }
 
   /**
@@ -192,7 +203,8 @@ export class StakeAccount {
     instructions: TransactionInstruction[],
     stakeProgram: Program,
     stakePool: PublicKey,
-    owner: PublicKey
+    owner: PublicKey,
+    payer: PublicKey
   ) {
     const stakeAccount = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
@@ -206,7 +218,6 @@ export class StakeAccount {
 
     if (!info) {
       const auth = Auth.deriveUserAuthentication(owner)
-      const payer = stakeProgram.provider.wallet.publicKey
 
       const ix = stakeProgram.instruction.initStakeAccount({
         accounts: {
@@ -228,6 +239,7 @@ export class StakeAccount {
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
    * @param {PublicKey} owner
+   * @param {PublicKey} payer
    * @param {PublicKey} tokenAccount
    * @param {BN} amount
    * @memberof StakeAccount
@@ -236,6 +248,7 @@ export class StakeAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     owner: PublicKey,
+    payer: PublicKey,
     tokenAccount: PublicKey,
     amount: BN
   ) {
@@ -248,7 +261,7 @@ export class StakeAccount {
           stakePool: stakePool.addresses.stakePool,
           stakePoolVault: stakePool.addresses.stakePoolVault,
           stakeAccount,
-          payer: stakePool.program.provider.wallet.publicKey,
+          payer,
           payerTokenAccount: tokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID
         }
