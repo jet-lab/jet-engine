@@ -90,26 +90,6 @@ export interface CreatePoolParams {
 
 //plus seed - tokenmint
 
-export interface CreatePoolInfo {
-  accounts: {
-    marginPool: PublicKey
-    vault: PublicKey
-    depositNoteMint: PublicKey
-    loanNoteMint: PublicKey
-    tokenMint: PublicKey
-    pythProduct: PublicKey
-    pythPrice: PublicKey
-    authority: PublicKey
-    payer: PublicKey
-    tokenProgram: PublicKey
-    systemProgram: PublicKey
-    rent: PublicKey
-  }
-  args: {
-    params: CreatePoolParams
-  }
-}
-
 export interface DepositInfo {
   accounts: {
     /** The pool to deposit into */

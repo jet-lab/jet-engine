@@ -2,8 +2,9 @@ import { PublicKey, SystemProgram } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
-import { MarginAccountInfo, CreateMarginAccountInfo } from "./types"
+import { MarginAccountInfo } from "./types"
 // import { MarginPool } from '../marginPool/marginPool';
+import { checkNull } from '../common/index';
 
 //derive accounts
 //load
@@ -26,7 +27,7 @@ export class MarginAccount {
     public marginAccount: MarginAccountInfo
   ) {}
 
-  //load multiple accounts?
+  //load multiple accounts?`
   /**
    *
    * @param {Program} marginProgram
@@ -38,9 +39,8 @@ export class MarginAccount {
     const address = this.deriveMarginAccount(marginProgram.programId, marginPoolAddress, owner)
     const marginAccount = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
-    if (!marginAccount) {
-      throw Error(`Can't fetch Margin Account`)
-    }
+    checkNull(marginAccount)
+
     return new MarginAccount(marginProgram, address, owner, marginAccount)
   }
 
@@ -78,17 +78,17 @@ export class MarginAccount {
   }
 
   /**
-   *
+   * Build instruction for Create Margin Account
    * @param program
    * @param marginPool
    * @param owner
    * @param seed
    * @returns
    */
-  static create(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
+  static withCreate(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
     const marginAccount = this.deriveMarginAccount(program.programId, marginPool, owner)
 
-    const createInfo: CreateMarginAccountInfo = {
+    const createInfo = {
       accounts: {
         owner: owner,
         payer: program.provider.wallet.publicKey,

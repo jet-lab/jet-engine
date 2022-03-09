@@ -59,14 +59,3 @@ export interface AccountPositionList {
   positions: AccountPosition[]
 }
 
-export interface CreateMarginAccountInfo {
-  accounts: {
-    owner: PublicKey
-    payer: PublicKey
-    marginAccount: PublicKey
-    systemProgram: PublicKey
-  }
-  args: {
-    seed: number
-  }
-}

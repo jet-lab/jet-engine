@@ -107,8 +107,7 @@ export function useProvider(connection: Connection, wallet: any): Provider {
 }
 
 export function checkNull(value: any): void {
-  if (!value) {
-    console.log(`Invalid ${value}`)
+  if (value === null) {
     throw new Error(`Invalid ${value}`)
   }
 }

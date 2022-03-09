@@ -4,8 +4,8 @@ import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount, checkNull } from "../common"
 import { Hooks } from "../common/hooks"
-import { CreatePoolParams, MarginPoolAccountInfo, CreatePoolInfo, MarginPoolConfig } from "./types"
-import { TokenMetadata } from "../marginMetadata"
+import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./types"
+import { TokenMetadataInfo } from "../marginMetadata"
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -105,7 +105,7 @@ export class MarginPool {
   /**
    *
    * @param program
-   * @param tokenMetaData
+   * @param tokenMetaDataInfoTokenMetadataInfo
    * @param authority
    * @param params
    * @param feeDestination
@@ -114,26 +114,26 @@ export class MarginPool {
    */
   static create(
     program: Program,
-    tokenMetaData: TokenMetadata,
+    tokenMetaDataInfoTokenMetadataInfo: TokenMetadataInfo,
     authority: PublicKey,
     params: CreatePoolParams,
     feeDestination: PublicKey,
     marginPoolConfig: MarginPoolConfig
   ): Promise<string> {
     //derive pool accounts
-    const addresses = this.deriveAccounts(program.programId, tokenMetaData.tokenMint)
+    const addresses = this.deriveAccounts(program.programId, tokenMetaDataInfoTokenMetadataInfo.tokenMint)
     //metatdata.load
 
     // make an accounts object
-    const createPoolInfo: CreatePoolInfo = {
+    const createPoolInfo = {
       accounts: {
         marginPool: addresses.marginPool,
         vault: addresses.vault,
         depositNoteMint: addresses.depositNoteMint,
         loanNoteMint: addresses.loanNoteMint,
         tokenMint: addresses.tokenMint,
-        pythProduct: tokenMetaData.pythProduct,
-        pythPrice: tokenMetaData.pythPrice,
+        pythProduct: tokenMetaDataInfoTokenMetadataInfo.pythProduct,
+        pythPrice: tokenMetaDataInfoTokenMetadataInfo.pythPrice,
         authority: authority,
         payer: program.provider.wallet.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
