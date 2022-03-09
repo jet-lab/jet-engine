@@ -58,7 +58,7 @@ export class MarginAccount {
   private static deriveMarginAccount(
     marginProgramId: PublicKey,
     marginPoolAddress: PublicKey,
-    owner: PublicKey,
+    owner: PublicKey
   ): PublicKey {
     return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
   }
