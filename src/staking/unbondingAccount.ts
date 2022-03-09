@@ -21,8 +21,8 @@ export interface UnbondingAccountInfo {
 }
 
 export interface FullAmount {
-  shares: BN
-  tokens: BN
+  shareAmount: BN
+  tokenAmount: BN
 }
 
 export interface UnbondingAmount {
@@ -165,13 +165,13 @@ export class UnbondingAccount {
     if (unbondingAccounts) {
       unbondingQueue = unbondingAccounts.reduce<BN>(
         (total: BN, curr: UnbondingAccount) =>
-          total.add(curr.unbondingAccount.isUnbonded ? new BN(0) : curr.unbondingAccount.amount.tokens),
+          total.add(curr.unbondingAccount.isUnbonded ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
         new BN(0)
       )
 
       unbondingComplete = unbondingAccounts.reduce<BN>(
         (total: BN, curr: UnbondingAccount) =>
-          total.add(curr.unbondingAccount.isUnbonded ? curr.unbondingAccount.amount.tokens : new BN(0)),
+          total.add(curr.unbondingAccount.isUnbonded ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
         new BN(0)
       )
     }
