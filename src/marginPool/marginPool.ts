@@ -7,6 +7,7 @@ import { Hooks } from "../common/hooks"
 import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./types"
 import { TokenMetadataInfo } from "../marginMetadata"
 
+
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
   tokenMint: PublicKey
@@ -16,13 +17,6 @@ export interface MarginPoolAddresses {
   loanNoteMint: PublicKey
 }
 
-// create marginPool
-// load margin pool,
-// use margin pool,
-// derive accounts
-//decode
-//instructions
-//txns
 export class MarginPool {
   //FIXME
   // add obj of addresses for seeds
@@ -39,18 +33,13 @@ export class MarginPool {
     public payer: PublicKey
   ) {}
 
-  //load multiple pools?
-
-  //add load multiple pools method
-  //change tokenMint to tokenMint
   /**
    * Load a Margin Pool Program Account
-   * @param program
-   * @param tokenMint
-   * @returns
+   * @param {Program} program
+   * @param {PublicKey} tokenMint
+   * @returns {Promise<MarginPool>}
    */
   static async load(program: Program, tokenMint: PublicKey, payer: PublicKey): Promise<MarginPool> {
-    //add toke
     const addresses = this.deriveAccounts(program.programId, tokenMint)
 
     const marginPool = (await program.account.marginPool.fetch(addresses.marginPool)) as MarginPoolAccountInfo
@@ -82,9 +71,9 @@ export class MarginPool {
 
   /**
    * Derive accounts from tokenMint
-   * @param programId
-   * @param tokenMint
-   * @returns
+   * @param {PublicKey} programId
+   * @param {PublicKey} tokenMint
+   * @returns {PublicKey} Margin Pool Address
    */
   private static deriveAccounts(programId: PublicKey, tokenMint: PublicKey): MarginPoolAddresses {
     //add
@@ -103,28 +92,27 @@ export class MarginPool {
   }
 
   /**
-   *
-   * @param program
-   * @param tokenMetaDataInfoTokenMetadataInfo
-   * @param authority
-   * @param params
-   * @param feeDestination
-   * @param marginPoolConfig
-   * @returns
+   * Create a margin pool
+   * @param {Program} program
+   * @param {TokenMetaDataInfo} tokenMetaDataInfo
+   * @param {PublicKey} authority
+   * @param {CreatePoolParams} params
+   * @param {PublicKey} feeDestination
+   * @param {MarginPoolConfig} marginPoolConfig
+   * @returns {Promise<string>}
    */
   static create(
     program: Program,
-    tokenMetaDataInfoTokenMetadataInfo: TokenMetadataInfo,
+    tokenMetaDataInfo: TokenMetadataInfo,
     authority: PublicKey,
     params: CreatePoolParams,
     feeDestination: PublicKey,
     marginPoolConfig: MarginPoolConfig
   ): Promise<string> {
     //derive pool accounts
-    const addresses = this.deriveAccounts(program.programId, tokenMetaDataInfoTokenMetadataInfo.tokenMint)
-    //metatdata.load
+    const addresses = this.deriveAccounts(program.programId, tokenMetaDataInfo.tokenMint)
 
-    // make an accounts object
+    //info to pass into createPool
     const createPoolInfo = {
       accounts: {
         marginPool: addresses.marginPool,
@@ -132,8 +120,8 @@ export class MarginPool {
         depositNoteMint: addresses.depositNoteMint,
         loanNoteMint: addresses.loanNoteMint,
         tokenMint: addresses.tokenMint,
-        pythProduct: tokenMetaDataInfoTokenMetadataInfo.pythProduct,
-        pythPrice: tokenMetaDataInfoTokenMetadataInfo.pythPrice,
+        pythProduct: tokenMetaDataInfo.pythProduct,
+        pythPrice: tokenMetaDataInfo.pythPrice,
         authority: authority,
         payer: program.provider.wallet.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -146,37 +134,4 @@ export class MarginPool {
     }
     return program.rpc.createPool(feeDestination, marginPoolConfig, createPoolInfo)
   }
-
-  // static deposit(program: Program, tokenMint: PublicKey,source: PublicKey, amount: BN) {
-  //   const addresses = this.deriveAccounts(program.programId, tokenMint)
-  //   // creat or load margin account to deposit depositNotes? so we gotta mint depositNotes as well. we need to create margin accounts
-
-  //   const accounts: DepositInfo = {
-  //     accounts: {
-  //       marginPool: addresses.marginPool,
-  //       vault: addresses.vault,
-  //       depositNoteMint: addresses.depositNoteMint,
-  //       source: source,
-  //       destination: //token account from register
-  //     },
-  //     args: [
-  //       { amount }
-  //     ]
-
-  //   }
-  // }
 }
-
-// //need to know the position of the user
-// // if not, create position
-// //
-
-// /*first deposit:
-
-// register position - ix
-// new token account to hold note
-// deposit USDC to marginpool
-// deposit USDC deposit note to new token account
-
-// //update position balance in  margin program -
-// // takes token account

@@ -3,21 +3,7 @@ import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { MarginAccountInfo } from "./types"
-// import { MarginPool } from '../marginPool/marginPool';
 import { checkNull } from "../common/index"
-
-//derive accounts
-//load
-//constructor
-//decode btw load and constructor - call by the load mthod -return object of all the calculated fields.
-//create
-//with method for every instruction
-//use
-
-// export interface MarginAccountAddresses {
-//   payer: PublicKey
-//   marginAccount: MarginAccount
-// }
 
 export class MarginAccount {
   constructor(
@@ -33,7 +19,7 @@ export class MarginAccount {
    * @param {Program} marginProgram
    * @param {PublicKey} marginPoolAddress
    * @param {PublicKey} owner
-   * @returns Promise<MarginAccount>
+   * @returns {Promise<MarginAccount>}
    */
   static async load(marginProgram: Program, marginPoolAddress: PublicKey, owner: PublicKey): Promise<MarginAccount> {
     const address = this.deriveMarginAccount(marginProgram.programId, marginPoolAddress, owner)
@@ -49,7 +35,7 @@ export class MarginAccount {
    * @param {Program | undefined} program
    * @param {PublicKey | undefined} marginPoolAddress
    * @param {PublicKey | undefined} owner
-   * @returns MarginAccount
+   * @returns {MarginAccount}
    */
   static use(
     program: Program | undefined,
@@ -64,15 +50,15 @@ export class MarginAccount {
 
   /**
    * derive PDA from pool address and owner address
-   * @param marginProgramId
-   * @param marginPoolAddress
-   * @param owner
-   * @returns PublicKey
+   * @param {PublicKey} marginProgramId
+   * @param {PublicKey} marginPoolAddress
+   * @param {PublicKey} owner
+   * @returns {PublicKey} Derive a margin account
    */
   private static deriveMarginAccount(
     marginProgramId: PublicKey,
     marginPoolAddress: PublicKey,
-    owner: PublicKey
+    owner: PublicKey,
   ): PublicKey {
     return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
   }
