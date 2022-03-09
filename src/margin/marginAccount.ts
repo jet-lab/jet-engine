@@ -4,7 +4,7 @@ import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { MarginAccountInfo } from "./types"
 // import { MarginPool } from '../marginPool/marginPool';
-import { checkNull } from '../common/index';
+import { checkNull } from "../common/index"
 
 //derive accounts
 //load

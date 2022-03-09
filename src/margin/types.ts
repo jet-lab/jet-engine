@@ -58,4 +58,3 @@ export interface AccountPosition {
 export interface AccountPositionList {
   positions: AccountPosition[]
 }
-
