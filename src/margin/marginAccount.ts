@@ -6,11 +6,7 @@ import { MarginAccountInfo } from "./state"
 import { checkNull } from "../common/index"
 
 export class MarginAccount {
-  constructor(
-    public marginProgram: Program,
-    public address: PublicKey,
-    public marginAccount: MarginAccountInfo
-  ) {}
+  constructor(public marginProgram: Program, public address: PublicKey, public marginAccount: MarginAccountInfo) {}
 
   //load multiple accounts?`
   /**
@@ -54,11 +50,7 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns {PublicKey} Derive a margin account
    */
-  private static derive(
-    marginProgramId: PublicKey,
-    marginPoolAddress: PublicKey,
-    owner: PublicKey
-  ): PublicKey {
+  private static derive(marginProgramId: PublicKey, marginPoolAddress: PublicKey, owner: PublicKey): PublicKey {
     return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
   }
 

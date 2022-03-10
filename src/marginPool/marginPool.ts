@@ -24,7 +24,7 @@ export class MarginPool {
     public vault: TokenAccountInfo,
     public depositNoteMint: MintInfo,
     public loanNoteMint: MintInfo,
-    public poolTokenMint: MintInfo,
+    public poolTokenMint: MintInfo
   ) {}
 
   /**
