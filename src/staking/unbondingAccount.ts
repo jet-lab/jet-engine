@@ -7,7 +7,7 @@ import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export interface UnbondingAccountInfo {
-  /// The related account requesting to unstake
+  /// The related account requesting to un
   stakeAccount: PublicKey
 
   /// The amount of shares/tokens to be unstaked

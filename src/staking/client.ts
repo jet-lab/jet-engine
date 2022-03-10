@@ -42,7 +42,7 @@ export class StakeClient {
    * TODO:
    * @static
    * @param {Provider} provider
-   * @returns {(Program<Idl> | undefined)}
+   * @returns {(Program<StakeIdl> | undefined)}
    * @memberof StakeClient
    */
   static use(provider: Provider): Program<StakeIdl> | undefined {

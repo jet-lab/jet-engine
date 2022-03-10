@@ -56,11 +56,11 @@ export class MarginAccount {
 
   /**
    * Build instruction for Create Margin Account
-   * @param program
-   * @param marginPool
-   * @param owner
-   * @param seed
-   * @returns
+   * @param {Program} program
+   * @param {PublicKey} marginPool
+   * @param {PublicKey} owner
+   * @param {number} seed
+   * @returns {TransactionInstruction} create margin account IX
    */
   static withCreate(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
     const marginAccount = this.derive(program.programId, marginPool, owner)
