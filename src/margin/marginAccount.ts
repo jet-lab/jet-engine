@@ -2,14 +2,13 @@ import { PublicKey, SystemProgram } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
-import { MarginAccountInfo } from "./types"
+import { MarginAccountInfo } from "./state"
 import { checkNull } from "../common/index"
 
 export class MarginAccount {
   constructor(
     public marginProgram: Program,
     public address: PublicKey,
-    public owner: PublicKey,
     public marginAccount: MarginAccountInfo
   ) {}
 
@@ -22,12 +21,12 @@ export class MarginAccount {
    * @returns {Promise<MarginAccount>}
    */
   static async load(marginProgram: Program, marginPoolAddress: PublicKey, owner: PublicKey): Promise<MarginAccount> {
-    const address = this.deriveMarginAccount(marginProgram.programId, marginPoolAddress, owner)
+    const address = this.derive(marginProgram.programId, marginPoolAddress, owner)
     const marginAccount = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
     checkNull(marginAccount)
 
-    return new MarginAccount(marginProgram, address, owner, marginAccount)
+    return new MarginAccount(marginProgram, address, marginAccount)
   }
 
   /**
@@ -55,7 +54,7 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns {PublicKey} Derive a margin account
    */
-  private static deriveMarginAccount(
+  private static derive(
     marginProgramId: PublicKey,
     marginPoolAddress: PublicKey,
     owner: PublicKey
@@ -72,7 +71,7 @@ export class MarginAccount {
    * @returns
    */
   static withCreate(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
-    const marginAccount = this.deriveMarginAccount(program.programId, marginPool, owner)
+    const marginAccount = this.derive(program.programId, marginPool, owner)
 
     const createInfo = {
       accounts: {

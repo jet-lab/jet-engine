@@ -1,10 +1,10 @@
-import { MintInfo, AccountInfo as TokenAccountInfo, NATIVE_MINT, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { MintInfo, AccountInfo as TokenAccountInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount, checkNull } from "../common"
 import { Hooks } from "../common/hooks"
-import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./types"
+import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./state"
 import { TokenMetadataInfo } from "../marginMetadata"
 
 export interface MarginPoolAddresses {
@@ -17,10 +17,6 @@ export interface MarginPoolAddresses {
 }
 
 export class MarginPool {
-  //FIXME
-  // add obj of addresses for seeds
-  static readonly solTokenMint = NATIVE_MINT
-
   constructor(
     public program: Program,
     public addresses: MarginPoolAddresses,
@@ -29,7 +25,6 @@ export class MarginPool {
     public depositNoteMint: MintInfo,
     public loanNoteMint: MintInfo,
     public poolTokenMint: MintInfo,
-    public payer: PublicKey
   ) {}
 
   /**
@@ -38,7 +33,7 @@ export class MarginPool {
    * @param {PublicKey} tokenMint
    * @returns {Promise<MarginPool>}
    */
-  static async load(program: Program, tokenMint: PublicKey, payer: PublicKey): Promise<MarginPool> {
+  static async load(program: Program, tokenMint: PublicKey): Promise<MarginPool> {
     const addresses = this.deriveAccounts(program.programId, tokenMint)
 
     const marginPool = (await program.account.marginPool.fetch(addresses.marginPool)) as MarginPoolAccountInfo
@@ -61,11 +56,11 @@ export class MarginPool {
     const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer)
     const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer)
 
-    return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint, payer)
+    return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
   }
 
-  static use(program: Program | undefined, tokenMint: PublicKey, payer: PublicKey): MarginPool | undefined {
-    return Hooks.usePromise(async () => program && MarginPool.load(program, tokenMint, payer), [program])
+  static use(program: Program | undefined, tokenMint: PublicKey): MarginPool | undefined {
+    return Hooks.usePromise(async () => program && MarginPool.load(program, tokenMint), [program])
   }
 
   /**
