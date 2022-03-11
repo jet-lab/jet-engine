@@ -1,7 +1,7 @@
-import { PublicKey, SystemProgram } from "@solana/web3.js"
+import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { Hooks } from "../common/hooks"
+// import { Hooks } from "../common/hooks"
 import { MarginAccountInfo } from "./types"
 // import { MarginPool } from '../marginPool/marginPool';
 import { checkNull } from "../common/index"
@@ -35,71 +35,73 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns Promise<MarginAccount>
    */
-  static async load(marginProgram: Program, marginPoolAddress: PublicKey, owner: PublicKey): Promise<MarginAccount> {
-    const address = this.deriveMarginAccount(marginProgram.programId, marginPoolAddress, owner)
-    const marginAccount = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
+  static async load(marginProgram: Program, owner: PublicKey, seed: string): Promise<MarginAccount> {
+    // find the PDA address
+    const address = this.derive(marginProgram.programId, owner, seed)
+    //fetch account info
+    // why no try and catch?
+    const marginAccountInfo = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
-    checkNull(marginAccount)
+    checkNull(marginAccountInfo)
 
-    return new MarginAccount(marginProgram, address, owner, marginAccount)
+    //return a Margin Account
+    return new MarginAccount(marginProgram, address, owner, marginAccountInfo)
+  }
+
+  // /**
+  //  *
+  //  * @param {Program | undefined} program
+  //  * @param {PublicKey | undefined} marginPoolAddress
+  //  * @param {PublicKey | undefined} owner
+  //  * @returns {MarginAccount | undefined}
+  //  */
+  // static use(
+  //   program: Program | undefined,
+  //   owner: PublicKey | undefined,
+  //   seed: string | undefined,
+  // ): MarginAccount | undefined {
+  //   return Hooks.usePromise(
+  //     async () => program && owner && seed.length && MarginAccount.load(program, owner, seed),
+  //     [program, owner, seed]
+  //   )
+  // }
+
+  /**
+   * derive PDA from pool address, owner address, and a seed string
+   * @param {PublicKey} marginProgramId
+   * @param {PublicKey} marginPoolAddress
+   * @param {PublicKey} owner
+   * @returns {PublicKey} Derive a margin account
+   */
+  private static derive(marginProgramId: PublicKey, owner: PublicKey, seed: string): PublicKey {
+    return findDerivedAccount(marginProgramId, owner, seed)
   }
 
   /**
-   *
-   * @param {Program | undefined} program
-   * @param {PublicKey | undefined} marginPoolAddress
-   * @param {PublicKey | undefined} owner
-   * @returns MarginAccount
+   * Add Create Margin Account instruction
+   * @param {Program} program
+   * @param {PublicKey} marginPool
+   * @param {PublicKey} owner
+   * @param {number} seed
+   * @returns {TransactionInstruction} create margin account IX
    */
-  static use(
-    program: Program | undefined,
-    marginPoolAddress: PublicKey | undefined,
-    owner: PublicKey | undefined
-  ): MarginAccount | undefined {
-    return Hooks.usePromise(
-      async () => program && marginPoolAddress && owner && MarginAccount.load(program, marginPoolAddress, owner),
-      [program, marginPoolAddress, owner]
-    )
-  }
-
-  /**
-   * derive PDA from pool address and owner address
-   * @param marginProgramId
-   * @param marginPoolAddress
-   * @param owner
-   * @returns PublicKey
-   */
-  private static deriveMarginAccount(
-    marginProgramId: PublicKey,
-    marginPoolAddress: PublicKey,
-    owner: PublicKey
-  ): PublicKey {
-    return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
-  }
-
-  /**
-   * Build instruction for Create Margin Account
-   * @param program
-   * @param marginPool
-   * @param owner
-   * @param seed
-   * @returns
-   */
-  static withCreate(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
-    const marginAccount = this.deriveMarginAccount(program.programId, marginPool, owner)
-
+  static withCreate(instructions: TransactionInstruction[], program: Program, owner: PublicKey, seed: string) {
+    const marginAccount = this.derive(program.programId, owner, seed)
+    // I think owner needs to be a Signer type?
     const createInfo = {
       accounts: {
         owner: owner,
         payer: program.provider.wallet.publicKey,
         marginAccount: marginAccount,
-        systemProgram: SystemProgram.programId
+        systemProgram: SystemProgram.programId,
       },
       args: {
         seed: seed
       }
     }
 
-    return program.instruction.createAccount(seed, createInfo)
+    instructions.push(program.instruction.createAccount(seed, createInfo))
+
+    return instructions
   }
 }
