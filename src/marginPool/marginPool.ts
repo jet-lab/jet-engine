@@ -104,7 +104,7 @@ export class MarginPool {
     marginPoolConfig: MarginPoolConfig
   ): Promise<string> {
     //derive pool accounts
-    const addresses = this.deriveAccounts(program.programId, tokenMetaDataInfo.tokenMint)
+    const addresses = this.derive(program.programId, tokenMetaDataInfo.tokenMint)
 
     //info to pass into createPool
     const createPoolInfo = {
