@@ -15,10 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Idl, Program, Provider } from "@project-serum/anchor"
+import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect } from "../common"
 import { Hooks } from "../common/hooks"
+import { StakeIdl } from "./idl"
 
 /**
  * TODO:
@@ -33,7 +34,7 @@ export class StakeClient {
    * @returns {Promise<Program>} The client
    * @memberof StakeClient
    */
-  static async connect(provider: Provider): Promise<Program> {
+  static async connect(provider: Provider): Promise<Program<StakeIdl>> {
     return await connect(StakeClient.PROGRAM_ID, provider)
   }
 
@@ -41,10 +42,10 @@ export class StakeClient {
    * TODO:
    * @static
    * @param {Provider} provider
-   * @returns {(Program<Idl> | undefined)}
+   * @returns {(Program<StakeIdl> | undefined)}
    * @memberof StakeClient
    */
-  static use(provider: Provider): Program<Idl> | undefined {
+  static use(provider: Provider): Program<StakeIdl> | undefined {
     return Hooks.usePromise(async () => StakeClient.connect(provider), [provider.connection])
   }
 }

@@ -20,7 +20,6 @@ import BN from "bn.js"
 import { JetClient, JetMarket, JetMarketData, JetReserve, JetUser, ReserveData } from "."
 import { JetUserData } from "./user"
 import { TokenAmount } from ".."
-import { Asset } from ".."
 import { Hooks } from "../common"
 
 export type Position = {
@@ -36,7 +35,6 @@ export type Position = {
   maxWithdrawAmount: TokenAmount
   maxBorrowAmount: TokenAmount
   maxRepayAmount: TokenAmount
-  walletBalances: Record<string, Asset> //create Asset
 }
 
 export interface Obligation {
@@ -181,8 +179,7 @@ export class JetObligation implements Obligation {
         maxDepositAmount: undefined as any as TokenAmount,
         maxWithdrawAmount: undefined as any as TokenAmount,
         maxBorrowAmount: undefined as any as TokenAmount,
-        maxRepayAmount: undefined as any as TokenAmount,
-        walletBalances: undefined as any as Record<string, Asset>
+        maxRepayAmount: undefined as any as TokenAmount
       }
 
       const price = reserve.priceData.price

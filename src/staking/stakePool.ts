@@ -176,6 +176,7 @@ export class StakePool {
    */
   static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
+
     const accounts = {
       ...params.accounts,
       ...derivedAccounts,
