@@ -34,7 +34,7 @@ export class MarginPool {
    * @returns {Promise<MarginPool>}
    */
   static async load(program: Program, tokenMint: PublicKey): Promise<MarginPool> {
-    const addresses = this.deriveAccounts(program.programId, tokenMint)
+    const addresses = this.derive(program.programId, tokenMint)
 
     const marginPool = (await program.account.marginPool.fetch(addresses.marginPool)) as MarginPoolAccountInfo
 
