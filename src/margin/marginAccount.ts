@@ -8,7 +8,6 @@ import { checkNull } from "../common/index"
 export class MarginAccount {
   constructor(public marginProgram: Program, public address: PublicKey, public marginAccount: MarginAccountInfo) {}
 
-  //load multiple accounts?`
   /**
    *
    * @param {Program} marginProgram
