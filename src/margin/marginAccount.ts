@@ -93,7 +93,7 @@ export class MarginAccount {
         owner: owner,
         payer: program.provider.wallet.publicKey,
         marginAccount: marginAccount,
-        systemProgram: SystemProgram.programId,
+        systemProgram: SystemProgram.programId
       },
       args: {
         seed: seed
