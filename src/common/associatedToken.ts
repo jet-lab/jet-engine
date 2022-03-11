@@ -7,7 +7,6 @@ import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount } from "."
 
-//ADD wrapping and unwrapping SOL
 export class AssociatedToken {
   address: PublicKey
   /**
