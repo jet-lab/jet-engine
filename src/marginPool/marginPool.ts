@@ -69,7 +69,7 @@ export class MarginPool {
    * @param {PublicKey} tokenMint
    * @returns {PublicKey} Margin Pool Address
    */
-  private static deriveAccounts(programId: PublicKey, tokenMint: PublicKey): MarginPoolAddresses {
+  private static derive(programId: PublicKey, tokenMint: PublicKey): MarginPoolAddresses {
     //add
     const marginPool = findDerivedAccount(programId, tokenMint)
     const vault = findDerivedAccount(programId, tokenMint, "vault")
