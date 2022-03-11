@@ -1,9 +1,28 @@
-import { Program } from "@project-serum/anchor"
-import { PublicKey } from "@solana/web3.js"
-import BN from "bn.js"
+/*
+ * Copyright (C) 2021 JET PROTOCOL HOLDINGS, LLC.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { BN, Program } from "@project-serum/anchor"
+import { PublicKey, TransactionInstruction } from "@solana/web3.js"
+import { StakeAccount, StakePool, StakeClient } from "../staking"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
+
 import { AirdropTargetsStruct } from "./layout"
 
 export interface AirdropInfo {
@@ -234,7 +253,7 @@ export class Airdrop {
   static use(rewardsProgram: Program | undefined, airdrop: PublicKey | undefined): Airdrop | undefined {
     return Hooks.usePromise(
       async () => rewardsProgram && airdrop && Airdrop.load(rewardsProgram, airdrop),
-      [rewardsProgram, airdrop]
+      [rewardsProgram, airdrop?.toBase58()]
     )
   }
 
@@ -244,5 +263,43 @@ export class Airdrop {
 
   getRecipient(wallet: PublicKey) {
     return this.targetInfo.recipients.find(recipient => wallet.equals(recipient.recipient))
+  }
+
+  static async withClaim(
+    instructions: TransactionInstruction[],
+    rewardsProgram: Program,
+    airdrop: Airdrop,
+    stakePool: StakePool,
+    stakeAccount: StakeAccount
+  ) {
+    console.log("Claiming and staking the airdrop.")
+    const ix = rewardsProgram.instruction.airdropClaim({
+      accounts: {
+        /** The airdrop to claim from */
+        airdrop: airdrop.airdropAddress,
+        /** The token account to claim the rewarded tokens from */
+        rewardVault: airdrop.rewardsVaultAddress,
+        /** The address entitled to the airdrop, which must sign to claim */
+        recipient: stakeAccount.stakeAccount.owner,
+        /** The address to receive rent recovered from the claim account */
+        receiver: stakeAccount.stakeAccount.owner,
+        /** The stake pool to deposit stake into */
+        stakePool: airdrop.airdrop.stakePool,
+        /** The stake pool token vault */
+        stakePoolVault: stakePool.vault.address,
+        /** The account to own the stake being deposited */
+        stakeAccount: stakeAccount.address,
+        stakingProgram: StakeClient.PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }
+    })
+    instructions.push(ix)
+  }
+
+  static async claim(rewardsProgram: Program, airdrop: Airdrop, stakePool: StakePool, stakeAccount: StakeAccount) {
+    const ix: TransactionInstruction[] = []
+    this.withClaim(ix, rewardsProgram, airdrop, stakePool, stakeAccount)
+    console.log("claim ix", ix)
+    return ix
   }
 }

@@ -15,7 +15,7 @@ export class Hooks {
           }
         })
       return () => {
-        abort = false
+        abort = true
       }
     }, deps)
 

@@ -7,7 +7,6 @@ import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount } from "."
 
-//ADD wrapping and unwrapping SOL
 export class AssociatedToken {
   address: PublicKey
   /**
@@ -105,7 +104,7 @@ export class AssociatedToken {
         return undefined
       }
       return this.derive(mint, owner)
-    }, [mint, owner])
+    }, [mint?.toBase58(), owner?.toBase58()])
   }
 
   /**
@@ -119,7 +118,7 @@ export class AssociatedToken {
   static useAux(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
     return Hooks.usePromise(
       async () => connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
-      [connection, tokenAddress]
+      [connection, tokenAddress?.toBase58()]
     )
   }
 
@@ -153,7 +152,7 @@ export class AssociatedToken {
   static useMint(connection: Connection | undefined, address: PublicKey | undefined): MintInfo | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
-      [connection, address]
+      [connection, address?.toBase58()]
     )
   }
 

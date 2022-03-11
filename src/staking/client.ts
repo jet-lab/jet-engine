@@ -27,7 +27,7 @@ import { StakeIdl } from "./idl"
  * @class JetClient
  */
 export class StakeClient {
-  static PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
+  static readonly PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
   /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
@@ -42,10 +42,10 @@ export class StakeClient {
    * TODO:
    * @static
    * @param {Provider} provider
-   * @returns {(Program<Idl> | undefined)}
+   * @returns {(Program<StakeIdl> | undefined)}
    * @memberof StakeClient
    */
   static use(provider: Provider): Program<StakeIdl> | undefined {
-    return Hooks.usePromise(async () => StakeClient.connect(provider), [provider])
+    return Hooks.usePromise(async () => StakeClient.connect(provider), [provider.connection])
   }
 }

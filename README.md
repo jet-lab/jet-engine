@@ -38,3 +38,12 @@ const client = await JetClient.connect(provider, true)
 ## Examples
 
 > [Fetching a position](https://github.com/jet-lab/jet-engine/blob/master/examples/user_position.ts)
+
+## Contributors ❤️
+
+<div align="center">
+  <a href="https://github.com/jet-lab/jet-engine/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=jet-lab/jet-engine" />
+  </a>
+</div>
+

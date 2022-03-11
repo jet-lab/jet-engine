@@ -52,7 +52,6 @@ export interface AccountPosition {
   exponent: number
   /** A weight on the value of this asset when counting collateral */
   collateralWeight: number
-  _reserved: number[]
 }
 
 export interface AccountPositionList {

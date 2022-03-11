@@ -44,13 +44,19 @@ export interface StakePoolInfo {
 
   /** The total amount of virtual stake tokens that are ineligible for rewards
   /** because they are being unbonded for future withdrawal. */
-  sharesUnbonded: BN
+  tokensUnbonding: BN
+
+  /** Amount of stake tokens or votes equivalent to one share */
+  jetVotesPerShare: BN
 }
 
 // ----- Instructions -----
 
 interface CreateStakePoolParams {
   accounts: {
+    /** The address paying to create this pool */
+    payer: PublicKey
+
     /** The address allowed to sign for changes to the pool,
      and management of the token balance. */
     authority: PublicKey
@@ -98,8 +104,9 @@ export class StakePool {
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
+    const jetVotesPerShare = vault.amount.div(stakePool.sharesBonded)
 
-    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
+    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint, jetVotesPerShare)
   }
 
   /**
@@ -120,7 +127,8 @@ export class StakePool {
     public voteMint: MintInfo,
     public collateralMint: MintInfo,
     public vault: TokenAccountInfo,
-    public tokenMint: MintInfo
+    public tokenMint: MintInfo,
+    public jetVotesPerShare: BN
   ) {}
 
   /**
@@ -170,7 +178,6 @@ export class StakePool {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
 
     const accounts = {
-      payer: program.provider.wallet.publicKey,
       ...params.accounts,
       ...derivedAccounts,
       tokenProgram: TOKEN_PROGRAM_ID,

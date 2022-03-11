@@ -22,7 +22,7 @@ export interface MarginPoolConfig {
   managementFeeCollectThreshold: BN
 }
 
-type UnixTimeStamp = BN
+type UnixTimestamp = BN
 
 export interface MarginPoolAccountInfo {
   version: number
@@ -55,7 +55,7 @@ export interface MarginPoolAccountInfo {
   /** The total amount of notes issued to borrowers of tokens */
   loanNotes: BN
   /** The time the interest was last accrued up to in seconds */
-  accruedUntil: UnixTimeStamp
+  accruedUntil: UnixTimestamp
 }
 
 export interface MarginPoolOracle {
