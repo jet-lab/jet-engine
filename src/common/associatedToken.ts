@@ -20,10 +20,10 @@ import {
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
-import { findDerivedAccount } from "."
+import { findDerivedAccount, bnToNumber } from "."
 
 /** Instructions defined by the program */
-export enum TokenInstruction {
+enum TokenInstruction {
   InitializeMint = 0,
   InitializeAccount = 1,
   InitializeMultisig = 2,
@@ -46,30 +46,11 @@ export enum TokenInstruction {
   InitializeMultisig2 = 19,
   InitializeMint2 = 20
 }
-/** TODO: docs */
-export interface SyncNativeInstructionData {
-  instruction: TokenInstruction.SyncNative
-}
 
-/** TODO: docs */
-export const syncNativeInstructionData = struct([u8("instruction")])
+const syncNativeInstructionData = struct([u8("instruction")])
 
-/**
- * Construct a SyncNative instruction
- *
- * @param account   Native account to sync lamports from
- * @param programId SPL Token program account
- *
- * @return Instruction to add to a transaction
- */
-export function createSyncNativeInstruction(account: PublicKey, programId = TOKEN_PROGRAM_ID): TransactionInstruction {
-  const keys = [{ pubkey: account, isSigner: false, isWritable: true }]
 
-  const data = Buffer.alloc(syncNativeInstructionData.span)
-  syncNativeInstructionData.encode({ instruction: TokenInstruction.SyncNative }, data)
 
-  return new TransactionInstruction({ keys, programId, data })
-}
 
 export class AssociatedToken {
   address: PublicKey
@@ -128,7 +109,7 @@ export class AssociatedToken {
   }
 
   /**
-   * TODO:
+   * Get mint info
    * @static
    * @param {Provider} connection
    * @param {PublicKey} mint
@@ -221,13 +202,13 @@ export class AssociatedToken {
   }
 
   /**
-   * check if associated token account exists for this mint if not, add instruction to create one. If it does exists, then return the address
+   * If the associated token account does not exist for this mint, add instruction to create the token account.If ATA exists, do nothing.
    * @static
    * @param {TransactionInstruction[]} instructions
    * @param {Provider} provider
    * @param {PublicKey} owner
    * @param {PublicKey} mint
-   * @returns {Promise<PublicKey>}
+   * @returns {Promise<PublicKey>} returns the public key of the token account
    * @memberof AssociatedToken
    */
   static async withCreate(
@@ -253,7 +234,7 @@ export class AssociatedToken {
   }
 
   /**
-   * TODO:
+   * Add close associated token account IX
    * @static
    * @param {TransactionInstruction[]} instructions
    * @param {PublicKey} owner
@@ -273,8 +254,28 @@ export class AssociatedToken {
     const ix = Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenAddress, rentDestination, owner, multiSigner)
     instructions.push(ix)
   }
+  /**
+   * Add SyncNative instruction
+   * @param {TransactionInstructions} instructions
+   * @param {PublicKey} account
+   * @param programId
+   */
+  static withCreateSyncNativeInstruction(instructions: TransactionInstruction[], account: PublicKey, programId = TOKEN_PROGRAM_ID): void {
+    const keys = [{ pubkey: account, isSigner: false, isWritable: true }]
 
-  //create IX for wrapping SOL
+    const data = Buffer.alloc(syncNativeInstructionData.span)
+    syncNativeInstructionData.encode({ instruction: TokenInstruction.SyncNative }, data)
+
+    instructions.push(new TransactionInstruction({ keys, programId, data }))
+  }
+
+  /** Add IX for wrapping SOL
+   * @param instructions
+   * @param provider
+   * @param owner
+   * @param mint
+   * @param amount
+   */
   static async withWrapIfNativeMint(
     instructions: TransactionInstruction[],
     provider: Provider,
@@ -289,14 +290,13 @@ export class AssociatedToken {
       //IX to transfer sol to ATA
       const transferIx = SystemProgram.transfer({
         fromPubkey: owner,
-        //fix? may be imprecise?
-        lamports: amount.toNumber(),
+        //parse BN
+        lamports: bnToNumber(amount),
         toPubkey: ata
       })
+      instructions.push(transferIx)
       //IX to sync wrapped SOL balance
-      const syncNativeIx = createSyncNativeInstruction(ata)
-
-      instructions.push(transferIx, syncNativeIx)
+      this.withCreateSyncNativeInstruction(instructions, ata)
     }
   }
 }
