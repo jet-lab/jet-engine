@@ -1,11 +1,53 @@
-import { Provider } from "@project-serum/anchor"
+import { Provider, BN } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token"
-import { AccountInfo, Connection, PublicKey, Signer, TransactionInstruction, ParsedAccountData } from "@solana/web3.js"
+import { struct, u8 } from "@solana/buffer-layout"
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  AccountInfo as TokenAccountInfo,
+  MintInfo,
+  NATIVE_MINT
+} from "@solana/spl-token"
+import {
+  AccountInfo,
+  Connection,
+  PublicKey,
+  Signer,
+  TransactionInstruction,
+  ParsedAccountData,
+  SystemProgram
+} from "@solana/web3.js"
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
-import { findDerivedAccount } from "."
+import { findDerivedAccount, bnToNumber } from "."
+
+/** Instructions defined by the program */
+enum TokenInstruction {
+  InitializeMint = 0,
+  InitializeAccount = 1,
+  InitializeMultisig = 2,
+  Transfer = 3,
+  Approve = 4,
+  Revoke = 5,
+  SetAuthority = 6,
+  MintTo = 7,
+  Burn = 8,
+  CloseAccount = 9,
+  FreezeAccount = 10,
+  ThawAccount = 11,
+  TransferChecked = 12,
+  ApproveChecked = 13,
+  MintToChecked = 14,
+  BurnChecked = 15,
+  InitializeAccount2 = 16,
+  SyncNative = 17,
+  InitializeAccount3 = 18,
+  InitializeMultisig2 = 19,
+  InitializeMint2 = 20
+}
+
+const syncNativeInstructionData = struct([u8("instruction")])
 
 export class AssociatedToken {
   address: PublicKey
@@ -64,7 +106,7 @@ export class AssociatedToken {
   }
 
   /**
-   * TODO:
+   * Get mint info
    * @static
    * @param {Provider} connection
    * @param {PublicKey} mint
@@ -157,13 +199,13 @@ export class AssociatedToken {
   }
 
   /**
-   * TODO:
+   * If the associated token account does not exist for this mint, add instruction to create the token account.If ATA exists, do nothing.
    * @static
    * @param {TransactionInstruction[]} instructions
    * @param {Provider} provider
    * @param {PublicKey} owner
    * @param {PublicKey} mint
-   * @returns {Promise<PublicKey>}
+   * @returns {Promise<PublicKey>} returns the public key of the token account
    * @memberof AssociatedToken
    */
   static async withCreate(
@@ -189,7 +231,7 @@ export class AssociatedToken {
   }
 
   /**
-   * TODO:
+   * Add close associated token account IX
    * @static
    * @param {TransactionInstruction[]} instructions
    * @param {PublicKey} owner
@@ -208,5 +250,54 @@ export class AssociatedToken {
     const tokenAddress = this.derive(mint, owner)
     const ix = Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenAddress, rentDestination, owner, multiSigner)
     instructions.push(ix)
+  }
+  /**
+   * Add SyncNative instruction
+   * @param {TransactionInstructions} instructions
+   * @param {PublicKey} account
+   * @param programId
+   */
+  static withCreateSyncNativeInstruction(
+    instructions: TransactionInstruction[],
+    account: PublicKey,
+    programId = TOKEN_PROGRAM_ID
+  ): void {
+    const keys = [{ pubkey: account, isSigner: false, isWritable: true }]
+
+    const data = Buffer.alloc(syncNativeInstructionData.span)
+    syncNativeInstructionData.encode({ instruction: TokenInstruction.SyncNative }, data)
+
+    instructions.push(new TransactionInstruction({ keys, programId, data }))
+  }
+
+  /** Add IX for wrapping SOL
+   * @param instructions
+   * @param provider
+   * @param owner
+   * @param mint
+   * @param amount
+   */
+  static async withWrapIfNativeMint(
+    instructions: TransactionInstruction[],
+    provider: Provider,
+    owner: PublicKey,
+    mint: PublicKey,
+    amount: BN
+  ) {
+    //only run if mint is wrapped sol mint
+    if (mint.equals(NATIVE_MINT)) {
+      //this will add instructions to create ata if ata does not exist, if exist, we will get the ata address
+      const ata = await this.withCreate(instructions, provider, owner, mint)
+      //IX to transfer sol to ATA
+      const transferIx = SystemProgram.transfer({
+        fromPubkey: owner,
+        //parse BN
+        lamports: bnToNumber(amount),
+        toPubkey: ata
+      })
+      instructions.push(transferIx)
+      //IX to sync wrapped SOL balance
+      this.withCreateSyncNativeInstruction(instructions, ata)
+    }
   }
 }

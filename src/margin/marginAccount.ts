@@ -1,4 +1,4 @@
-import { PublicKey, SystemProgram } from "@solana/web3.js"
+import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
@@ -15,15 +15,14 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns {Promise<MarginAccount>}
    */
-  static async load(marginProgram: Program, marginPoolAddress: PublicKey, owner: PublicKey): Promise<MarginAccount> {
-    const address = this.derive(marginProgram.programId, marginPoolAddress, owner)
-    const marginAccount = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
+  static async load(marginProgram: Program, owner: PublicKey, seed: number): Promise<MarginAccount> {
+    const address = this.derive(marginProgram.programId, owner, seed)
+    const marginAccountInfo = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
-    checkNull(marginAccount)
+    checkNull(marginAccountInfo)
 
-    return new MarginAccount(marginProgram, address, marginAccount)
+    return new MarginAccount(marginProgram, address, marginAccountInfo)
   }
-
   /**
    *
    * @param {Program | undefined} program
@@ -33,13 +32,14 @@ export class MarginAccount {
    */
   static use(
     program: Program | undefined,
-    marginPoolAddress: PublicKey | undefined,
-    owner: PublicKey | undefined
+    owner: PublicKey | undefined,
+    seed: number | undefined
   ): MarginAccount | undefined {
-    return Hooks.usePromise(
-      async () => program && marginPoolAddress && owner && MarginAccount.load(program, marginPoolAddress, owner),
-      [program, marginPoolAddress, owner]
-    )
+    return Hooks.usePromise(async () => {
+      if (seed !== undefined && program && owner) {
+        return await MarginAccount.load(program, owner, seed)
+      }
+    }, [program, owner, seed])
   }
 
   /**
@@ -49,8 +49,10 @@ export class MarginAccount {
    * @param {PublicKey} owner
    * @returns {PublicKey} Derive a margin account
    */
-  private static derive(marginProgramId: PublicKey, marginPoolAddress: PublicKey, owner: PublicKey): PublicKey {
-    return findDerivedAccount(marginProgramId, marginPoolAddress, owner)
+  private static derive(marginProgramId: PublicKey, owner: PublicKey, seed: number): PublicKey {
+    const buffer = Buffer.alloc(2)
+    buffer.writeUInt16LE(seed)
+    return findDerivedAccount(marginProgramId, owner, buffer)
   }
 
   /**
@@ -61,8 +63,8 @@ export class MarginAccount {
    * @param {number} seed
    * @returns {TransactionInstruction} create margin account IX
    */
-  static withCreate(program: Program, marginPool: PublicKey, owner: PublicKey, seed: number) {
-    const marginAccount = this.derive(program.programId, marginPool, owner)
+  static withCreate(instructions: TransactionInstruction[], program: Program, owner: PublicKey, seed: number) {
+    const marginAccount = this.derive(program.programId, owner, seed)
 
     const createInfo = {
       accounts: {
@@ -76,6 +78,8 @@ export class MarginAccount {
       }
     }
 
-    return program.instruction.createAccount(seed, createInfo)
+    instructions.push(program.instruction.createAccount(seed, createInfo))
+
+    return instructions
   }
 }

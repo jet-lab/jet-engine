@@ -10,7 +10,7 @@ export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"
 export { Hooks } from "./hooks"
 
-export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string
+export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string | Buffer
 
 /**
  * Utility class to store a calculated PDA and
