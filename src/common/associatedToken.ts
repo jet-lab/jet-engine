@@ -49,9 +49,6 @@ enum TokenInstruction {
 
 const syncNativeInstructionData = struct([u8("instruction")])
 
-
-
-
 export class AssociatedToken {
   address: PublicKey
   /**
@@ -260,7 +257,11 @@ export class AssociatedToken {
    * @param {PublicKey} account
    * @param programId
    */
-  static withCreateSyncNativeInstruction(instructions: TransactionInstruction[], account: PublicKey, programId = TOKEN_PROGRAM_ID): void {
+  static withCreateSyncNativeInstruction(
+    instructions: TransactionInstruction[],
+    account: PublicKey,
+    programId = TOKEN_PROGRAM_ID
+  ): void {
     const keys = [{ pubkey: account, isSigner: false, isWritable: true }]
 
     const data = Buffer.alloc(syncNativeInstructionData.span)
