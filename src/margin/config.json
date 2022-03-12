@@ -1,0 +1,293 @@
+{
+  "devnet": {
+    "url": "https://api.devnet.solana.com/",
+    "marginProgramId": "CzJ2A4aBQnx7qqZoSt6rzTTLRcYViwUcqxDdLQEt94fx",
+    "marginPoolProgramId": "8MppZR3992nKVvt4wbEKbuF4Bik2ovBLCw5fqcxi8k2L",
+    "marginSerumProgramId": "DDdpZPyzWZ9irLAvbUJLQ6cjttdqyiikeyj8UvoUCBNM",
+    "marginSwapProgramId": "JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN",
+    "metadataProgramId": "FMfSb6kUgLbwevUsPuQZAJ6ihwxhZhGaeXUjYxxKRZb5",
+    "pythProgramId": "5MRiFLAJ6nBFbKpSqwTW4aWG3KbhTseEZZfjR7p3BrRT",
+    "serumProgramId": "6czu6fC35NY4yBNy2zadPcGqsHjstyiKeMoido4rn9h",
+    "serumReferralAuthority": "11111111111111111111111111111111",
+    "tokens": [
+      {
+        "symbol": "BTC",
+        "mint": "F4aQGmSARNyjFXJAYmNGue98dpsH1GawkSjgNZ8tcWpi",
+        "decimals": 6
+      },
+      {
+        "symbol": "ETH",
+        "mint": "AdkhsMLZo9RCfg4ZvFsp8gXsg3F1dmPxmw7FhX8WFeKW",
+        "decimals": 6
+      },
+      {
+        "symbol": "SOL",
+        "mint": "8sV64cK2dTmuUcLdQbQhuWp23eKXEWD9nrPSmw2AWeRC",
+        "decimals": 9
+      },
+      {
+        "symbol": "USDC",
+        "mint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "decimals": 6
+      }
+    ],
+    "oracles": [
+      {
+        "symbol": "BTC/USD",
+        "address": "8QzWALgDuBK45wnhx3fVXbLoQEoYNJbhpXPXhGJKRfUr"
+      },
+      {
+        "symbol": "ETH/USD",
+        "address": "6bWG7buAJDgwJBzGov6maCUmn8249RwKZPS1dPaeheEd"
+      },
+      {
+        "symbol": "SOL/USD",
+        "address": "EYoruynF7CxkCCK1DXVdfy96YjpFMSps5bxUnzf2K2qX"
+      }
+    ],
+    "markets": [
+      {
+        "symbol": "BTC/USDC",
+        "market": "BgrcTJptiZ2YMvfYuxEcRKChzgrLQH2NerkaDpfXYgPg",
+        "baseMint": "F4aQGmSARNyjFXJAYmNGue98dpsH1GawkSjgNZ8tcWpi",
+        "baseSymbol": "BTC",
+        "baseDecimals": 6,
+        "baseLotSize": 100,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "L7ygGudBDqfBXM1zvsPxSsrYpY7yygXPrFdyR3gCapa",
+        "eventQueue": "FAyEusyt3neyg9D1jbUcyd6exHttc7sCwW9NhtipRnTm",
+        "bids": "FscwVXnfBasZJDGMsNxagJ87jaR4tcD1YoxwTFET47UC",
+        "asks": "9cFbYD94kBvAhPTqZU6fmHx5MBf1GoCskV9whgWF4DYx"
+      },
+      {
+        "symbol": "ETH/USDC",
+        "market": "8sGEZTZz5xewJq8vADEpzAUte1qpyLAxgUmKFDGSjCYL",
+        "baseMint": "AdkhsMLZo9RCfg4ZvFsp8gXsg3F1dmPxmw7FhX8WFeKW",
+        "baseSymbol": "ETH",
+        "baseDecimals": 6,
+        "baseLotSize": 1000,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "7HTDMLwkA4BAacmNA7JpBrv1iWTXH8SkRNtgctXaze5s",
+        "eventQueue": "AKobYahe3cWJLd2Q9EV5EYqYXiLMuVFYZmCkRTTxJSoJ",
+        "bids": "9rPeUSCBDEe2B2w1CSPm5j7B7H1TFdcPbAPQTmtHcrmu",
+        "asks": "8PpCHLHAP8KDuuEfNgjffJKWjko2TgeX1Kd4Zchz1hbr"
+      },
+      {
+        "symbol": "SOL/USDC",
+        "market": "13pNBLHnbDFkpr6GZ5ZHP1XvsQQ4pz9NheX8i3ZHNGNp",
+        "baseMint": "8sV64cK2dTmuUcLdQbQhuWp23eKXEWD9nrPSmw2AWeRC",
+        "baseSymbol": "SOL",
+        "baseDecimals": 9,
+        "baseLotSize": 100000000,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 100,
+        "requestQueue": "DnDyBh8BsWse7yuusQSxF1L8qymgpAuUt4DULvbZzCJj",
+        "eventQueue": "EXGhdJnBWYteeoweNreQfPHUDPS6UeGwda22eia1d8Fo",
+        "bids": "8H2J9uMNbKhKVGPb48uBDLHChk37wxxJhPcYZNJ5C56U",
+        "asks": "C7bkVyYs5WDZYQsmjsrdViZK8G9JfF1CfKfSoYpw52La"
+      }
+    ]
+  },
+  "localnet": {
+    "url": "http://127.0.0.1:8899/",
+    "marginProgramId": "JPMvgcajw1LfsHphj4XKKR953DDBgRcbKi1ZWPcEPbk",
+    "marginPoolProgramId": "JPMPcFm69yrCHFvzBJ5aVSxhq5mBHwH1N3axcEQW27G",
+    "marginSerumProgramId": "3wsXmuTcx2hnvznnmufTEbiRHUxQewmukoMkkoG3A1K4",
+    "marginSwapProgramId": "JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN",
+    "metadataProgramId": "JPMMTBqXjR3xQM9vyoJC8pBKQ6Bw9aXysmhtE9bWCR6",
+    "pythProgramId": "ASfdvRMCan2aoWtbDi5HLXhz2CFfgEkuDoxc57bJLKLX",
+    "serumProgramId": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+    "serumReferralAuthority": "11111111111111111111111111111111",
+    "tokens": [
+      {
+        "symbol": "BTC",
+        "mint": "F4aQGmSARNyjFXJAYmNGue98dpsH1GawkSjgNZ8tcWpi",
+        "decimals": 6
+      },
+      {
+        "symbol": "ETH",
+        "mint": "AdkhsMLZo9RCfg4ZvFsp8gXsg3F1dmPxmw7FhX8WFeKW",
+        "decimals": 6
+      },
+      {
+        "symbol": "SOL",
+        "mint": "8sV64cK2dTmuUcLdQbQhuWp23eKXEWD9nrPSmw2AWeRC",
+        "decimals": 9
+      },
+      {
+        "symbol": "USDC",
+        "mint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "decimals": 6
+      }
+    ],
+    "oracles": [
+      {
+        "symbol": "BTC/USD",
+        "address": "8QzWALgDuBK45wnhx3fVXbLoQEoYNJbhpXPXhGJKRfUr"
+      },
+      {
+        "symbol": "ETH/USD",
+        "address": "6bWG7buAJDgwJBzGov6maCUmn8249RwKZPS1dPaeheEd"
+      },
+      {
+        "symbol": "SOL/USD",
+        "address": "EYoruynF7CxkCCK1DXVdfy96YjpFMSps5bxUnzf2K2qX"
+      }
+    ],
+    "markets": [
+      {
+        "symbol": "BTC/USDC",
+        "market": "BgrcTJptiZ2YMvfYuxEcRKChzgrLQH2NerkaDpfXYgPg",
+        "baseMint": "F4aQGmSARNyjFXJAYmNGue98dpsH1GawkSjgNZ8tcWpi",
+        "baseSymbol": "BTC",
+        "baseDecimals": 6,
+        "baseLotSize": 100,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "L7ygGudBDqfBXM1zvsPxSsrYpY7yygXPrFdyR3gCapa",
+        "eventQueue": "FAyEusyt3neyg9D1jbUcyd6exHttc7sCwW9NhtipRnTm",
+        "bids": "FscwVXnfBasZJDGMsNxagJ87jaR4tcD1YoxwTFET47UC",
+        "asks": "9cFbYD94kBvAhPTqZU6fmHx5MBf1GoCskV9whgWF4DYx"
+      },
+      {
+        "symbol": "ETH/USDC",
+        "market": "8sGEZTZz5xewJq8vADEpzAUte1qpyLAxgUmKFDGSjCYL",
+        "baseMint": "AdkhsMLZo9RCfg4ZvFsp8gXsg3F1dmPxmw7FhX8WFeKW",
+        "baseSymbol": "ETH",
+        "baseDecimals": 6,
+        "baseLotSize": 1000,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "7HTDMLwkA4BAacmNA7JpBrv1iWTXH8SkRNtgctXaze5s",
+        "eventQueue": "AKobYahe3cWJLd2Q9EV5EYqYXiLMuVFYZmCkRTTxJSoJ",
+        "bids": "9rPeUSCBDEe2B2w1CSPm5j7B7H1TFdcPbAPQTmtHcrmu",
+        "asks": "8PpCHLHAP8KDuuEfNgjffJKWjko2TgeX1Kd4Zchz1hbr"
+      },
+      {
+        "symbol": "SOL/USDC",
+        "market": "13pNBLHnbDFkpr6GZ5ZHP1XvsQQ4pz9NheX8i3ZHNGNp",
+        "baseMint": "8sV64cK2dTmuUcLdQbQhuWp23eKXEWD9nrPSmw2AWeRC",
+        "baseSymbol": "SOL",
+        "baseDecimals": 9,
+        "baseLotSize": 100000000,
+        "quoteMint": "CgrwTWWUvchjiqAYoeqFdCwSyAwerQvehfgvQ3GpFJto",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 100,
+        "requestQueue": "DnDyBh8BsWse7yuusQSxF1L8qymgpAuUt4DULvbZzCJj",
+        "eventQueue": "EXGhdJnBWYteeoweNreQfPHUDPS6UeGwda22eia1d8Fo",
+        "bids": "8H2J9uMNbKhKVGPb48uBDLHChk37wxxJhPcYZNJ5C56U",
+        "asks": "C7bkVyYs5WDZYQsmjsrdViZK8G9JfF1CfKfSoYpw52La"
+      }
+    ]
+  },
+  "mainnet": {
+    "url": "https://api.mainnet-beta.solana.com/",
+    "marginProgramId": "JPMvgcajw1LfsHphj4XKKR953DDBgRcbKi1ZWPcEPbk",
+    "marginPoolProgramId": "JPMPcFm69yrCHFvzBJ5aVSxhq5mBHwH1N3axcEQW27G",
+    "marginSerumProgramId": "3wsXmuTcx2hnvznnmufTEbiRHUxQewmukoMkkoG3A1K4",
+    "marginSwapProgramId": "JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN",
+    "metadataProgramId": "JPMMTBqXjR3xQM9vyoJC8pBKQ6Bw9aXysmhtE9bWCR6",
+    "pythProgramId": "ASfdvRMCan2aoWtbDi5HLXhz2CFfgEkuDoxc57bJLKLX",
+    "serumProgramId": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+    "serumReferralAuthority": "11111111111111111111111111111111",
+    "tokens": [
+      {
+        "symbol": "BTC",
+        "mint": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
+        "decimals": 6
+      },
+      {
+        "symbol": "ETH",
+        "mint": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
+        "decimals": 6
+      },
+      {
+        "symbol": "SOL",
+        "mint": "So11111111111111111111111111111111111111112",
+        "decimals": 9
+      },
+      {
+        "symbol": "USDC",
+        "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "decimals": 6
+      }
+    ],
+    "oracles": [
+      {
+        "symbol": "BTC/USD",
+        "address": "GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU"
+      },
+      {
+        "symbol": "ETH/USD",
+        "address": "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
+      },
+      {
+        "symbol": "SOL/USD",
+        "address": "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG"
+      }
+    ],
+    "markets": [
+      {
+        "symbol": "BTC/USDC",
+        "market": "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
+        "baseMint": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
+        "baseSymbol": "BTC",
+        "baseDecimals": 6,
+        "baseLotSize": 100,
+        "quoteMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "H6UaUrNVELJgTqao1CNL4252kShLKSfwoboT8tF7HNtB",
+        "eventQueue": "6NQqaa48SnBBJZt9HyVPngcZFW81JfDv9EjRX2M4WkbP",
+        "bids": "6wLt7CX1zZdFpa6uGJJpZfzWvG6W9rxXjquJDYiFwf9K",
+        "asks": "6EyVXMMA58Nf6MScqeLpw1jS12RCpry23u9VMfy8b65Y"
+      },
+      {
+        "symbol": "ETH/USDC",
+        "market": "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
+        "baseMint": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
+        "baseSymbol": "ETH",
+        "baseDecimals": 6,
+        "baseLotSize": 1000,
+        "quoteMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 10,
+        "requestQueue": "6yJsfduT4Av6xaECAoXf4cXHaQQYjf78D1FG3WDyuxdr",
+        "eventQueue": "Eac7hqpaZxiBtG4MdyKpsgzcoVN6eMe9tAbsdZRYH4us",
+        "bids": "8tFaNpFPWJ8i7inhKSfAcSestudiFqJ2wHyvtTfsBZZU",
+        "asks": "2po4TC8qiTgPsqcnbf6uMZRMVnPBzVwqqYfHP15QqREU"
+      },
+      {
+        "symbol": "SOL/USDC",
+        "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT",
+        "baseMint": "So11111111111111111111111111111111111111112",
+        "baseSymbol": "SOL",
+        "baseDecimals": 9,
+        "baseLotSize": 100000000,
+        "quoteMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "quoteSymbol": "USDC",
+        "quoteDecimals": 6,
+        "quoteLotSize": 100,
+        "requestQueue": "AZG3tFCFtiCqEwyardENBQNpHqxgzbMw8uKeZEw2nRG5",
+        "eventQueue": "5KKsLVU6TcbVDK4BS6K1DGDxnh4Q9xjYJ8XaDCG5t8ht",
+        "bids": "14ivtgssEBoBjuZJtSAPKYgpUK7DmnSwuPMqJoVTSgKJ",
+        "asks": "CEQdAFKdycHugujQg9k2wbmxjcpdYZyVLfV9WerTnafJ"
+      }
+    ]
+  }
+}

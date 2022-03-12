@@ -1,10 +1,11 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
+import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginSwapIdl } from "./idl"
 
 export class MarginSwapClient {
-  static readonly MARGIN_SWAP_PROGRAM_ID = new PublicKey("JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN")
+  //static readonly MARGIN_SWAP_PROGRAM_ID = new PublicKey("JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN")
 
   /**
    *
@@ -12,7 +13,7 @@ export class MarginSwapClient {
    * @returns
    */
   static async connect(provider: Provider): Promise<Program<JetMarginSwapIdl>> {
-    return await connect(this.MARGIN_SWAP_PROGRAM_ID, provider)
+    return await connect(new PublicKey(MARGIN_CONFIG.mainnet.marginSwapProgramId), provider)
   }
 
   /**

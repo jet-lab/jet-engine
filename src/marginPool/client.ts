@@ -1,10 +1,11 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
+import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginPoolIdl } from "./idl"
 
 export class MarginPoolClient {
-  static readonly MARGIN_POOL_PROGRAM_ID = new PublicKey("JPPooLEqRo3NCSx82EdE2VZY5vUaSsgskpZPBHNGVLZ")
+  //static readonly MARGIN_POOL_PROGRAM_ID = new PublicKey("JPPooLEqRo3NCSx82EdE2VZY5vUaSsgskpZPBHNGVLZ")
 
   /**
    * Create a new client for interacting with the Jet Margin-Pool Program
@@ -12,7 +13,7 @@ export class MarginPoolClient {
    * @returns
    */
   static async connect(provider: Provider): Promise<Program<JetMarginPoolIdl>> {
-    return await connect(this.MARGIN_POOL_PROGRAM_ID, provider)
+    return await connect(new PublicKey(MARGIN_CONFIG.mainnet.marginPoolProgramId), provider)
   }
 
   /**
