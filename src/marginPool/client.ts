@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginPoolIdl } from "./idl"
 
 export class MarginPoolClient {
-  //static readonly MARGIN_POOL_PROGRAM_ID = new PublicKey("JPPooLEqRo3NCSx82EdE2VZY5vUaSsgskpZPBHNGVLZ")
 
   /**
    * Create a new client for interacting with the Jet Margin-Pool Program

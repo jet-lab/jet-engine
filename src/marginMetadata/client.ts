@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginMetaDataIdl } from "./idl"
 
 export class MarginMetadataClient {
-  //static readonly MARGIN_METADATA_PROGRAM_ID = new PublicKey("JPMMTBqXjR3xQM9vyoJC8pBKQ6Bw9aXysmhtE9bWCR6")
 
   /**
    *

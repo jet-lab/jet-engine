@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginSerumIdl } from "./idl"
 
 export class MarginSerumClient {
-  //static readonly MARGIN_SERUM_PROGRAM_ID = new PublicKey("3wsXmuTcx2hnvznnmufTEbiRHUxQewmukoMkkoG3A1K4")
 
   /**
    *
