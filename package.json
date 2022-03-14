@@ -35,6 +35,7 @@
     "@project-serum/serum": "^0.13.60",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "^3.0.0",
+    "@solana/spl-governance": "^0.0.29",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.33.0",
     "eventemitter3": "^4.0.7",
