@@ -1,18 +1,24 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
+import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginSwapIdl } from "./idl"
 
 export class MarginSwapClient {
-  static readonly MARGIN_SWAP_PROGRAM_ID = new PublicKey("JPMAa5dnWLFRvUsumawFcGhnwikqZziLLfqn9SLNXPN")
-
   /**
    *
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider): Promise<Program<JetMarginSwapIdl>> {
-    return await connect(this.MARGIN_SWAP_PROGRAM_ID, provider)
+  static async connect(
+    provider: Provider,
+    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
+  ): Promise<Program<JetMarginSwapIdl>> {
+    const config = MARGIN_CONFIG[cluster]
+    if (!config) {
+      throw new Error(`Unhandled cluster: ${cluster}`)
+    }
+    return await connect(new PublicKey(config.marginSwapProgramId), provider)
   }
 
   /**

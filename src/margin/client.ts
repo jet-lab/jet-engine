@@ -1,11 +1,10 @@
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { connect, Hooks } from "../common"
+import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginIdl } from "./idl"
 
 export class MarginClient {
-  static readonly MARGIN_PROGRAM_ID = new PublicKey("JPMRGNgRk3w2pzBM1RLNBnpGxQYsFQ3yXKpuk4tTXVZ")
-
   /**
    *
    * @param {Program<JetMarginClient>} program
@@ -17,8 +16,15 @@ export class MarginClient {
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider): Promise<Program<JetMarginIdl>> {
-    return await connect(this.MARGIN_PROGRAM_ID, provider)
+  static async connect(
+    provider: Provider,
+    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
+  ): Promise<Program<JetMarginIdl>> {
+    const config = MARGIN_CONFIG[cluster]
+    if (!config) {
+      throw new Error(`Unhandled cluster: ${cluster}`)
+    }
+    return await connect(new PublicKey(config.marginProgramId), provider)
   }
 
   /**
