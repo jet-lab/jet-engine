@@ -16,22 +16,12 @@ export class MarginClient {
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider, cluster = "mainnet-beta"): Promise<Program<JetMarginIdl>> {
-    switch (cluster) {
-      case "devnet": {
-        return await connect(new PublicKey(MARGIN_CONFIG.devnet.marginProgramId), provider)
-      }
-      case "localnet": {
-        return await connect(new PublicKey(MARGIN_CONFIG.localnet.marginProgramId), provider)
-      }
-      case "mainnet":
-      case "mainnet-beta": {
-        return await connect(new PublicKey(MARGIN_CONFIG.mainnet.marginProgramId), provider)
-      }
-      default: {
-        throw new Error(`Unhandled cluster: ${cluster}`)
-      }
+  static async connect(provider: Provider, cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"): Promise<Program<JetMarginIdl>> {
+    const config = MARGIN_CONFIG[cluster]
+    if(!config) {
+      throw new Error(`Unhandled cluster: ${cluster}`)
     }
+    return await connect(new PublicKey(config.marginProgramId), provider)
   }
 
   /**

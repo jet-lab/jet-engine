@@ -193,7 +193,7 @@
       }
     ]
   },
-  "mainnet": {
+  "mainnet-beta": {
     "url": "https://api.mainnet-beta.solana.com/",
     "marginProgramId": "JPMvgcajw1LfsHphj4XKKR953DDBgRcbKi1ZWPcEPbk",
     "marginPoolProgramId": "JPMPcFm69yrCHFvzBJ5aVSxhq5mBHwH1N3axcEQW27G",
