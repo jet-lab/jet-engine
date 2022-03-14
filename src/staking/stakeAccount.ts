@@ -1,4 +1,4 @@
-import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program, Provider } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
@@ -6,6 +6,8 @@ import { findDerivedAccount } from "../common"
 import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
+import { getTokenOwnerRecordAddress, ProgramAccount, Realm } from "@solana/spl-governance"
+import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -44,6 +46,63 @@ export class StakeAccount {
    */
   static deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): PublicKey {
     return findDerivedAccount(stakeProgram.programId, stakePool, owner)
+  }
+
+  /**
+   * The seed used by governance program PDAs.
+   *
+   * @private
+   * @static
+   * @memberof StakeAccount
+   */
+  private static readonly GOVERNANCE_PROGRAM_SEED = "governance"
+
+  /**
+   * Derive the token owner record for a realm community mint or council mint
+   *
+   * @private
+   * @static
+   * @param {ProgramAccount<Realm>} realm
+   * @param {PublicKey} governingTokenMint
+   * @param {PublicKey} governingTokenOwner
+   * @return {Promise<PublicKey>}
+   * @memberof StakeAccount
+   */
+  private static async deriveGovernanceTokenOwnerRecord(
+    realm: ProgramAccount<Realm>,
+    governingTokenMint: PublicKey,
+    governingTokenOwner: PublicKey
+  ): Promise<PublicKey> {
+    const tokenOwnerRecordAddress = await getTokenOwnerRecordAddress(
+      realm.owner,
+      realm.pubkey,
+      governingTokenMint,
+      governingTokenOwner
+    )
+    return tokenOwnerRecordAddress
+  }
+
+  /**
+   * Derive the vault token account that stores all communty or council tokens for a realm
+   *
+   * @private
+   * @static
+   * @param {PublicKey} governingProgramId
+   * @param {PublicKey} realm
+   * @param {PublicKey} governingTokenMint
+   * @return {PublicKey}
+   * @memberof StakeAccount
+   */
+  private static deriveGovernanceVault(
+    governingProgramId: PublicKey,
+    realm: PublicKey,
+    governingTokenMint: PublicKey
+  ): PublicKey {
+    const [governingTokenHoldingAddress] = findProgramAddressSync(
+      [Buffer.from(StakeAccount.GOVERNANCE_PROGRAM_SEED), realm.toBuffer(), governingTokenMint.toBuffer()],
+      governingProgramId
+    )
+    return governingTokenHoldingAddress
   }
 
   /**
@@ -162,6 +221,7 @@ export class StakeAccount {
    * @static
    * @param {Provider} provider
    * @param {StakePool} stakePool
+   * @param {ProgramAccount<Realm>} realm
    * @param {PublicKey} owner
    * @param {PublicKey} collateralTokenAccount
    * @param {BN} amount
@@ -171,6 +231,7 @@ export class StakeAccount {
   static async addStake(
     provider: Provider,
     stakePool: StakePool,
+    realm: ProgramAccount<Realm>,
     owner: PublicKey,
     collateralTokenAccount: PublicKey,
     amount: BN
@@ -185,7 +246,7 @@ export class StakeAccount {
     )
     await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner, owner)
     await this.withAddStake(instructions, stakePool, owner, owner, collateralTokenAccount, amount)
-    await this.withMintVotes(instructions, stakePool, owner, voterTokenAccount, amount)
+    await this.withMintVotes(instructions, stakePool, realm, owner, voterTokenAccount)
 
     return provider.send(new Transaction().add(...instructions))
   }
@@ -275,34 +336,40 @@ export class StakeAccount {
    * @static
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
+   * @param {Realm} realm
    * @param {PublicKey} owner
    * @param {PublicKey} voterTokenAccount
-   * @param {BN} amount
    * @memberof StakeAccount
    */
   static async withMintVotes(
     instructions: TransactionInstruction[],
     stakePool: StakePool,
+    realm: ProgramAccount<Realm>,
     owner: PublicKey,
-    voterTokenAccount: PublicKey,
-    amount: BN
+    voterTokenAccount: PublicKey
   ) {
     const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
+    const governanceVault = this.deriveGovernanceVault(realm.owner, realm.pubkey, realm.account.communityMint)
+    const tokenOwnerRecord = await this.deriveGovernanceTokenOwnerRecord(realm, realm.account.communityMint, owner)
 
-    const ix = stakePool.program.instruction.mintVotes(
-      { kind: { tokens: {} }, value: amount },
-      {
-        accounts: {
-          owner: owner,
-          stakePool: stakePool.addresses.stakePool,
-          stakePoolVault: stakePool.addresses.stakePoolVault,
-          stakeVoteMint: stakePool.addresses.stakeVoteMint,
-          stakeAccount,
-          voterTokenAccount,
-          tokenProgram: TOKEN_PROGRAM_ID
-        }
+    const ix = stakePool.program.instruction.mintVotes(null, {
+      accounts: {
+        owner: owner,
+        stakePool: stakePool.addresses.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        stakeVoteMint: stakePool.addresses.stakeVoteMint,
+        stakeAccount,
+        voterTokenAccount,
+        governanceRealm: realm.pubkey,
+        governanceVault,
+        governanceOwnerRecord: tokenOwnerRecord,
+        payer: owner,
+        governanceProgram: realm.owner,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
       }
-    )
+    })
     instructions.push(ix)
   }
 
