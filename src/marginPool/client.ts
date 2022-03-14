@@ -10,9 +10,12 @@ export class MarginPoolClient {
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions
    * @returns
    */
-  static async connect(provider: Provider, cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"): Promise<Program<JetMarginPoolIdl>> {
+  static async connect(
+    provider: Provider,
+    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
+  ): Promise<Program<JetMarginPoolIdl>> {
     const config = MARGIN_CONFIG[cluster]
-    if(!config) {
+    if (!config) {
       throw new Error(`Unhandled cluster: ${cluster}`)
     }
     return await connect(new PublicKey(config.marginPoolProgramId), provider)

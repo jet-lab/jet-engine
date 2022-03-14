@@ -10,9 +10,12 @@ export class MarginMetadataClient {
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider, cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"): Promise<Program<JetMarginMetaDataIdl>> {
+  static async connect(
+    provider: Provider,
+    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
+  ): Promise<Program<JetMarginMetaDataIdl>> {
     const config = MARGIN_CONFIG[cluster]
-    if(!config) {
+    if (!config) {
       throw new Error(`Unhandled cluster: ${cluster}`)
     }
     return await connect(new PublicKey(config.metadataProgramId), provider)

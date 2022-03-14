@@ -10,9 +10,12 @@ export class MarginSerumClient {
    * @param {Provider} provider
    * @returns
    */
-  static async connect(provider: Provider, cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"): Promise<Program<JetMarginSerumIdl>> {
+  static async connect(
+    provider: Provider,
+    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
+  ): Promise<Program<JetMarginSerumIdl>> {
     const config = MARGIN_CONFIG[cluster]
-    if(!config) {
+    if (!config) {
       throw new Error(`Unhandled cluster: ${cluster}`)
     }
     return await connect(new PublicKey(config.marginSerumProgramId), provider)
