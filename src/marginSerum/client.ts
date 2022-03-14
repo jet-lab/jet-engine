@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginSerumIdl } from "./idl"
 
 export class MarginSerumClient {
-
   /**
    *
    * @param {Provider} provider

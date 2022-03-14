@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginPoolIdl } from "./idl"
 
 export class MarginPoolClient {
-
   /**
    * Create a new client for interacting with the Jet Margin-Pool Program
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions

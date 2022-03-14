@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginSwapIdl } from "./idl"
 
 export class MarginSwapClient {
-
   /**
    *
    * @param {Provider} provider

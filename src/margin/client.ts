@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginIdl } from "./idl"
 
 export class MarginClient {
-
   /**
    *
    * @param {Program<JetMarginClient>} program

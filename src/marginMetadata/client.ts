@@ -5,7 +5,6 @@ import MARGIN_CONFIG from "../margin/config.json"
 import { JetMarginMetaDataIdl } from "./idl"
 
 export class MarginMetadataClient {
-
   /**
    *
    * @param {Provider} provider
