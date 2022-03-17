@@ -15,9 +15,6 @@ export interface UnbondingAccountInfo {
 
   /// The time after which the staked amount can be withdrawn
   unbondedAt: BN
-
-  /// If amount has completed unbonding and is available to withdraw
-  isUnbonded: boolean
 }
 
 export interface FullAmount {
@@ -165,13 +162,13 @@ export class UnbondingAccount {
     if (unbondingAccounts) {
       unbondingQueue = unbondingAccounts.reduce<BN>(
         (total: BN, curr: UnbondingAccount) =>
-          total.add(curr.unbondingAccount.isUnbonded ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
+          total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
         new BN(0)
       )
 
       unbondingComplete = unbondingAccounts.reduce<BN>(
         (total: BN, curr: UnbondingAccount) =>
-          total.add(curr.unbondingAccount.isUnbonded ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
+          total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
         new BN(0)
       )
     }
