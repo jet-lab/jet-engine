@@ -1,6 +1,6 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import { Mint, TokenAccountInfo } from './types'
+import { Mint, TokenAccountInfo } from "./types"
 
 export class TokenAmount {
   /** Raw amount of token lamports */

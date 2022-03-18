@@ -1,2 +1,2 @@
 export * from "./client"
-export * from './marginAccount'
+export * from "./marginAccount"

@@ -1,8 +1,8 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import * as BL from "@solana/buffer-layout"
-import * as BLU from '@solana/buffer-layout-utils'
-import { TokenAccountInfo, Mint, RawTokenAccountInfo, RawMint } from './types';
+import * as BLU from "@solana/buffer-layout-utils"
+import { TokenAccountInfo, Mint, RawTokenAccountInfo, RawMint } from "./types"
 
 /**
  * TODO:
@@ -183,14 +183,14 @@ const RawTokenAccountLayout = BL.struct<RawTokenAccountInfo>([
 
 /** Buffer layout for de/serializing a mint */
 export const RawMintLayout = BL.struct<RawMint>([
-  BL.u32('mintAuthorityOption'),
-  BLU.publicKey('mintAuthority'),
-  u64Field('supply'),
-  BL.u8('decimals'),
-  BLU.bool('isInitialized'),
-  BL.u32('freezeAuthorityOption'),
-  BLU.publicKey('freezeAuthority'),
-]);
+  BL.u32("mintAuthorityOption"),
+  BLU.publicKey("mintAuthority"),
+  u64Field("supply"),
+  BL.u8("decimals"),
+  BLU.bool("isInitialized"),
+  BL.u32("freezeAuthorityOption"),
+  BLU.publicKey("freezeAuthority")
+])
 
 /**
  * Decode a token account

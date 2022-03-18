@@ -6,7 +6,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createCloseAccountInstruction,
   createTransferInstruction,
-  createSyncNativeInstruction,
+  createSyncNativeInstruction
 } from "@solana/spl-token"
 import {
   AccountInfo,
@@ -20,7 +20,7 @@ import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount, bnToNumber } from "."
-import { TokenAccountInfo, Mint } from'./types'
+import { TokenAccountInfo, Mint } from "./types"
 
 export class AssociatedToken {
   address: PublicKey
@@ -45,11 +45,7 @@ export class AssociatedToken {
    * @returns {(Promise<AssociatedToken | undefined>)}
    * @memberof AssociatedToken
    */
-  static async load(
-    connection: Connection,
-    mint: PublicKey, owner: PublicKey
-    ): Promise<AssociatedToken | undefined> {
-
+  static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
     const address = this.derive(mint, owner)
     const token = await this.loadAux(connection, address)
     if (token && !token.info.owner.equals(owner)) {
@@ -90,10 +86,7 @@ export class AssociatedToken {
    * @returns {(Promise<Mint | undefined>)}
    * @memberof AssociatedToken
    */
-  static async loadMint(
-    connection: Connection,
-    mint: PublicKey
-    ): Promise<Mint | undefined> {
+  static async loadMint(connection: Connection, mint: PublicKey): Promise<Mint | undefined> {
     const mintInfo = await connection.getAccountInfo(mint)
     if (!mintInfo) {
       return undefined
@@ -108,10 +101,7 @@ export class AssociatedToken {
    * @param {TokenAccountInfo} info
    * @memberof AssociatedToken
    */
-  constructor(
-    public account: AccountInfo<Buffer | ParsedAccountData>,
-    public info: TokenAccountInfo
-    ) {
+  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: TokenAccountInfo) {
     this.address = info.address
   }
 
@@ -123,10 +113,7 @@ export class AssociatedToken {
    * @returns {(PublicKey | undefined)}
    * @memberof AssociatedToken
    */
-  static useAddress(
-    mint: PublicKey | undefined,
-    owner: PublicKey | undefined
-    ): PublicKey | undefined {
+  static useAddress(mint: PublicKey | undefined, owner: PublicKey | undefined): PublicKey | undefined {
     return useMemo(() => {
       if (!mint || !owner) {
         return undefined
@@ -143,13 +130,9 @@ export class AssociatedToken {
    * @returns {(TokenAccountInfo | undefined)}
    * @memberof AssociatedToken
    */
-  static useAux(
-    connection: Connection | undefined,
-    tokenAddress: PublicKey | undefined
-    ): AssociatedToken | undefined {
+  static useAux(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
     return Hooks.usePromise(
-      async () =>
-      connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
+      async () => connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
       [connection, tokenAddress?.toBase58()]
     )
   }
@@ -181,10 +164,7 @@ export class AssociatedToken {
    * @returns {(Mint | undefined)}
    * @memberof AssociatedToken
    */
-  static useMint(
-    connection: Connection | undefined,
-    address: PublicKey | undefined
-    ): Mint | undefined {
+  static useMint(connection: Connection | undefined, address: PublicKey | undefined): Mint | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
       [connection, address?.toBase58()]
@@ -237,7 +217,7 @@ export class AssociatedToken {
     instructions: TransactionInstruction[],
     owner: PublicKey,
     mint: PublicKey,
-    rentDestination: PublicKey,
+    rentDestination: PublicKey
   ) {
     const tokenAddress = this.derive(mint, owner)
     const ix = createCloseAccountInstruction(tokenAddress, rentDestination, owner)
@@ -273,7 +253,6 @@ export class AssociatedToken {
     }
   }
 
-
   /**
    * add unWrap SOL IX
    * @param {TransactionInstruction[]} instructions
@@ -286,11 +265,11 @@ export class AssociatedToken {
   static async withUnwrapIfNative(
     instructions: TransactionInstruction[],
     provider: Provider,
-    owner: PublicKey,//user pubkey
+    owner: PublicKey, //user pubkey
     tokenAccount: PublicKey,
     mint: PublicKey,
-    amount: BN,
-    ): Promise<void> {
+    amount: BN
+  ): Promise<void> {
     if (mint.equals(NATIVE_MINT)) {
       //create a new ata if ata doesn't not exist
       const ata = await this.withCreate(instructions, provider, owner, mint)

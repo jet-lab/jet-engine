@@ -7,7 +7,6 @@ import { Hooks } from "../common/hooks"
 import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./state"
 import { TokenMetadataInfo } from "../marginMetadata"
 
-
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
   tokenMint: PublicKey
