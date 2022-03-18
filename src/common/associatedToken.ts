@@ -164,10 +164,7 @@ export class AssociatedToken {
    * @returns {(Mint | undefined)}
    * @memberof AssociatedToken
    */
-  static useMint(
-    connection: Connection | undefined,
-    address: PublicKey | undefined
-    ): Mint | undefined {
+  static useMint(connection: Connection | undefined, address: PublicKey | undefined): Mint | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
       [connection, address?.toBase58()]
@@ -191,19 +188,10 @@ export class AssociatedToken {
     mint: PublicKey
   ): Promise<PublicKey> {
     const tokenAddress = this.derive(mint, owner)
-    const tokenAccount = await this.load(
-      provider.connection,
-      mint,
-      owner
-      )
+    const tokenAccount = await this.load(provider.connection, mint, owner)
 
     if (!tokenAccount) {
-      const ix = createAssociatedTokenAccountInstruction(
-        provider.wallet.publicKey,
-        tokenAddress,
-        owner,
-        mint
-        )
+      const ix = createAssociatedTokenAccountInstruction(provider.wallet.publicKey, tokenAddress, owner, mint)
       instructions.push(ix)
     }
     return tokenAddress
