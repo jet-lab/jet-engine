@@ -1,18 +1,17 @@
 import { Provider, BN } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
-import { struct, u8 } from "@solana/buffer-layout"
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  AccountInfo as TokenAccountInfo,
-  MintInfo,
-  NATIVE_MINT
+  NATIVE_MINT,
+  createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
+  createTransferInstruction,
+  createSyncNativeInstruction,
 } from "@solana/spl-token"
 import {
   AccountInfo,
   Connection,
   PublicKey,
-  Signer,
   TransactionInstruction,
   ParsedAccountData,
   SystemProgram
@@ -21,33 +20,7 @@ import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount, bnToNumber } from "."
-
-/** Instructions defined by the program */
-enum TokenInstruction {
-  InitializeMint = 0,
-  InitializeAccount = 1,
-  InitializeMultisig = 2,
-  Transfer = 3,
-  Approve = 4,
-  Revoke = 5,
-  SetAuthority = 6,
-  MintTo = 7,
-  Burn = 8,
-  CloseAccount = 9,
-  FreezeAccount = 10,
-  ThawAccount = 11,
-  TransferChecked = 12,
-  ApproveChecked = 13,
-  MintToChecked = 14,
-  BurnChecked = 15,
-  InitializeAccount2 = 16,
-  SyncNative = 17,
-  InitializeAccount3 = 18,
-  InitializeMultisig2 = 19,
-  InitializeMint2 = 20
-}
-
-const syncNativeInstructionData = struct([u8("instruction")])
+import { TokenAccountInfo, Mint } from'./types'
 
 export class AssociatedToken {
   address: PublicKey
@@ -72,7 +45,11 @@ export class AssociatedToken {
    * @returns {(Promise<AssociatedToken | undefined>)}
    * @memberof AssociatedToken
    */
-  static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
+  static async load(
+    connection: Connection,
+    mint: PublicKey, owner: PublicKey
+    ): Promise<AssociatedToken | undefined> {
+
     const address = this.derive(mint, owner)
     const token = await this.loadAux(connection, address)
     if (token && !token.info.owner.equals(owner)) {
@@ -105,20 +82,23 @@ export class AssociatedToken {
     })
   }
 
-  /**
+  /** TODO: throw error OR undefined on !mintInfo?
    * Get mint info
    * @static
    * @param {Provider} connection
    * @param {PublicKey} mint
-   * @returns {(Promise<MintInfo | undefined>)}
+   * @returns {(Promise<Mint | undefined>)}
    * @memberof AssociatedToken
    */
-  static async loadMint(connection: Connection, mint: PublicKey): Promise<MintInfo | undefined> {
+  static async loadMint(
+    connection: Connection,
+    mint: PublicKey
+    ): Promise<Mint | undefined> {
     const mintInfo = await connection.getAccountInfo(mint)
     if (!mintInfo) {
       return undefined
     }
-    return parseMintAccount(mintInfo.data)
+    return parseMintAccount(mintInfo.data, mint)
   }
 
   /**
@@ -128,7 +108,10 @@ export class AssociatedToken {
    * @param {TokenAccountInfo} info
    * @memberof AssociatedToken
    */
-  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: TokenAccountInfo) {
+  constructor(
+    public account: AccountInfo<Buffer | ParsedAccountData>,
+    public info: TokenAccountInfo
+    ) {
     this.address = info.address
   }
 
@@ -140,7 +123,10 @@ export class AssociatedToken {
    * @returns {(PublicKey | undefined)}
    * @memberof AssociatedToken
    */
-  static useAddress(mint: PublicKey | undefined, owner: PublicKey | undefined): PublicKey | undefined {
+  static useAddress(
+    mint: PublicKey | undefined,
+    owner: PublicKey | undefined
+    ): PublicKey | undefined {
     return useMemo(() => {
       if (!mint || !owner) {
         return undefined
@@ -157,9 +143,13 @@ export class AssociatedToken {
    * @returns {(TokenAccountInfo | undefined)}
    * @memberof AssociatedToken
    */
-  static useAux(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
+  static useAux(
+    connection: Connection | undefined,
+    tokenAddress: PublicKey | undefined
+    ): AssociatedToken | undefined {
     return Hooks.usePromise(
-      async () => connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
+      async () =>
+      connection && tokenAddress && AssociatedToken.loadAux(connection, tokenAddress),
       [connection, tokenAddress?.toBase58()]
     )
   }
@@ -188,10 +178,13 @@ export class AssociatedToken {
    * @static
    * @param {Provider} [connection]
    * @param {PublicKey} [address]
-   * @returns {(MintInfo | undefined)}
+   * @returns {(Mint | undefined)}
    * @memberof AssociatedToken
    */
-  static useMint(connection: Connection | undefined, address: PublicKey | undefined): MintInfo | undefined {
+  static useMint(
+    connection: Connection | undefined,
+    address: PublicKey | undefined
+    ): Mint | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
       [connection, address?.toBase58()]
@@ -217,7 +210,7 @@ export class AssociatedToken {
     const tokenAddress = this.derive(mint, owner)
     const tokenAccount = await this.load(provider.connection, mint, owner)
     if (!tokenAccount) {
-      const ix = Token.createAssociatedTokenAccountInstruction(
+      const ix = createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mint,
@@ -245,32 +238,13 @@ export class AssociatedToken {
     owner: PublicKey,
     mint: PublicKey,
     rentDestination: PublicKey,
-    multiSigner: Signer[] = []
   ) {
     const tokenAddress = this.derive(mint, owner)
-    const ix = Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, tokenAddress, rentDestination, owner, multiSigner)
+    const ix = createCloseAccountInstruction(tokenAddress, rentDestination, owner)
     instructions.push(ix)
   }
-  /**
-   * Add SyncNative instruction
-   * @param {TransactionInstructions} instructions
-   * @param {PublicKey} account
-   * @param programId
-   */
-  static withCreateSyncNativeInstruction(
-    instructions: TransactionInstruction[],
-    account: PublicKey,
-    programId = TOKEN_PROGRAM_ID
-  ): void {
-    const keys = [{ pubkey: account, isSigner: false, isWritable: true }]
 
-    const data = Buffer.alloc(syncNativeInstructionData.span)
-    syncNativeInstructionData.encode({ instruction: TokenInstruction.SyncNative }, data)
-
-    instructions.push(new TransactionInstruction({ keys, programId, data }))
-  }
-
-  /** Add IX for wrapping SOL
+  /** Add wrap SOL IX
    * @param instructions
    * @param provider
    * @param owner
@@ -283,7 +257,7 @@ export class AssociatedToken {
     owner: PublicKey,
     mint: PublicKey,
     amount: BN
-  ) {
+  ): Promise<void> {
     //only run if mint is wrapped sol mint
     if (mint.equals(NATIVE_MINT)) {
       //this will add instructions to create ata if ata does not exist, if exist, we will get the ata address
@@ -291,13 +265,41 @@ export class AssociatedToken {
       //IX to transfer sol to ATA
       const transferIx = SystemProgram.transfer({
         fromPubkey: owner,
-        //parse BN
         lamports: bnToNumber(amount),
         toPubkey: ata
       })
+      const syncNativeIX = createSyncNativeInstruction(ata)
+      instructions.push(transferIx, syncNativeIX)
+    }
+  }
+
+
+  /**
+   * add unWrap SOL IX
+   * @param {TransactionInstruction[]} instructions
+   * @param {Provider} provider
+   * @param {owner} owner
+   * @param {tokenAccount} tokenAccount
+   * @param {mint} mint
+   * @param {amount} amount
+   */
+  static async withUnwrapIfNative(
+    instructions: TransactionInstruction[],
+    provider: Provider,
+    owner: PublicKey,//user pubkey
+    tokenAccount: PublicKey,
+    mint: PublicKey,
+    amount: BN,
+    ): Promise<void> {
+    if (mint.equals(NATIVE_MINT)) {
+      //create a new ata if ata doesn't not exist
+      const ata = await this.withCreate(instructions, provider, owner, mint)
+      //IX to transfer wSOL to ATA
+      const transferIx = createTransferInstruction(tokenAccount, ata, owner, BigInt(amount.toString()))
+      //add transfer IX
       instructions.push(transferIx)
-      //IX to sync wrapped SOL balance
-      this.withCreateSyncNativeInstruction(instructions, ata)
+      //add close account IX
+      await this.withClose(instructions, owner, mint, owner)
     }
   }
 }

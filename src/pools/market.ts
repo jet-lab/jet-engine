@@ -16,7 +16,7 @@
  */
 
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
-import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import * as anchor from "@project-serum/anchor"
 import { JetClient, DEX_ID, DEX_ID_DEVNET } from "."
 import { CreateReserveParams, JetReserve } from "./reserve"
@@ -145,19 +145,19 @@ export class JetMarket implements JetMarketData {
     )
   }
 
-  /**
-   * TODO:
-   * @param {u64} flags
-   * @memberof JetMarket
-   */
-  async setFlags(flags: u64) {
-    await this.client.program.rpc.setMarketFlags(flags, {
-      accounts: {
-        market: this.address,
-        owner: this.owner
-      }
-    })
-  }
+  // /**
+  //  * TODO:
+  //  * @param {u64} flags
+  //  * @memberof JetMarket
+  //  */
+  // async setFlags(flags: u64) {
+  //   await this.client.program.rpc.setMarketFlags(flags, {
+  //     accounts: {
+  //       market: this.address,
+  //       owner: this.owner
+  //     }
+  //   })
+  // }
 
   /**
    * TODO:

@@ -1,7 +1,8 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import * as BL from "@solana/buffer-layout"
-import { AccountInfo as TokenAccountInfo, MintInfo, MintLayout } from "@solana/spl-token"
+import * as BLU from '@solana/buffer-layout-utils'
+import { TokenAccountInfo, Mint, RawTokenAccountInfo, RawMint } from './types';
 
 /**
  * TODO:
@@ -14,12 +15,12 @@ export function pubkeyField(property?: string): PubkeyField {
 }
 
 /**
- * TODO:
+ * TODO: fix <any> type
  * @export
  * @class PubkeyField
  * @extends {BL.Layout}
  */
-export class PubkeyField extends BL.Layout {
+export class PubkeyField extends BL.Layout<any> {
   /**
    * Creates an instance of PubkeyField.
    * @param {string} [property]
@@ -58,12 +59,12 @@ export class PubkeyField extends BL.Layout {
 }
 
 /**
- * TODO:
+ * TODO: fix <any> type
  * @export
  * @class NumberField
  * @extends {BL.Layout}
  */
-export class NumberField extends BL.Layout {
+export class NumberField extends BL.Layout<any> {
   /**
    * Creates an instance of NumberField which decodes to a BN.
    * @param span The number of bytes in the number
@@ -102,12 +103,12 @@ export class NumberField extends BL.Layout {
 }
 
 /**
- * TODO:
+ * TODO: fix <any> type
  * @export
  * @class SignedNumberField
  * @extends {BL.Layout}
  */
-export class SignedNumberField extends BL.Layout {
+export class SignedNumberField extends BL.Layout<any> {
   /**
    * Creates an instance of SignedNumberField.
    * @param {number} span
@@ -166,8 +167,8 @@ export function u64Field(property?: string): NumberField {
   return new NumberField(8, property)
 }
 
-const TokenAccountLayout = BL.struct([
-  pubkeyField("mint"),
+const RawTokenAccountLayout = BL.struct<RawTokenAccountInfo>([
+  BLU.publicKey("mint"),
   pubkeyField("owner"),
   u64Field("amount"),
   BL.u32("delegateOption"),
@@ -180,39 +181,67 @@ const TokenAccountLayout = BL.struct([
   pubkeyField("closeAuthority")
 ])
 
-export const parseTokenAccount = (account: Buffer, accountPubkey: PublicKey) => {
-  const data = TokenAccountLayout.decode(account)
+/** Buffer layout for de/serializing a mint */
+export const RawMintLayout = BL.struct<RawMint>([
+  BL.u32('mintAuthorityOption'),
+  BLU.publicKey('mintAuthority'),
+  u64Field('supply'),
+  BL.u8('decimals'),
+  BLU.bool('isInitialized'),
+  BL.u32('freezeAuthorityOption'),
+  BLU.publicKey('freezeAuthority'),
+]);
+
+/**
+ * Decode a token account
+ * @param {Buffer} account
+ * @param {PublicKey} accountPubkey
+ * @returns
+ */
+export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): TokenAccountInfo => {
+  const data = RawTokenAccountLayout.decode(account)
 
   // PublicKeys and BNs are currently Uint8 arrays and
   // booleans are really Uint8s. Convert them
   const decoded: TokenAccountInfo = {
-    address: accountPubkey,
+    address: accountAddress,
     mint: new PublicKey(data.mint),
     owner: new PublicKey(data.owner),
     amount: new BN(data.amount, undefined, "le"),
-    delegate: (data as any).delegateOption ? new PublicKey(data.delegate) : null,
+    delegate: new PublicKey(data.delegate),
     delegatedAmount: new BN(data.delegatedAmount, undefined, "le"),
     isInitialized: (data as any).state != 0,
     isFrozen: (data as any).state == 2,
     isNative: !!(data as any).isNativeOption,
     rentExemptReserve: new BN(0, undefined, "le"), //  Todo: calculate. I believe this is lamports minus rent for wrapped sol
-    closeAuthority: (data as any).closeAuthorityOption ? new PublicKey(data.closeAuthority) : null
+    closeAuthority: new PublicKey(data.closeAuthority)
   }
   return decoded
 }
 
 /**
- * TODO:
+ * Decode a mint account
  * @param {Buffer} mint
- * @returns {MintInfo}
+ * @param {PublicKey} mintAddress
+ * @returns {Mint}
  */
-export const parseMintAccount = (mint: Buffer): MintInfo => {
-  //convert? isInitialized 0/1 and freeAuthority - null | PublicKey.default
-  return MintLayout.decode(mint) as MintInfo
+export const parseMintAccount = (mint: Buffer, mintAddress: PublicKey): Mint => {
+  const data = RawMintLayout.decode(mint)
+
+  const decoded: Mint = {
+    address: mintAddress,
+    mintAuthority: new PublicKey(data.mintAuthority),
+    supply: new BN(data.supply),
+    decimals: data.decimals,
+    isInitialized: data.isInitialized,
+    freezeAuthority: data.freezeAuthority
+  }
+
+  return decoded
 }
 
 /**
- * TODO:
+ * Convert BN to precise number
  * @param {BN} [bn]
  * @returns {number}
  */

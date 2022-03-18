@@ -353,7 +353,7 @@ export class JetReserve {
     mintData: Buffer,
     availableLiquidityLamports: BN
   ) {
-    const mint = parseMintAccount(mintData)
+    const mint = parseMintAccount(mintData, address)
     const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals, data.tokenMint)
     const state = ReserveStateStruct.decode(new Uint8Array(data.state))
     state.outstandingDebt = new TokenAmount(
