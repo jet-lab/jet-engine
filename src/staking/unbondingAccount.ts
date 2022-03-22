@@ -17,7 +17,7 @@ export interface UnbondingAccountInfo {
   unbondedAt: BN
 
   /** The unbonding index at the time the request was made */
-  unbondChangeIndex: BN,
+  unbondChangeIndex: BN
 }
 
 export interface FullAmount {
