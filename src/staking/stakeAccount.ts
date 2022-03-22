@@ -315,19 +315,16 @@ export class StakeAccount {
   ) {
     const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
 
-    const ix = stakePool.program.instruction.addStake(
-      { kind: { tokens: {} }, value: amount },
-      {
-        accounts: {
-          stakePool: stakePool.addresses.stakePool,
-          stakePoolVault: stakePool.addresses.stakePoolVault,
-          stakeAccount,
-          payer,
-          payerTokenAccount: tokenAccount,
-          tokenProgram: TOKEN_PROGRAM_ID
-        }
+    const ix = stakePool.program.instruction.addStake(amount, {
+      accounts: {
+        stakePool: stakePool.addresses.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        stakeAccount,
+        payer,
+        payerTokenAccount: tokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID
       }
-    )
+    })
     instructions.push(ix)
   }
 
