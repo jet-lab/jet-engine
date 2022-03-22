@@ -2,7 +2,7 @@ import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import * as BL from "@solana/buffer-layout"
 import * as BLU from "@solana/buffer-layout-utils"
-import { TokenAccountInfo, Mint, RawTokenAccountInfo, RawMint } from "./types"
+import { JetTokenAccount, JetMint, RawTokenAccountInfo, RawMint } from "./types"
 
 /**
  * TODO:
@@ -15,12 +15,12 @@ export function pubkeyField(property?: string): PubkeyField {
 }
 
 /**
- * TODO: fix <any> type
+ * TODO:
  * @export
  * @class PubkeyField
  * @extends {BL.Layout}
  */
-export class PubkeyField extends BL.Layout<any> {
+export class PubkeyField extends BL.Layout<PublicKey> {
   /**
    * Creates an instance of PubkeyField.
    * @param {string} [property]
@@ -59,12 +59,12 @@ export class PubkeyField extends BL.Layout<any> {
 }
 
 /**
- * TODO: fix <any> type
+ * TODO: 
  * @export
  * @class NumberField
  * @extends {BL.Layout}
  */
-export class NumberField extends BL.Layout<any> {
+export class NumberField extends BL.Layout<BN> {
   /**
    * Creates an instance of NumberField which decodes to a BN.
    * @param span The number of bytes in the number
@@ -103,12 +103,12 @@ export class NumberField extends BL.Layout<any> {
 }
 
 /**
- * TODO: fix <any> type
+ * TODO:
  * @export
  * @class SignedNumberField
  * @extends {BL.Layout}
  */
-export class SignedNumberField extends BL.Layout<any> {
+export class SignedNumberField extends BL.Layout<BN> {
   /**
    * Creates an instance of SignedNumberField.
    * @param {number} span
@@ -198,23 +198,23 @@ export const RawMintLayout = BL.struct<RawMint>([
  * @param {PublicKey} accountPubkey
  * @returns
  */
-export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): TokenAccountInfo => {
+export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): JetTokenAccount => {
   const data = RawTokenAccountLayout.decode(account)
 
   // PublicKeys and BNs are currently Uint8 arrays and
   // booleans are really Uint8s. Convert them
-  const decoded: TokenAccountInfo = {
+  const decoded: JetTokenAccount = {
     address: accountAddress,
-    mint: new PublicKey(data.mint),
-    owner: new PublicKey(data.owner),
-    amount: new BN(data.amount, undefined, "le"),
-    delegate: new PublicKey(data.delegate),
-    delegatedAmount: new BN(data.delegatedAmount, undefined, "le"),
-    isInitialized: (data as any).state != 0,
-    isFrozen: (data as any).state == 2,
-    isNative: !!(data as any).isNativeOption,
-    rentExemptReserve: new BN(0, undefined, "le"), //  Todo: calculate. I believe this is lamports minus rent for wrapped sol
-    closeAuthority: new PublicKey(data.closeAuthority)
+    mint: data.mint,
+    owner: data.owner,
+    amount: data.amount,
+    delegate: data.delegateOption === 1 ? data.delegate : undefined,
+    delegatedAmount: data.delegatedAmount,
+    isInitialized: data.state !== 0,
+    isFrozen: data.state === 2, //2 = frozen in AccountState enum
+    isNative: data.isNativeOption ===  1,
+    rentExemptReserve: data.isNativeOption === 1 ? data.isNative : new BN(0),
+    closeAuthority: data.closeAuthorityOption === 1 ? data.closeAuthority : undefined
   }
   return decoded
 }
@@ -225,18 +225,17 @@ export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): T
  * @param {PublicKey} mintAddress
  * @returns {Mint}
  */
-export const parseMintAccount = (mint: Buffer, mintAddress: PublicKey): Mint => {
+export const parseMintAccount = (mint: Buffer, mintAddress: PublicKey): JetMint => {
   const data = RawMintLayout.decode(mint)
 
-  const decoded: Mint = {
+  const decoded: JetMint = {
     address: mintAddress,
-    mintAuthority: new PublicKey(data.mintAuthority),
-    supply: new BN(data.supply),
+    mintAuthority: data.mintAuthorityOption === 1 ? data.mintAuthority : undefined,
+    supply: data.supply,
     decimals: data.decimals,
     isInitialized: data.isInitialized,
-    freezeAuthority: data.freezeAuthority
+    freezeAuthority: data.freezeAuthorityOption === 1 ? data.freezeAuthority : undefined
   }
-
   return decoded
 }
 

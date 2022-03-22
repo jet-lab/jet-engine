@@ -24,7 +24,7 @@ export interface RawTokenAccountInfo {
 }
 
 /** Custom Account Interface with BN. Information about a token account*/
-export interface TokenAccountInfo {
+export interface JetTokenAccount {
   /** Address of the account */
   address: PublicKey
   /** Mint associated with the account */
@@ -34,7 +34,7 @@ export interface TokenAccountInfo {
   /** Number of tokens the account holds */
   amount: BN
   /** Authority that can transfer tokens from the account */
-  delegate: PublicKey
+  delegate: PublicKey | undefined
   /** Number of tokens the delegate is authorized to transfer */
   delegatedAmount: BN
   /** True if the account is initialized */
@@ -49,18 +49,18 @@ export interface TokenAccountInfo {
    */
   rentExemptReserve: BN
   /** Optional authority to close the account */
-  closeAuthority: PublicKey
+  closeAuthority: PublicKey | undefined
 }
 
 /** Custom Mint Interface with BN. Information about a mint */
-export interface Mint {
+export interface JetMint {
   /** Address of the mint */
   address: PublicKey
   /**
    * Optional authority used to mint new tokens. The mint authority may only be provided during mint creation.
    * If no mint authority is present then the mint has a fixed supply and no further tokens may be minted.
    */
-  mintAuthority: PublicKey
+  mintAuthority: PublicKey | undefined
   /** Total supply of tokens */
   supply: BN
   /** Number of base 10 digits to the right of the decimal place */
@@ -68,7 +68,7 @@ export interface Mint {
   /** Is this mint initialized */
   isInitialized: boolean
   /** Optional authority to freeze token accounts */
-  freezeAuthority: PublicKey
+  freezeAuthority: PublicKey | undefined
 }
 
 /** Custom RawMint Interface with BN. Mint as stored by the program */

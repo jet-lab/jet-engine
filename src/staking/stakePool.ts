@@ -2,7 +2,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { findDerivedAccount, TokenAccountInfo, Mint } from "../common"
+import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
 import { Hooks } from "../common/hooks"
 
 export interface StakePoolAccounts {
@@ -115,7 +115,7 @@ export class StakePool {
    * @param {StakePoolInfo} stakePool
    * @param {MintInfo} voteMint
    * @param {MintInfo} collateralMint
-   * @param {TokenAccountInfo} vault
+   * @param {JetTokenAccount} vault
    * @param {MintInfo} tokenMint
    * @memberof StakePool
    */
@@ -123,10 +123,10 @@ export class StakePool {
     public program: Program,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public voteMint: Mint,
-    public collateralMint: Mint,
-    public vault: TokenAccountInfo,
-    public tokenMint: Mint,
+    public voteMint: JetMint,
+    public collateralMint: JetMint,
+    public vault: JetTokenAccount,
+    public tokenMint: JetMint,
     public jetVotesPerShare: BN
   ) {}
 

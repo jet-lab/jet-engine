@@ -1,6 +1,6 @@
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import { Mint, TokenAccountInfo } from "./types"
+import { JetMint, JetTokenAccount } from "./types"
 
 export class TokenAmount {
   /** Raw amount of token lamports */
@@ -51,7 +51,7 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static tokenAccount(tokenAccount: TokenAccountInfo, decimals: number): TokenAmount {
+  public static tokenAccount(tokenAccount: JetTokenAccount, decimals: number): TokenAmount {
     return new TokenAmount(tokenAccount.amount, decimals, tokenAccount.mint)
   }
 
@@ -62,7 +62,7 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static mint(mint: Mint, mintAddress: PublicKey): TokenAmount {
+  public static mint(mint: JetMint, mintAddress: PublicKey): TokenAmount {
     return new TokenAmount(new BN(mint.supply), mint.decimals, mintAddress)
   }
 

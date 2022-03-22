@@ -20,7 +20,7 @@ import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount, bnToNumber } from "."
-import { TokenAccountInfo, Mint } from "./types"
+import { JetTokenAccount, JetMint } from "./types"
 
 export class AssociatedToken {
   address: PublicKey
@@ -78,7 +78,7 @@ export class AssociatedToken {
     })
   }
 
-  /** TODO: throw error OR undefined on !mintInfo?
+  /** TODO:
    * Get mint info
    * @static
    * @param {Provider} connection
@@ -86,7 +86,7 @@ export class AssociatedToken {
    * @returns {(Promise<Mint | undefined>)}
    * @memberof AssociatedToken
    */
-  static async loadMint(connection: Connection, mint: PublicKey): Promise<Mint | undefined> {
+  static async loadMint(connection: Connection, mint: PublicKey): Promise<JetMint | undefined> {
     const mintInfo = await connection.getAccountInfo(mint)
     if (!mintInfo) {
       return undefined
@@ -98,10 +98,10 @@ export class AssociatedToken {
    * Creates an instance of AssociatedToken.
    * @param {PublicKey} address
    * @param {AccountInfo<Buffer>} account
-   * @param {TokenAccountInfo} info
+   * @param {JetTokenAccount} info
    * @memberof AssociatedToken
    */
-  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: TokenAccountInfo) {
+  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: JetTokenAccount) {
     this.address = info.address
   }
 
@@ -127,7 +127,7 @@ export class AssociatedToken {
    * @static
    * @param {Provider} [provider]
    * @param {PublicKey} [tokenAddress]
-   * @returns {(TokenAccountInfo | undefined)}
+   * @returns {(JetTokenAccount | undefined)}
    * @memberof AssociatedToken
    */
   static useAux(connection: Connection | undefined, tokenAddress: PublicKey | undefined): AssociatedToken | undefined {
@@ -143,7 +143,7 @@ export class AssociatedToken {
    * @param {Provider} [provider]
    * @param {PublicKey} [mint]
    * @param {(PublicKey | null)} [owner]
-   * @returns {(TokenAccountInfo | undefined)}
+   * @returns {(JetTokenAccount | undefined)}
    * @memberof AssociatedToken
    */
   static use(
@@ -164,7 +164,7 @@ export class AssociatedToken {
    * @returns {(Mint | undefined)}
    * @memberof AssociatedToken
    */
-  static useMint(connection: Connection | undefined, address: PublicKey | undefined): Mint | undefined {
+  static useMint(connection: Connection | undefined, address: PublicKey | undefined): JetMint | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
       [connection, address?.toBase58()]
