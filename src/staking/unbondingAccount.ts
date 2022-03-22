@@ -220,7 +220,7 @@ export class UnbondingAccount {
     tokenReceiver: PublicKey,
     rentReceiver: PublicKey
   ) {
-    const ix = stakeAccount.program.instruction.unbondStake({
+    const ix = stakeAccount.program.instruction.withdrawUnbonded({
       accounts: {
         owner: stakeAccount.stakeAccount.owner,
         closer: rentReceiver,
