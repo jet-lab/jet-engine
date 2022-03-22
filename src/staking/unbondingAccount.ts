@@ -195,7 +195,7 @@ export class UnbondingAccount {
     stakeAccount: StakeAccount,
     payer: PublicKey,
     unbondingSeed: number,
-    amount: BN
+    amount: BN | null = null
   ) {
     const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
     const ix = stakePool.program.instruction.unbondStake(unbondingSeed, amount, {
