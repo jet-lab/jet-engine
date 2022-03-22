@@ -7,14 +7,17 @@ import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export interface UnbondingAccountInfo {
-  /// The related account requesting to unstake
+  /** The related account requesting to unstake  */
   stakeAccount: PublicKey
 
-  /// The amount of shares/tokens to be unstaked
+  /** The amount of shares/tokens to be unstaked */
   amount: FullAmount
 
-  /// The time after which the staked amount can be withdrawn
+  /** The time after which the staked amount can be withdrawn */
   unbondedAt: BN
+
+  /** The unbonding index at the time the request was made */
+  unbondChangeIndex: BN
 }
 
 export interface FullAmount {
@@ -192,24 +195,20 @@ export class UnbondingAccount {
     stakeAccount: StakeAccount,
     payer: PublicKey,
     unbondingSeed: number,
-    amount: BN
+    amount: BN | null = null
   ) {
     const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
-    const ix = stakePool.program.instruction.unbondStake(
-      unbondingSeed,
-      { kind: { tokens: {} }, value: amount },
-      {
-        accounts: {
-          owner: stakeAccount.stakeAccount.owner,
-          payer,
-          stakeAccount: stakeAccount.address,
-          stakePool: stakePool.addresses.stakePool,
-          stakePoolVault: stakePool.addresses.stakePoolVault,
-          unbondingAccount: address,
-          systemProgram: SystemProgram.programId
-        }
+    const ix = stakePool.program.instruction.unbondStake(unbondingSeed, amount, {
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        payer,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakePool.addresses.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        unbondingAccount: address,
+        systemProgram: SystemProgram.programId
       }
-    )
+    })
     instructions.push(ix)
   }
 
@@ -221,7 +220,7 @@ export class UnbondingAccount {
     tokenReceiver: PublicKey,
     rentReceiver: PublicKey
   ) {
-    const ix = stakeAccount.program.instruction.unbondStake({
+    const ix = stakeAccount.program.instruction.withdrawUnbonded({
       accounts: {
         owner: stakeAccount.stakeAccount.owner,
         closer: rentReceiver,

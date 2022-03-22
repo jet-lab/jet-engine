@@ -159,7 +159,7 @@ export class Distribution {
       }
       seed = utf8ToString(seed, seedLen)
     }
-    const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, seed)
+    const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, "distribution", seed)
     const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, distribution, "vault")
     return { distribution, vault }
   }
@@ -190,6 +190,7 @@ export class Distribution {
 
     return (
       _.zip(addresses, distributions, vaults)
+        .filter(([address, distribution, vault]) => address && distribution && vault)
         .map(([address, distribution, vault]) => {
           if (!address) {
             throw new Error("Address is undefined")

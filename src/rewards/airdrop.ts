@@ -83,6 +83,14 @@ export interface AirdropInfo {
   shortDesc: number[]
 
   /**
+   * A long descriptive text for the airdrop
+   *
+   * @type {number[]}
+   * @memberof AirdropInfo
+   */
+  longDesc: number[]
+
+  /**
    * The bump seed for the reward vault
    *
    * @type {number[]}
