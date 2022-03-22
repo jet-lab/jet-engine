@@ -3,7 +3,7 @@
  * Jet tokens and minting vote tokens.
  */
 
-import { BN, Provider } from "@project-serum/anchor"
+import { BN, Program, Provider } from "@project-serum/anchor"
 import { StakeClient, StakePool } from "../src";
 import { resolve } from "path"
 import { homedir } from "os";
@@ -44,22 +44,28 @@ async function main() {
   process.env.ANCHOR_WALLET = resolve(homedir(), ".config/solana/id.json");
   const provider = Provider.local(cluster);
 
-  const client = await StakeClient.connect(provider)
-  await StakePool.create(client, {
-    accounts: {
-      authority,
-      tokenMint,
-    },
-    args: {
-      unbondPeriod,
-      seed
-    }
-  })
+  const program = await StakeClient.connect(provider) as any as Program
+  try {
+    await StakePool.create(program, {
+      accounts: {
+        payer: provider.wallet.publicKey,
+        authority,
+        tokenMint,
+      },
+      args: {
+        unbondPeriod,
+        seed
+      }
+    })
+  } catch(err) {
+    console.log("Error creating stake pool")
+    console.log(err)
+  }
 
   await new Promise<void>(r => setTimeout(() => r(), 5000))
-  const pool = await StakePool.load(client, seed);
+  const pool = await StakePool.load(program, seed);
 
-  console.log(JSON.stringify(Object.entries(pool.addresses.accounts).map(([key, value]) => [key, value.toBase58()])))
+  console.log(JSON.stringify(Object.entries(pool.addresses).map(([key, value]) => [key, value.toBase58()]), null, 2))
   /**
    * [
    *   ["stakePool","83bqcdNH5G7kUwxczSd5WkJWf76f68SEMNiUd3sNLBQH"],
