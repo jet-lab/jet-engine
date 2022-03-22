@@ -190,6 +190,7 @@ export class Distribution {
 
     return (
       _.zip(addresses, distributions, vaults)
+        .filter(([address, distribution, vault]) => address && distribution && vault)
         .map(([address, distribution, vault]) => {
           if (!address) {
             throw new Error("Address is undefined")
