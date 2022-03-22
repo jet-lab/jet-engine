@@ -356,11 +356,7 @@ export class JetReserve {
     const mint = parseMintAccount(mintData, address)
     const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals, data.tokenMint)
     const state = ReserveStateStruct.decode(new Uint8Array(data.state))
-    state.outstandingDebt = (
-      state.outstandingDebt.lamports.div(new BN(1e15)),
-      mint.decimals,
-      data.tokenMint
-    )
+    state.outstandingDebt = (state.outstandingDebt.lamports.div(new BN(1e15)), mint.decimals, data.tokenMint)
     const reserve: ReserveData = {
       ...data,
       address,

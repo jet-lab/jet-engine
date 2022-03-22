@@ -24,8 +24,8 @@ import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
 import { DerivedAccount } from "../common"
 import { findDerivedAccountWithBump, Hooks } from "../common"
-import { BN } from '@project-serum/anchor';
-import { SYSVAR_RENT_PUBKEY, SystemProgram } from '@solana/web3.js'
+import { BN } from "@project-serum/anchor"
+import { SYSVAR_RENT_PUBKEY, SystemProgram } from "@solana/web3.js"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey

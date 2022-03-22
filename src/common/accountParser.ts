@@ -59,7 +59,7 @@ export class PubkeyField extends BL.Layout<PublicKey> {
 }
 
 /**
- * TODO: 
+ * TODO:
  * @export
  * @class NumberField
  * @extends {BL.Layout}
@@ -212,7 +212,7 @@ export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): J
     delegatedAmount: data.delegatedAmount,
     isInitialized: data.state !== 0,
     isFrozen: data.state === 2, //2 = frozen in AccountState enum
-    isNative: data.isNativeOption ===  1,
+    isNative: data.isNativeOption === 1,
     rentExemptReserve: data.isNativeOption === 1 ? data.isNative : new BN(0),
     closeAuthority: data.closeAuthorityOption === 1 ? data.closeAuthority : undefined
   }

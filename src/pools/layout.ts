@@ -18,10 +18,9 @@
 import * as BL from "@solana/buffer-layout"
 import { numberField, pubkeyField, u64Field } from "../common/accountParser"
 import { i64Field } from "./util"
-import { ReserveStateData } from './reserve'
-import { JetMarketReserveInfo } from './market'
+import { ReserveStateData } from "./reserve"
+import { JetMarketReserveInfo } from "./market"
 import { ObligationPositionStruct } from "./types"
-
 
 export const MAX_RESERVES = 32
 
@@ -46,7 +45,7 @@ export const ReserveInfoStruct = BL.struct<JetMarketReserveInfo>([
   numberField("minCollateralRatio"),
   BL.u16("liquidationBonus"),
   u64Field("lastUpdated"),
-  BL.u8("invalidated"),
+  BL.u8("invalidated")
 ])
 
 export const MarketReserveInfoStructList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
@@ -55,7 +54,7 @@ export const PositionInfoStruct = BL.struct<ObligationPositionStruct>([
   pubkeyField("account"),
   numberField("amount"),
   BL.u32("side"),
-  BL.u16("reserveIndex"),
+  BL.u16("reserveIndex")
 ])
 
 export const PositionInfoStructList = BL.seq(PositionInfoStruct, 16, "positions")
