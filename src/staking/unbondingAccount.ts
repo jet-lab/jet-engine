@@ -7,14 +7,17 @@ import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 export interface UnbondingAccountInfo {
-  /// The related account requesting to unstake
+  /** The related account requesting to unstake  */
   stakeAccount: PublicKey
 
-  /// The amount of shares/tokens to be unstaked
+  /** The amount of shares/tokens to be unstaked */
   amount: FullAmount
 
-  /// The time after which the staked amount can be withdrawn
+  /** The time after which the staked amount can be withdrawn */
   unbondedAt: BN
+
+  /** The unbonding index at the time the request was made */
+  unbondChangeIndex: BN,
 }
 
 export interface FullAmount {
