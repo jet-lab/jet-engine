@@ -159,7 +159,7 @@ export class Distribution {
       }
       seed = utf8ToString(seed, seedLen)
     }
-    const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, seed)
+    const distribution = findDerivedAccount(RewardsClient.PROGRAM_ID, "distribution", seed)
     const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, distribution, "vault")
     return { distribution, vault }
   }

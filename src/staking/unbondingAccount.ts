@@ -195,21 +195,17 @@ export class UnbondingAccount {
     amount: BN
   ) {
     const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
-    const ix = stakePool.program.instruction.unbondStake(
-      unbondingSeed,
-      { kind: { tokens: {} }, value: amount },
-      {
-        accounts: {
-          owner: stakeAccount.stakeAccount.owner,
-          payer,
-          stakeAccount: stakeAccount.address,
-          stakePool: stakePool.addresses.stakePool,
-          stakePoolVault: stakePool.addresses.stakePoolVault,
-          unbondingAccount: address,
-          systemProgram: SystemProgram.programId
-        }
+    const ix = stakePool.program.instruction.unbondStake(unbondingSeed, amount, {
+      accounts: {
+        owner: stakeAccount.stakeAccount.owner,
+        payer,
+        stakeAccount: stakeAccount.address,
+        stakePool: stakePool.addresses.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        unbondingAccount: address,
+        systemProgram: SystemProgram.programId
       }
-    )
+    })
     instructions.push(ix)
   }
 

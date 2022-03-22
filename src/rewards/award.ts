@@ -71,7 +71,7 @@ export class Award {
    * @memberof Award
    */
   static derive(stakeAccount: PublicKey, seed: string): AwardAddresses {
-    const award = findDerivedAccount(RewardsClient.PROGRAM_ID, stakeAccount, seed)
+    const award = findDerivedAccount(RewardsClient.PROGRAM_ID, "award", stakeAccount, seed)
     const vault = findDerivedAccount(RewardsClient.PROGRAM_ID, award, "vault")
     return { award, vault }
   }
