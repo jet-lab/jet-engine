@@ -21,8 +21,10 @@ export interface UnbondingAccountInfo {
 }
 
 export interface FullAmount {
-  shareAmount: BN
   tokenAmount: BN
+  shareAmount: BN
+  shares: BN
+  tokens: BN
 }
 
 export interface UnbondingAmount {

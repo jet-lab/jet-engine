@@ -1,5 +1,5 @@
 export type StakeIdl = {
-  version: "0.1.0"
+  version: "1.0.0"
   name: "jet_staking"
   instructions: [
     {
@@ -62,12 +62,6 @@ export type StakeIdl = {
           type: "string"
         },
         {
-          name: "bump"
-          type: {
-            defined: "InitPoolSeeds"
-          }
-        },
-        {
           name: "config"
           type: {
             defined: "PoolConfig"
@@ -82,6 +76,11 @@ export type StakeIdl = {
           name: "owner"
           isMut: false
           isSigner: true
+        },
+        {
+          name: "auth"
+          isMut: false
+          isSigner: false
         },
         {
           name: "stakePool"
@@ -104,12 +103,7 @@ export type StakeIdl = {
           isSigner: false
         }
       ]
-      args: [
-        {
-          name: "bump"
-          type: "u8"
-        }
-      ]
+      args: []
     },
     {
       name: "addStake"
@@ -149,7 +143,7 @@ export type StakeIdl = {
         {
           name: "amount"
           type: {
-            defined: "Amount"
+            option: "u64"
           }
         }
       ]
@@ -164,7 +158,7 @@ export type StakeIdl = {
         },
         {
           name: "payer"
-          isMut: false
+          isMut: true
           isSigner: true
         },
         {
@@ -195,23 +189,55 @@ export type StakeIdl = {
       ]
       args: [
         {
-          name: "bump"
-          type: "u8"
-        },
-        {
           name: "seed"
           type: "u32"
         },
         {
           name: "amount"
           type: {
-            defined: "Amount"
+            option: "u64"
           }
         }
       ]
     },
     {
-      name: "withdrawUnbondend"
+      name: "cancelUnbond"
+      accounts: [
+        {
+          name: "owner"
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: "receiver"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "stakeAccount"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "stakePool"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "stakePoolVault"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "unbondingAccount"
+          isMut: true
+          isSigner: false
+        }
+      ]
+      args: []
+    },
+    {
+      name: "withdrawUnbonded"
       accounts: [
         {
           name: "owner"
@@ -257,6 +283,42 @@ export type StakeIdl = {
       args: []
     },
     {
+      name: "withdrawBonded"
+      accounts: [
+        {
+          name: "authority"
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: "stakePool"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "tokenReceiver"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "stakePoolVault"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "tokenProgram"
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: "amount"
+          type: "u64"
+        }
+      ]
+    },
+    {
       name: "mintVotes"
       accounts: [
         {
@@ -266,7 +328,7 @@ export type StakeIdl = {
         },
         {
           name: "stakePool"
-          isMut: false
+          isMut: true
           isSigner: false
         },
         {
@@ -290,7 +352,42 @@ export type StakeIdl = {
           isSigner: false
         },
         {
+          name: "governanceRealm"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "governanceVault"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "governanceOwnerRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "payer"
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: "governanceProgram"
+          isMut: false
+          isSigner: false
+        },
+        {
           name: "tokenProgram"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "systemProgram"
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: "rent"
           isMut: false
           isSigner: false
         }
@@ -299,7 +396,7 @@ export type StakeIdl = {
         {
           name: "amount"
           type: {
-            defined: "Amount"
+            option: "u64"
           }
         }
       ]
@@ -346,7 +443,9 @@ export type StakeIdl = {
       args: [
         {
           name: "amount"
-          type: "u64"
+          type: {
+            option: "u64"
+          }
         }
       ]
     },
@@ -425,6 +524,14 @@ export type StakeIdl = {
           {
             name: "tokensUnbonding"
             type: "u64"
+          },
+          {
+            name: "vaultAmount"
+            type: "u64"
+          },
+          {
+            name: "unbondChangeIndex"
+            type: "u64"
           }
         ]
       }
@@ -479,54 +586,16 @@ export type StakeIdl = {
           {
             name: "unbondedAt"
             type: "i64"
+          },
+          {
+            name: "unbondChangeIndex"
+            type: "u64"
           }
         ]
       }
     }
   ]
   types: [
-    {
-      name: "Amount"
-      type: {
-        kind: "struct"
-        fields: [
-          {
-            name: "kind"
-            type: {
-              defined: "AmountKind"
-            }
-          },
-          {
-            name: "value"
-            type: "u64"
-          }
-        ]
-      }
-    },
-    {
-      name: "InitPoolSeeds"
-      type: {
-        kind: "struct"
-        fields: [
-          {
-            name: "stakePool"
-            type: "u8"
-          },
-          {
-            name: "stakeVoteMint"
-            type: "u8"
-          },
-          {
-            name: "stakeCollateralMint"
-            type: "u8"
-          },
-          {
-            name: "stakePoolVault"
-            type: "u8"
-          }
-        ]
-      }
-    },
     {
       name: "PoolConfig"
       type: {
@@ -545,6 +614,14 @@ export type StakeIdl = {
         kind: "struct"
         fields: [
           {
+            name: "tokenAmount"
+            type: "u64"
+          },
+          {
+            name: "shareAmount"
+            type: "u64"
+          },
+          {
             name: "shares"
             type: "u64"
           },
@@ -556,15 +633,15 @@ export type StakeIdl = {
       }
     },
     {
-      name: "AmountKind"
+      name: "Rounding"
       type: {
         kind: "enum"
         variants: [
           {
-            name: "Tokens"
+            name: "Up"
           },
           {
-            name: "Shares"
+            name: "Down"
           }
         ]
       }
@@ -590,6 +667,10 @@ export type StakeIdl = {
     {
       code: 6004
       name: "StakeRemaining"
+    },
+    {
+      code: 6005
+      name: "InvalidAmount"
     }
   ]
 }

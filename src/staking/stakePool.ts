@@ -20,8 +20,8 @@ export interface StakePoolInfo {
   authority: PublicKey
 
   /** The seed used to generate the pool address */
-  seed: number | number[]
-
+  seed: number[]
+  seedLen: number
   bumpSeed: number[]
 
   /** The mint for the tokens being staked */
