@@ -311,23 +311,20 @@ export class StakeAccount {
     owner: PublicKey,
     payer: PublicKey,
     tokenAccount: PublicKey,
-    amount: BN
+    amount: BN | null = null
   ) {
     const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
 
-    const ix = stakePool.program.instruction.addStake(
-      { kind: { tokens: {} }, value: amount },
-      {
-        accounts: {
-          stakePool: stakePool.addresses.stakePool,
-          stakePoolVault: stakePool.addresses.stakePoolVault,
-          stakeAccount,
-          payer,
-          payerTokenAccount: tokenAccount,
-          tokenProgram: TOKEN_PROGRAM_ID
-        }
+    const ix = stakePool.program.instruction.addStake(amount, {
+      accounts: {
+        stakePool: stakePool.addresses.stakePool,
+        stakePoolVault: stakePool.addresses.stakePoolVault,
+        stakeAccount,
+        payer,
+        payerTokenAccount: tokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID
       }
-    )
+    })
     instructions.push(ix)
   }
 
@@ -346,13 +343,14 @@ export class StakeAccount {
     stakePool: StakePool,
     realm: ProgramAccount<Realm>,
     owner: PublicKey,
-    voterTokenAccount: PublicKey
+    voterTokenAccount: PublicKey,
+    amount: BN | null = null
   ) {
     const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
     const governanceVault = this.deriveGovernanceVault(realm.owner, realm.pubkey, realm.account.communityMint)
     const tokenOwnerRecord = await this.deriveGovernanceTokenOwnerRecord(realm, realm.account.communityMint, owner)
 
-    const ix = stakePool.program.instruction.mintVotes(null, {
+    const ix = stakePool.program.instruction.mintVotes(amount, {
       accounts: {
         owner: owner,
         stakePool: stakePool.addresses.stakePool,
@@ -390,7 +388,7 @@ export class StakeAccount {
     stakeAccount: StakeAccount,
     owner: PublicKey,
     voterTokenAccount: PublicKey,
-    amount: BN
+    amount: BN | null = null
   ) {
     const ix = stakePool.program.instruction.burnVotes(amount, {
       accounts: {

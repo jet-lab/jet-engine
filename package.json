@@ -1,6 +1,6 @@
 {
   "name": "@jet-lab/jet-engine",
-  "version": "0.2.26",
+  "version": "0.2.32",
   "description": "Library for interacting with the Jet on-chain programs",
   "keywords": [
     "solana",
@@ -31,7 +31,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.20.1",
+    "@project-serum/anchor": "^0.21.0",
     "@project-serum/serum": "^0.13.60",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "^4.0.0",

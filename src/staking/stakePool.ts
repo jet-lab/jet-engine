@@ -42,11 +42,15 @@ export interface StakePoolInfo {
   sharesBonded: BN
 
   /** The total amount of virtual stake tokens that are ineligible for rewards
-  /** because they are being unbonded for future withdrawal. */
+      because they are being unbonded for future withdrawal. */
   tokensUnbonding: BN
 
-  /** Amount of stake tokens or votes equivalent to one share */
-  jetVotesPerShare: BN
+  /** The amount of tokens stored by the pool's vault */
+  vaultAmount: BN
+
+  /* A token to identify when unbond conversions are invalidated due to
+     a withdraw of bonded tokens. */
+  unbondChangeIndex: BN
 }
 
 // ----- Instructions -----
@@ -72,7 +76,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "JET"
+  public static readonly CANONICAL_SEED = "amoose"
 
   /**
    * TODO:
@@ -102,10 +106,9 @@ export class StakePool {
     const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
-    const jetVotesPerShare = vault.amount.div(stakePool.sharesBonded)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer,  stakePool.tokenMint)
 
-    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint, jetVotesPerShare)
+    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
 
   /**
@@ -126,8 +129,7 @@ export class StakePool {
     public voteMint: JetMint,
     public collateralMint: JetMint,
     public vault: JetTokenAccount,
-    public tokenMint: JetMint,
-    public jetVotesPerShare: BN
+    public tokenMint: JetMint
   ) {}
 
   /**

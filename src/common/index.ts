@@ -91,7 +91,7 @@ export async function connect<T extends Idl>(programId: PublicKey, provider: Pro
 }
 
 const confirmOptions: ConfirmOptions = {
-  skipPreflight: false,
+  skipPreflight: true,
   commitment: "recent" as Commitment,
   preflightCommitment: "recent"
 }

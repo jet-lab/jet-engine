@@ -518,7 +518,13 @@ export type RewardsIdl = {
           {
             name: "shortDesc"
             type: {
-              array: ["u8", 31]
+              array: ["u8", 32]
+            }
+          },
+          {
+            name: "longDesc"
+            type: {
+              array: ["u8", 255]
             }
           },
           {
