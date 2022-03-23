@@ -205,11 +205,11 @@ export class Airdrop {
     return new Airdrop(airdropAddress, rewardsVaultAddress, airdrop, rewardsVault)
   }
 
-  static async loadAll(rewardsProgram: Program, stakePool: PublicKey): Promise<Airdrop[]> {
+  static async loadAll(rewardsProgram: Program, stakePoolVault: PublicKey): Promise<Airdrop[]> {
     const stakePoolFilter: MemcmpFilter = {
       memcmp: {
         offset: 8,
-        bytes: stakePool.toBase58()
+        bytes: stakePoolVault.toBase58()
       }
     }
 
@@ -272,10 +272,10 @@ export class Airdrop {
     )
   }
 
-  static useAll(rewardsProgram: Program | undefined, stakePool: PublicKey | undefined): Airdrop[] | undefined {
+  static useAll(rewardsProgram: Program | undefined, stakePoolVault: PublicKey | undefined): Airdrop[] | undefined {
     return Hooks.usePromise(
-      async () => rewardsProgram && stakePool && Airdrop.loadAll(rewardsProgram, stakePool),
-      [rewardsProgram, stakePool]
+      async () => rewardsProgram && stakePoolVault && Airdrop.loadAll(rewardsProgram, stakePoolVault),
+      [rewardsProgram, stakePoolVault]
     )
   }
 
