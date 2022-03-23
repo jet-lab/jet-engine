@@ -1,7 +1,7 @@
 import * as BL from "@solana/buffer-layout"
 import { pubkeyField, u64Field } from "../common/accountParser"
 
-import { AirdropTargetInfo, AirdropTarget } from './airdrop'
+import { AirdropTargetInfo, AirdropTarget } from "./airdrop"
 
 export const AirdropTargetStruct = BL.struct<AirdropTarget>([u64Field("amount"), pubkeyField("recipient")])
 
@@ -16,5 +16,3 @@ export const AirdropTargetsStruct = BL.struct<AirdropTargetInfo>([
 
 console.assert(AirdropTargetStruct.span === 40)
 console.assert(AirdropTargetsStruct.span === 400024)
-
-

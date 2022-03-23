@@ -139,7 +139,6 @@ export interface AirdropTargetInfo {
   recipients: AirdropTarget[]
 }
 
-
 /**
  * An airdrop recipients that can claim tokens
  *
