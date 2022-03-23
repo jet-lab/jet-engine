@@ -368,8 +368,8 @@ export class JetReserve {
       outstandingDebt: calculatedOutstandingDebt,
       uncollectedFees: new TokenAmount(decodedData.uncollectedFees, mint.decimals, data.tokenMint),
       totalDeposits: new TokenAmount(decodedData.totalDeposits, mint.decimals, data.tokenMint),
-      totalDepositNotes: new TokenAmount(decodedData.totalDepositNotes, mint.decimals, data.tokenMint),
-      totalLoanNotes: new TokenAmount(decodedData.totalLoanNotes, mint.decimals, data.tokenMint)
+      totalDepositNotes: new TokenAmount(decodedData.totalDepositNotes, mint.decimals, data.depositNoteMint),
+      totalLoanNotes: new TokenAmount(decodedData.totalLoanNotes, mint.decimals, data.loanNoteMint)
     }
 
     const reserve: ReserveData = {
