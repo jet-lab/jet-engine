@@ -106,7 +106,7 @@ export class StakePool {
     const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer,  stakePool.tokenMint)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
 
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
