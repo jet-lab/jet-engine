@@ -132,8 +132,21 @@ export class JetMarket implements JetMarketData {
    */
   private static decode(client: JetClient, address: PublicKey, data: any) {
     const reserveInfoData = new Uint8Array(data.reserves)
-    let reserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData) as JetMarketReserveInfo[]
-    reserveInfoList = reserveInfoList.filter(reserve => !reserve.reserve.equals(PublicKey.default))
+    let rawReserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData)
+    rawReserveInfoList = rawReserveInfoList.filter(reserve => !reserve.reserve.equals(PublicKey.default))
+
+    const reserveInfoList = rawReserveInfoList.map(reserve => {
+      return {
+        reserve: reserve.reserve,
+        price: reserve.price,
+        depositNoteExchangeRate: reserve.depositNoteExchangeRate,
+        loanNoteExchangeRate: reserve.loanNoteExchangeRate,
+        minCollateralRatio: reserve.minCollateralRatio,
+        liquidationBonus: reserve.liquidationBonus,
+        lastUpdated: reserve.lastUpdated,
+        invalidated: reserve.invalidated
+      }
+    })
 
     return new JetMarket(
       client,

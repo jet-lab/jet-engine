@@ -38,4 +38,4 @@ describe("JetMarket", () => {
   test("can be refreshed", async () => {
     await market.refresh()
   })
-})
+})  

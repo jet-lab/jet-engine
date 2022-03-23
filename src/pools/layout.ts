@@ -18,14 +18,12 @@
 import * as BL from "@solana/buffer-layout"
 import { numberField, pubkeyField, u64Field } from "../common/accountParser"
 import { i64Field } from "./util"
-import { ReserveStateData } from "./reserve"
-import { JetMarketReserveInfo } from "./market"
-import { ObligationPositionStruct } from "./types"
+import { RawReserveStateData, RawJetMarketReserveInfo, RawObligationPositionStruct } from "./types"
 
 export const MAX_RESERVES = 32
 
-export const ReserveStateStruct = BL.struct<ReserveStateData>([
-  i64Field("accruedUntil") as any,
+export const ReserveStateStruct = BL.struct<RawReserveStateData>([
+  i64Field("accruedUntil"),
   numberField("outstandingDebt"),
   numberField("uncollectedFees"),
   u64Field("totalDeposits"),
@@ -37,24 +35,28 @@ export const ReserveStateStruct = BL.struct<ReserveStateData>([
   BL.blob(7, "_UNUSED_1_")
 ])
 
-export const ReserveInfoStruct = BL.struct<JetMarketReserveInfo>([
+export const ReserveInfoStruct = BL.struct<RawJetMarketReserveInfo>([
   pubkeyField("reserve"),
+  BL.blob(80, "_UNUSED_0_"),
   numberField("price"),
   numberField("depositNoteExchangeRate"),
   numberField("loanNoteExchangeRate"),
   numberField("minCollateralRatio"),
   BL.u16("liquidationBonus"),
+  BL.blob(158, "_UNUSED_1_"),
   u64Field("lastUpdated"),
-  BL.u8("invalidated")
+  BL.u8("invalidated"),
+  BL.blob(7, "_UNUSED_2_")
 ])
 
 export const MarketReserveInfoStructList = BL.seq(ReserveInfoStruct, MAX_RESERVES)
 
-export const PositionInfoStruct = BL.struct<ObligationPositionStruct>([
+export const PositionInfoStruct = BL.struct<RawObligationPositionStruct>([
   pubkeyField("account"),
   numberField("amount"),
   BL.u32("side"),
-  BL.u16("reserveIndex")
+  BL.u16("reserveIndex"),
+  BL.blob(66, "_reserved")
 ])
 
 export const PositionInfoStructList = BL.seq(PositionInfoStruct, 16, "positions")

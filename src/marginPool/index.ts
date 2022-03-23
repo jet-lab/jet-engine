@@ -1,2 +1,2 @@
 export * from "./client"
-export * from "./marginPool"
+export { MarginPool, MarginPoolAddresses } from "./marginPool"
