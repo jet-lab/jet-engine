@@ -518,20 +518,24 @@ export type StakeIdl = {
             type: "i64"
           },
           {
-            name: "sharesBonded"
-            type: "u64"
-          },
-          {
-            name: "tokensUnbonding"
-            type: "u64"
-          },
-          {
             name: "vaultAmount"
             type: "u64"
           },
           {
             name: "unbondChangeIndex"
             type: "u64"
+          },
+          {
+            name: "bonded"
+            type: {
+              defined: "SharedTokenPool"
+            }
+          },
+          {
+            name: "unbonding"
+            type: {
+              defined: "SharedTokenPool"
+            }
           }
         ]
       }
@@ -550,7 +554,7 @@ export type StakeIdl = {
             type: "publicKey"
           },
           {
-            name: "shares"
+            name: "bondedShares"
             type: "u64"
           },
           {
@@ -562,7 +566,7 @@ export type StakeIdl = {
             type: "u64"
           },
           {
-            name: "unbonding"
+            name: "unbondingShares"
             type: "u64"
           }
         ]
@@ -578,10 +582,8 @@ export type StakeIdl = {
             type: "publicKey"
           },
           {
-            name: "amount"
-            type: {
-              defined: "FullAmount"
-            }
+            name: "shares"
+            type: "u64"
           },
           {
             name: "unbondedAt"
@@ -609,6 +611,22 @@ export type StakeIdl = {
       }
     },
     {
+      name: "SharedTokenPool"
+      type: {
+        kind: "struct"
+        fields: [
+          {
+            name: "tokens"
+            type: "u64"
+          },
+          {
+            name: "shares"
+            type: "u64"
+          }
+        ]
+      }
+    },
+    {
       name: "FullAmount"
       type: {
         kind: "struct"
@@ -622,11 +640,11 @@ export type StakeIdl = {
             type: "u64"
           },
           {
-            name: "shares"
+            name: "allShares"
             type: "u64"
           },
           {
-            name: "tokens"
+            name: "allTokens"
             type: "u64"
           }
         ]
