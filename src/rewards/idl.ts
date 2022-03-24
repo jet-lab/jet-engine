@@ -16,7 +16,7 @@
  */
 
 export type RewardsIdl = {
-  version: "0.1.0"
+  version: "1.0.0"
   name: "jet_rewards"
   instructions: [
     {
@@ -553,7 +553,13 @@ export type RewardsIdl = {
           },
           {
             name: "seed"
-            type: "string"
+            type: {
+              array: ["u8", 30]
+            }
+          },
+          {
+            name: "seedLen"
+            type: "u8"
           },
           {
             name: "bumpSeed"
@@ -680,8 +686,8 @@ export type RewardsIdl = {
             type: "string"
           },
           {
-            name: "vaultBump"
-            type: "u8"
+            name: "longDesc"
+            type: "string"
           },
           {
             name: "flags"
@@ -698,10 +704,6 @@ export type RewardsIdl = {
           {
             name: "seed"
             type: "string"
-          },
-          {
-            name: "bumpSeed"
-            type: "u8"
           },
           {
             name: "authority"
@@ -722,10 +724,6 @@ export type RewardsIdl = {
           {
             name: "endAt"
             type: "u64"
-          },
-          {
-            name: "vaultBump"
-            type: "u8"
           }
         ]
       }
@@ -770,10 +768,6 @@ export type RewardsIdl = {
             type: "string"
           },
           {
-            name: "bumpSeed"
-            type: "u8"
-          },
-          {
             name: "authority"
             type: "publicKey"
           },
@@ -792,10 +786,6 @@ export type RewardsIdl = {
           {
             name: "endAt"
             type: "u64"
-          },
-          {
-            name: "vaultBump"
-            type: "u8"
           }
         ]
       }
@@ -835,11 +825,11 @@ export type RewardsIdl = {
     },
     {
       code: 6005
-      name: "RecipientsNotSorted"
+      name: "AirdropNotFinal"
     },
     {
       code: 6006
-      name: "ClaimNotVerified"
+      name: "RecipientsNotSorted"
     },
     {
       code: 6007
