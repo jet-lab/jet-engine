@@ -17,6 +17,7 @@
 
 import { PublicKey } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor"
+import { u64 } from "@solana/spl-token"
 
 export * from "./client"
 export * from "./idl"
@@ -60,11 +61,11 @@ export class Amount {
   /**
    * TODO:
    * @static
-   * @param {(number)} amount
+   * @param {(number | u64)} amount
    * @returns {Amount}
    * @memberof Amount
    */
-  static tokens(amount: number): Amount {
+  static tokens(amount: number | u64): Amount {
     return new Amount({ tokens: {} }, new anchor.BN(amount))
   }
 
@@ -75,7 +76,7 @@ export class Amount {
    * @returns {Amount}
    * @memberof Amount
    */
-  static depositNotes(amount: number): Amount {
+  static depositNotes(amount: number | u64): Amount {
     return new Amount({ depositNotes: {} }, new anchor.BN(amount))
   }
 
@@ -86,7 +87,7 @@ export class Amount {
    * @returns {Amount}
    * @memberof Amount
    */
-  static loanNotes(amount: number): Amount {
+  static loanNotes(amount: number | u64): Amount {
     return new Amount({ loanNotes: {} }, new anchor.BN(amount))
   }
 
