@@ -5,7 +5,6 @@ import { useMemo } from "react"
 
 export * from "./tokenAmount"
 export * from "./tokenMintKeys"
-export { JetTokenAccount, JetMint } from "./types"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
 export { bnToNumber } from "./accountParser"

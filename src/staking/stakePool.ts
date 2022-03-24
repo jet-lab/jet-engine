@@ -1,8 +1,9 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { MintInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
+import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
+import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 
 export interface StakePoolAccounts {
@@ -113,10 +114,10 @@ export class StakePool {
       throw new Error("Invalid mint")
     }
 
-    const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
-    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
+    const voteMint = parseMintAccount(voteMintInfo.data as Buffer)
+    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
 
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
@@ -128,7 +129,7 @@ export class StakePool {
    * @param {StakePoolInfo} stakePool
    * @param {MintInfo} voteMint
    * @param {MintInfo} collateralMint
-   * @param {JetTokenAccount} vault
+   * @param {TokenAccountInfo} vault
    * @param {MintInfo} tokenMint
    * @memberof StakePool
    */
@@ -136,10 +137,10 @@ export class StakePool {
     public program: Program,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public voteMint: JetMint,
-    public collateralMint: JetMint,
-    public vault: JetTokenAccount,
-    public tokenMint: JetMint
+    public voteMint: MintInfo,
+    public collateralMint: MintInfo,
+    public vault: TokenAccountInfo,
+    public tokenMint: MintInfo
   ) {}
 
   /**

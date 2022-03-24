@@ -1,8 +1,8 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { MintInfo, AccountInfo as TokenAccountInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
-import { findDerivedAccount, checkNull, JetMint, JetTokenAccount } from "../common"
+import { findDerivedAccount, checkNull } from "../common"
 import { Hooks } from "../common/hooks"
 import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./state"
 import { TokenMetadataInfo } from "../marginMetadata"
@@ -21,10 +21,10 @@ export class MarginPool {
     public program: Program,
     public addresses: MarginPoolAddresses,
     public marginPool: MarginPoolAccountInfo,
-    public vault: JetTokenAccount,
-    public depositNoteMint: JetMint,
-    public loanNoteMint: JetMint,
-    public poolTokenMint: JetMint
+    public vault: TokenAccountInfo,
+    public depositNoteMint: MintInfo,
+    public loanNoteMint: MintInfo,
+    public poolTokenMint: MintInfo
   ) {}
 
   /**
@@ -51,10 +51,10 @@ export class MarginPool {
     checkNull(depositNoteMintInfo)
     checkNull(loanNoteMintInfo)
 
-    const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer, tokenMint)
+    const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer)
     const vault = parseTokenAccount(vaultMintInfo?.data as Buffer, addresses.vault)
-    const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer, addresses.depositNoteMint)
-    const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer, addresses.loanNoteMint)
+    const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer)
+    const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer)
 
     return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
   }
