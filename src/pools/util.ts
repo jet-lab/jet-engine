@@ -45,7 +45,7 @@ export const parsePosition = (position: any): ObligationPositionStruct => ({
  * @class SignedNumberField
  * @extends {BL.Layout}
  */
-export class SignedNumberField extends BL.Layout {
+export class SignedNumberField extends BL.Layout<BN> {
   /**
    * Creates an instance of SignedNumberField.
    * @param {number} span

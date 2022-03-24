@@ -52,6 +52,14 @@ export type ObligationPositionStruct = {
   _reserved: number[]
 }
 
+export type RawObligationPositionStruct = {
+  account: PublicKey
+  amount: BN
+  side: number
+  reserveIndex: number
+  _reserved: Uint8Array
+}
+
 export type ReserveAccount = {
   version: number
   index: number
@@ -71,4 +79,31 @@ export type ReserveAccount = {
   reserved1: number | number[]
   config: ReserveConfig
   state: number[]
+}
+
+export interface RawReserveStateData {
+  accruedUntil: BN
+  outstandingDebt: BN
+  uncollectedFees: BN
+  totalDeposits: BN
+  totalDepositNotes: BN
+  totalLoanNotes: BN
+  _UNUSED_0_: Uint8Array
+  lastUpdated: BN
+  invalidate: number
+  _UNUSED_1_: Uint8Array
+}
+
+export interface RawJetMarketReserveInfo {
+  reserve: PublicKey
+  _UNUSED_0_: Uint8Array
+  price: BN
+  depositNoteExchangeRate: BN
+  loanNoteExchangeRate: BN
+  minCollateralRatio: BN
+  liquidationBonus: number
+  _UNUSED_1_: Uint8Array
+  lastUpdated: BN
+  invalidated: number
+  _UNUSED_2_: Uint8Array
 }
