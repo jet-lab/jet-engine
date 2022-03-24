@@ -17,7 +17,7 @@ export interface StakeAccountInfo {
   stakePool: PublicKey
 
   /** The stake balance (in share units) */
-  shares: BN
+  bondedShares: BN
 
   /** The token balance locked by existence of voting tokens */
   mintedVotes: BN
@@ -25,8 +25,8 @@ export interface StakeAccountInfo {
   /** The stake balance locked by existence of collateral tokens */
   mintedCollateral: BN
 
-  /** The total staked tokens currently unbonding so as to be withdrawn in the future */
-  unbonding: BN
+  /** The total share of currently unbonding tokens to be withdrawn in the future */
+  unbondingShares: BN
 }
 
 export interface StakeBalance {
@@ -181,9 +181,11 @@ export class StakeAccount {
     let unbondingJet: BN | undefined
 
     if (!!stakePool && !!stakeAccount) {
-      stakedJet = stakePool.vault.amount.mul(stakeAccount.stakeAccount.shares).div(stakePool.stakePool.sharesBonded)
+      stakedJet = stakePool.vault.amount
+        .mul(stakeAccount.stakeAccount.bondedShares)
+        .div(stakePool.stakePool.bonded.shares)
 
-      unbondingJet = stakeAccount.stakeAccount.unbonding
+      unbondingJet = stakeAccount.stakeAccount.unbondingShares
     }
 
     return {

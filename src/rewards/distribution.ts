@@ -353,10 +353,10 @@ export class Distribution {
         return undefined
       }
       let usersShares: number
-      const totalShares = bnToNumber(stakePool.stakePool.sharesBonded)
+      const totalShares = bnToNumber(stakePool.stakePool.bonded.shares)
       const totalDeposits = bnToNumber(stakePool.vault.amount)
       if (stakeAccount) {
-        usersShares = bnToNumber(stakeAccount.stakeAccount.shares)
+        usersShares = bnToNumber(stakeAccount.stakeAccount.bondedShares)
       } else {
         usersShares = 1
       }
