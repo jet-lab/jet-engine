@@ -181,9 +181,13 @@ export class StakeAccount {
     let unbondingJet: BN | undefined
 
     if (!!stakePool && !!stakeAccount) {
-      stakedJet = stakePool.vault.amount
-        .mul(stakeAccount.stakeAccount.bondedShares)
-        .div(stakePool.stakePool.bonded.shares)
+      if (stakePool.stakePool.bonded.shares.isZero()) {
+        stakedJet = new BN(0)
+      } else {
+        stakedJet = stakePool.vault.amount
+          .mul(stakeAccount.stakeAccount.bondedShares)
+          .div(stakePool.stakePool.bonded.shares)
+      }
 
       unbondingJet = stakeAccount.stakeAccount.unbondingShares
     }

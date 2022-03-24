@@ -36,14 +36,14 @@ export interface StakePoolInfo {
   stakeCollateralMint: PublicKey
 
   /** Length of the unbonding period */
-  unbond_period: BN
+  unbondPeriod: BN
 
   /** The amount of tokens stored by the pool's vault */
-  vault_amount: BN
+  vaultAmount: BN
 
   /** A token to identify when unbond conversions are invalidated due to */
   /** a withdraw of bonded tokens. */
-  unbond_change_index: BN
+  unbondChangeIndex: BN
 
   /** Tokens that are currently bonded, */
   /** and the distinctly valued shares that represent stake in bonded tokens */
@@ -58,8 +58,8 @@ export interface SharedTokenPool {
   /** Number of tokens held by this pool */
   tokens: BN
 
-  /** Number of shares that have been issued to users */
-  /** to represent ownership of a portion of the tokens */
+  /** Number of shares that have been issued to users
+      to represent ownership of a portion of the tokens */
   shares: BN
 }
 
@@ -86,7 +86,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "amoose"
+  public static readonly CANONICAL_SEED = "amoose2"
 
   /**
    * TODO:
