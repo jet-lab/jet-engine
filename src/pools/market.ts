@@ -16,8 +16,7 @@
  */
 
 import { PublicKey, Keypair, GetProgramAccountsFilter } from "@solana/web3.js"
-import { TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token"
-import * as anchor from "@project-serum/anchor"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { JetClient, DEX_ID, DEX_ID_DEVNET } from "."
 import { CreateReserveParams, JetReserve } from "./reserve"
 import { parsePosition, StaticSeeds } from "./util"
@@ -25,15 +24,17 @@ import { MarketReserveInfoStructList, PositionInfoStructList } from "./layout"
 import type { ObligationAccount } from "./types"
 import { DerivedAccount } from "../common"
 import { findDerivedAccountWithBump, Hooks } from "../common"
+import { BN } from "@project-serum/anchor"
+import { SYSVAR_RENT_PUBKEY, SystemProgram } from "@solana/web3.js"
 
 export interface JetMarketReserveInfo {
   reserve: PublicKey
-  price: anchor.BN
-  depositNoteExchangeRate: anchor.BN
-  loanNoteExchangeRate: anchor.BN
-  minCollateralRatio: anchor.BN
+  price: BN
+  depositNoteExchangeRate: BN
+  loanNoteExchangeRate: BN
+  minCollateralRatio: BN
   liquidationBonus: number
-  lastUpdated: anchor.BN
+  lastUpdated: BN
   invalidated: number
 }
 
@@ -131,8 +132,21 @@ export class JetMarket implements JetMarketData {
    */
   private static decode(client: JetClient, address: PublicKey, data: any) {
     const reserveInfoData = new Uint8Array(data.reserves)
-    let reserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData) as JetMarketReserveInfo[]
-    reserveInfoList = reserveInfoList.filter(reserve => !reserve.reserve.equals(PublicKey.default))
+    let rawReserveInfoList = MarketReserveInfoStructList.decode(reserveInfoData)
+    rawReserveInfoList = rawReserveInfoList.filter(reserve => !reserve.reserve.equals(PublicKey.default))
+
+    const reserveInfoList = rawReserveInfoList.map(reserve => {
+      return {
+        reserve: reserve.reserve,
+        price: reserve.price,
+        depositNoteExchangeRate: reserve.depositNoteExchangeRate,
+        loanNoteExchangeRate: reserve.loanNoteExchangeRate,
+        minCollateralRatio: reserve.minCollateralRatio,
+        liquidationBonus: reserve.liquidationBonus,
+        lastUpdated: reserve.lastUpdated,
+        invalidated: reserve.invalidated
+      }
+    })
 
     return new JetMarket(
       client,
@@ -147,10 +161,10 @@ export class JetMarket implements JetMarketData {
 
   /**
    * TODO:
-   * @param {u64} flags
+   * @param {BN} flags
    * @memberof JetMarket
    */
-  async setFlags(flags: u64) {
+  async setFlags(flags: BN) {
     await this.client.program.rpc.setMarketFlags(flags, {
       accounts: {
         market: this.address,
@@ -235,8 +249,8 @@ export class JetMarket implements JetMarketData {
 
         tokenProgram: TOKEN_PROGRAM_ID,
         dexProgram,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId
+        rent: SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId
       },
       instructions: [createReserveAccount],
       signers: [account]
