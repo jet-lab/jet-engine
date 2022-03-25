@@ -48,7 +48,7 @@ async function main() {
 
   const rewardsProgram = await RewardsClient.connect(provider)
   const stakeProgram = await StakeClient.connect(provider)
-  const stakePool = await StakePool.load(stakeProgram, args.targetStakePoolSeed)
+  const stakePool = await StakePool.load(stakeProgram as any, args.targetStakePoolSeed)
   const tokenSource = await AssociatedToken.load(connection, stakePool.stakePool.tokenMint, wallet.publicKey)
 
   if (!tokenSource) {

@@ -17,10 +17,18 @@ export interface AwardInfo {
   /**
    * The seed for the address
    *
-   * @type {PublicKey}
+   * @type {number[]}
    * @memberof AwardInfo
    */
-  seed: PublicKey
+  seed: number[]
+
+  /**
+   * The length of the seed
+   *
+   * @type {number}
+   * @memberof AwardInfo
+   */
+  seedLen: number
 
   /**
    * The bump seed for the address

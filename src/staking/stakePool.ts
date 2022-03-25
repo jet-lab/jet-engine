@@ -19,8 +19,8 @@ export interface StakePoolInfo {
   authority: PublicKey
 
   /** The seed used to generate the pool address */
-  seed: number | number[]
-
+  seed: number[]
+  seedLen: number
   bumpSeed: number[]
 
   /** The mint for the tokens being staked */
@@ -38,19 +38,29 @@ export interface StakePoolInfo {
   /** Length of the unbonding period */
   unbondPeriod: BN
 
-  /** The total amount of virtual stake tokens that can receive rewards */
-  sharesBonded: BN
-
-  /** The total amount of virtual stake tokens that are ineligible for rewards
-      because they are being unbonded for future withdrawal. */
-  tokensUnbonding: BN
-
   /** The amount of tokens stored by the pool's vault */
   vaultAmount: BN
 
-  /* A token to identify when unbond conversions are invalidated due to
-     a withdraw of bonded tokens. */
+  /** A token to identify when unbond conversions are invalidated due to */
+  /** a withdraw of bonded tokens. */
   unbondChangeIndex: BN
+
+  /** Tokens that are currently bonded, */
+  /** and the distinctly valued shares that represent stake in bonded tokens */
+  bonded: SharedTokenPool
+
+  /** Tokens that are in the process of unbonding, */
+  /** and the distinctly valued shares that represent stake in unbonding tokens */
+  unbonding: SharedTokenPool
+}
+
+export interface SharedTokenPool {
+  /** Number of tokens held by this pool */
+  tokens: BN
+
+  /** Number of shares that have been issued to users
+      to represent ownership of a portion of the tokens */
+  shares: BN
 }
 
 // ----- Instructions -----
@@ -76,7 +86,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "amoose"
+  public static readonly CANONICAL_SEED = "amoose2"
 
   /**
    * TODO:

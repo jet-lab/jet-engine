@@ -10,8 +10,9 @@ export interface UnbondingAccountInfo {
   /** The related account requesting to unstake  */
   stakeAccount: PublicKey
 
-  /** The amount of shares/tokens to be unstaked */
-  amount: FullAmount
+  /** The share of the unbonding tokens to be unstaked
+      These shares do not have equal value to the bonded shares */
+  shares: BN
 
   /** The time after which the staked amount can be withdrawn */
   unbondedAt: BN
@@ -21,8 +22,10 @@ export interface UnbondingAccountInfo {
 }
 
 export interface FullAmount {
-  shareAmount: BN
   tokenAmount: BN
+  shareAmount: BN
+  allShares: BN
+  allTokens: BN
 }
 
 export interface UnbondingAmount {
@@ -32,6 +35,9 @@ export interface UnbondingAmount {
 
 export class UnbondingAccount {
   private static readonly UINT32_MAXVALUE = 2 ** 32
+
+  /** The total amount of tokens unbonding */
+  public tokens: BN = new BN(0)
 
   /**
    * TODO:
@@ -116,7 +122,9 @@ export class UnbondingAccount {
    * @param {UnbondingAccountInfo} unbondingAccount
    * @memberof UnbondingAccount
    */
-  constructor(public program: Program, public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {}
+  constructor(public program: Program, public address: PublicKey, public unbondingAccount: UnbondingAccountInfo) {
+    this.tokens = new BN(0)
+  }
 
   /**
    * TODO:
@@ -154,27 +162,29 @@ export class UnbondingAccount {
   /**
    * TODO:
    * @static
-   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
+   * @param {UnbondingAccount[] | undefined} [_unbondingAccounts]
    * @returns {UnbondingAmount}
    * @memberof UnbondingAccount
    */
-  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): UnbondingAmount {
-    let unbondingQueue = new BN(0)
-    let unbondingComplete = new BN(0)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static useUnbondingAmountTotal(_unbondingAccounts: UnbondingAccount[] | undefined): UnbondingAmount {
+    const unbondingQueue = new BN(0)
+    const unbondingComplete = new BN(0)
 
-    if (unbondingAccounts) {
-      unbondingQueue = unbondingAccounts.reduce<BN>(
-        (total: BN, curr: UnbondingAccount) =>
-          total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
-        new BN(0)
-      )
+    // FIXME: Calculate unbonding token amounts after breaking change
+    // if (unbondingAccounts) {
+    //   unbondingQueue = unbondingAccounts.reduce<BN>(
+    //     (total: BN, curr: UnbondingAccount) =>
+    //       total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
+    //     new BN(0)
+    //   )
 
-      unbondingComplete = unbondingAccounts.reduce<BN>(
-        (total: BN, curr: UnbondingAccount) =>
-          total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
-        new BN(0)
-      )
-    }
+    //   unbondingComplete = unbondingAccounts.reduce<BN>(
+    //     (total: BN, curr: UnbondingAccount) =>
+    //       total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
+    //     new BN(0)
+    //   )
+    // }
     return { unbondingQueue, unbondingComplete }
   }
 
