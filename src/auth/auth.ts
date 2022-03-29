@@ -1,10 +1,11 @@
-import { Idl, Program, Provider } from "@project-serum/anchor"
+import { Program, Provider } from "@project-serum/anchor"
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js"
+import { PublicKey, Transaction } from "@solana/web3.js"
 import { useEffect, useState } from "react"
 import { connect, findDerivedAccount } from "../common"
 import { PubkeyField } from "../common/accountParser"
 import { Hooks } from "../common/hooks"
+import { AuthIdl } from "./idl"
 
 export interface UserAuthentication {
   /** The relevant user address */
@@ -40,10 +41,10 @@ export class Auth {
    * Creates a connection to the authentication program.
    * @static
    * @param {Provider} provider
-   * @returns {Promise<Program<Idl>>}
+   * @returns {Promise<Program<AuthIdl>>}
    * @memberof Auth
    */
-  static connect(provider: Provider): Promise<Program<Idl>> {
+  static connect(provider: Provider): Promise<Program<AuthIdl>> {
     return connect(Auth.PROGRAM_ID, provider)
   }
 
@@ -58,12 +59,12 @@ export class Auth {
   /**
    * Load and return the user authentication account from the argued public key.
    * @static
-   * @param {Program} authProgram
+   * @param {Program<AuthIdl>} authProgram
    * @param {PublicKey} user
    * @returns {Promise<Auth>}
    * @memberof Auth
    */
-  static async loadUserAuth(authProgram: Program, user: PublicKey): Promise<Auth> {
+  static async loadUserAuth(authProgram: Program<AuthIdl>, user: PublicKey): Promise<Auth> {
     const address = this.deriveUserAuthentication(user)
     const userAuthentication = (await authProgram.account.userAuthentication.fetch(address)) as UserAuthentication
     return new Auth(userAuthentication, address)
@@ -73,22 +74,25 @@ export class Auth {
    * Custom React hook to use the authentication program as state.
    * @static
    * @param {Provider} provider
-   * @returns {(Program<Idl> | undefined)}
+   * @returns {(Program<AuthIdl> | undefined)}
    * @memberof Auth
    */
-  static useAuthProgram(provider: Provider): Program<Idl> | undefined {
+  static useAuthProgram(provider: Provider): Program<AuthIdl> | undefined {
     return Hooks.usePromise(async () => Auth.connect(provider), [provider])
   }
 
   /**
    * Load the user authentication account. The account will be fetched every 2 seconds until it has been authenticated.
    * @static
-   * @param {Program} [authProgram]
+   * @param {Program<AuthIdl>} [authProgram]
    * @param {(PublicKey | null)} [wallet]
    * @returns {{ authAccount?: UserAuthentication; loading: boolean }}
    * @memberof Auth
    */
-  static useAuthAccount(authProgram?: Program, wallet?: PublicKey | null): { authAccount?: Auth; loading: boolean } {
+  static useAuthAccount(
+    authProgram?: Program<AuthIdl>,
+    wallet?: PublicKey | null
+  ): { authAccount?: Auth; loading: boolean } {
     const [{ authAccount, loading }, setAuthAccount] = useState<{
       authAccount: Auth | undefined
       loading: boolean
@@ -133,41 +137,34 @@ export class Auth {
    * Create a new account that can be used to identify that a
    * wallet/address is properly authenticated to perform protected actions.
    * @static
-   * @param {Program} authProgram
+   * @param {Program<AuthIdl>} authProgram
    * @param {PublicKey} user
    * @param {PublicKey} payer
    * @returns {Promise<Transaction>}
    * @memberof Auth
    */
-  static async createUserAuth(authProgram: Program, user: PublicKey, payer: PublicKey): Promise<Transaction> {
+  static async createUserAuth(authProgram: Program<AuthIdl>, user: PublicKey, payer: PublicKey): Promise<Transaction> {
     const auth = this.deriveUserAuthentication(user)
-    return authProgram.transaction.createUserAuth({
-      accounts: {
-        user,
-        payer,
-        auth,
-        systemProgram: SystemProgram.programId
-      }
-    })
+    return authProgram.methods.createUserAuth().accounts({ user, payer, auth }).transaction()
   }
 
   /**
    * Authenticate a user address. Auth.AUTHORITY must sign.
    * @static
-   * @param {Program} authProgram
+   * @param {Program<AuthIdl>} authProgram
    * @param {PublicKey} user
-   * @returns {Transaction}
+   * @returns {Promise<Transaction>}
    * @memberof Auth
    */
-  static approveAuthentication(authProgram: Program, user: PublicKey): Transaction {
+  static approveAuthentication(authProgram: Program<AuthIdl>, user: PublicKey): Promise<Transaction> {
     const authority = (authProgram.provider.wallet as NodeWallet).payer
-
-    return authProgram.transaction.authenticate({
-      accounts: {
+    return authProgram.methods
+      .authenticate()
+      .accounts({
         auth: user,
         authority: authority.publicKey
-      },
-      signers: [authority]
-    })
+      })
+      .signers([authority])
+      .transaction()
   }
 }

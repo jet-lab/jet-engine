@@ -8,7 +8,7 @@ export class TokenFaucet {
   /**
    * Airdrop faucet program public key.
    * @static
-   * @memberof Airdrop
+   * @memberof TokenFaucet
    */
   static readonly FAUCET_PROGRAM_ID = new PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
 
@@ -20,7 +20,7 @@ export class TokenFaucet {
    * @param {PublicKey} tokenMint
    * @param {PublicKey} tokenFaucet
    * @param {PublicKey} tokenAccount
-   * @memberof Airdrop
+   * @memberof TokenFaucet
    */
   private static async withAirdrop(
     instructions: TransactionInstruction[],
@@ -59,7 +59,7 @@ export class TokenFaucet {
    * @param {PublicKey} user
    * @param {PublicKey} mint
    * @returns {Promise<string>}
-   * @memberof Airdrop
+   * @memberof TokenFaucet
    */
   static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey): Promise<string> {
     const instructions: TransactionInstruction[] = []

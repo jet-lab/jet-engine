@@ -394,18 +394,19 @@ export class JetReserve {
   }
 
   async sendRefreshTx(): Promise<string> {
-    const tx = new Transaction().add(this.makeRefreshIx())
+    const tx = new Transaction().add(await this.makeRefreshIx())
     return await this.client.program.provider.send(tx)
   }
 
   /**
    * TODO:
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof JetReserve
    */
-  makeRefreshIx(): TransactionInstruction {
-    return this.client.program.instruction.refreshReserve({
-      accounts: {
+  makeRefreshIx(): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .refreshReserve()
+      .accounts({
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
         reserve: this.data.address,
@@ -413,8 +414,8 @@ export class JetReserve {
         depositNoteMint: this.data.depositNoteMint,
         pythOraclePrice: this.data.pythOraclePrice,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
   }
 
   /**

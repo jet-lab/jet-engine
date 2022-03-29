@@ -1,5 +1,6 @@
 import { Program } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
+import { RewardsIdl } from "."
 import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
@@ -88,13 +89,13 @@ export class Award {
    * Load the award account and its vault
    *
    * @static
-   * @param {Program} rewardsProgram
+   * @param {Program<RewardsIdl>} rewardsProgram
    * @param {PublicKey} stakeAccount
    * @param {string} seed
    * @returns {Promise<Award>}
    * @memberof Award
    */
-  static async load(rewardsProgram: Program, stakeAccount: PublicKey, seed: string): Promise<Award> {
+  static async load(rewardsProgram: Program<RewardsIdl>, stakeAccount: PublicKey, seed: string): Promise<Award> {
     const addresses = this.derive(stakeAccount, seed)
     const award = (await rewardsProgram.account.award.fetch(addresses.award)) as AwardInfo
     const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault)
@@ -117,14 +118,14 @@ export class Award {
    * React hook to use the award account and its vault
    *
    * @static
-   * @param {(Program | undefined)} rewardsProgram
+   * @param {(Program<RewardsIdl> | undefined)} rewardsProgram
    * @param {(PublicKey | undefined)} stakeAccount
    * @param {string} seed
    * @returns {(Award | undefined)}
    * @memberof Award
    */
   static use(
-    rewardsProgram: Program | undefined,
+    rewardsProgram: Program<RewardsIdl> | undefined,
     stakeAccount: PublicKey | undefined,
     seed: string
   ): Award | undefined {
