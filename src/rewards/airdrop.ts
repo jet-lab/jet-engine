@@ -16,7 +16,7 @@
  */
 
 import { BN, Program } from "@project-serum/anchor"
-import { MemcmpFilter, PublicKey, TransactionInstruction } from "@solana/web3.js"
+import { DataSizeFilter, PublicKey, TransactionInstruction } from "@solana/web3.js"
 import { StakeAccount, StakePool, StakeClient } from "../staking"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AssociatedToken, findDerivedAccount } from "../common"
@@ -205,15 +205,12 @@ export class Airdrop {
     return new Airdrop(airdropAddress, rewardsVaultAddress, airdrop, rewardsVault)
   }
 
-  static async loadAll(rewardsProgram: Program, stakePoolVault: PublicKey): Promise<Airdrop[]> {
-    const stakePoolFilter: MemcmpFilter = {
-      memcmp: {
-        offset: 8,
-        bytes: stakePoolVault.toBase58()
-      }
+  static async loadAll(rewardsProgram: Program): Promise<Airdrop[]> {
+    const dataSizeFilter: DataSizeFilter = {
+      dataSize: 400464
     }
+    const airdropInfos = await rewardsProgram.account.airdrop.all([dataSizeFilter])
 
-    const airdropInfos = await rewardsProgram.account.unbondingAccount.all([stakePoolFilter])
     const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
     const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
     const airdrops: Airdrop[] = []
@@ -274,7 +271,7 @@ export class Airdrop {
 
   static useAll(rewardsProgram: Program | undefined, stakePoolVault: PublicKey | undefined): Airdrop[] | undefined {
     return Hooks.usePromise(
-      async () => rewardsProgram && stakePoolVault && Airdrop.loadAll(rewardsProgram, stakePoolVault),
+      async () => rewardsProgram && stakePoolVault && Airdrop.loadAll(rewardsProgram),
       [rewardsProgram, stakePoolVault]
     )
   }
