@@ -198,7 +198,7 @@ export class Airdrop {
   static async load(rewardsProgram: Program<RewardsIdl>, airdropAddress: PublicKey): Promise<Airdrop> {
     const rewardsVaultAddress = this.deriveRewardsVault(airdropAddress)
     const rewardsVault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, rewardsVaultAddress)
-    const airdrop = (await rewardsProgram.account.Airdrop.fetch(airdropAddress)) as AirdropInfo
+    const airdrop = (await rewardsProgram.account.airdrop.fetch(airdropAddress)) as AirdropInfo
     if (!rewardsVault) {
       throw new Error("Rewards vault is undefined")
     }
@@ -225,7 +225,7 @@ export class Airdrop {
         bytes: stakePoolVault.toBase58()
       }
     }
-    const airdropInfos = await rewardsProgram.account.Airdrop.all([dataSizeFilter, stakePoolFilter])
+    const airdropInfos = await rewardsProgram.account.airdrop.all([dataSizeFilter, stakePoolFilter])
     
     const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
     const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
