@@ -205,7 +205,6 @@ export class Airdrop {
     return new Airdrop(airdropAddress, rewardsVaultAddress, airdrop, rewardsVault)
   }
 
-
   /**
    * Loads the airdrop accounts associating with the stake pool vault
    *
@@ -226,7 +225,7 @@ export class Airdrop {
       }
     }
     const airdropInfos = await rewardsProgram.account.airdrop.all([dataSizeFilter, stakePoolFilter])
-    
+
     const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
     const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
 
