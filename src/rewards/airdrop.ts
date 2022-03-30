@@ -16,7 +16,7 @@
  */
 
 import { BN, Program } from "@project-serum/anchor"
-import { MemcmpFilter, PublicKey, TransactionInstruction } from "@solana/web3.js"
+import { DataSizeFilter, MemcmpFilter, PublicKey, TransactionInstruction } from "@solana/web3.js"
 import { StakeAccount, StakePool, StakeClient } from "../staking"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AssociatedToken, findDerivedAccount } from "../common"
@@ -206,7 +206,7 @@ export class Airdrop {
   }
 
   /**
-   * TODO:
+   * Loads the airdrop accounts associating with the stake pool vault
    *
    * @static
    * @param {Program<RewardsIdl>} rewardsProgram
@@ -215,14 +215,17 @@ export class Airdrop {
    * @memberof Airdrop
    */
   static async loadAll(rewardsProgram: Program<RewardsIdl>, stakePoolVault: PublicKey): Promise<Airdrop[]> {
+    const dataSizeFilter: DataSizeFilter = {
+      dataSize: 400464
+    }
     const stakePoolFilter: MemcmpFilter = {
       memcmp: {
-        offset: 8,
+        offset: 8 + 32 + 32 + 32 + 8, // airdrop.stake_pool
         bytes: stakePoolVault.toBase58()
       }
     }
+    const airdropInfos = await rewardsProgram.account.airdrop.all([dataSizeFilter, stakePoolFilter])
 
-    const airdropInfos = await rewardsProgram.account.airdrop.all([stakePoolFilter])
     const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
     const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
 
