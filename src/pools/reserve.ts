@@ -24,7 +24,6 @@ import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient } from "./client"
 import { JetMarket } from "./market"
 import { StaticSeeds } from "./util"
-import { ReserveStateStruct } from "./layout"
 import type { ReserveAccount } from "./types"
 import { parsePriceData, parseProductData, PriceData, ProductData } from "@pythnetwork/client"
 import { BN } from "@project-serum/anchor"
@@ -33,6 +32,7 @@ import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { findDerivedAccountWithBump } from "../common"
 import { DerivedAccount } from "../common"
 import { Hooks } from "../common"
+import { ReserveStateStruct } from "./layout"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -353,22 +353,34 @@ export class JetReserve {
     mintData: Buffer,
     availableLiquidityLamports: BN
   ) {
-    const mint = parseMintAccount(mintData)
+    const mint = parseMintAccount(mintData, address)
     const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals, data.tokenMint)
-    const state = ReserveStateStruct.decode(new Uint8Array(data.state))
-    state.outstandingDebt = new TokenAmount(
-      (state.outstandingDebt as BN).div(new BN(1e15)),
+    const decodedData = ReserveStateStruct.decode(new Uint8Array(data.state))
+
+    const calculatedOutstandingDebt = new TokenAmount(
+      decodedData.outstandingDebt.div(new BN(1e15)),
       mint.decimals,
       data.tokenMint
     )
+
+    const state: ReserveStateData = {
+      accruedUntil: decodedData.accruedUntil,
+      outstandingDebt: calculatedOutstandingDebt,
+      uncollectedFees: new TokenAmount(decodedData.uncollectedFees, mint.decimals, data.tokenMint),
+      totalDeposits: new TokenAmount(decodedData.totalDeposits, mint.decimals, data.tokenMint),
+      totalDepositNotes: new TokenAmount(decodedData.totalDepositNotes, mint.decimals, data.depositNoteMint),
+      totalLoanNotes: new TokenAmount(decodedData.totalLoanNotes, mint.decimals, data.loanNoteMint)
+    }
+
     const reserve: ReserveData = {
       ...data,
-      address,
       state,
+      address,
       priceData,
       productData,
       availableLiquidity
     }
+
     // Derive market reserve values
     reserve.marketSize = reserve.state.outstandingDebt.add(reserve.availableLiquidity)
     reserve.utilizationRate = reserve.marketSize.isZero()
@@ -382,18 +394,19 @@ export class JetReserve {
   }
 
   async sendRefreshTx(): Promise<string> {
-    const tx = new Transaction().add(this.makeRefreshIx())
+    const tx = new Transaction().add(await this.makeRefreshIx())
     return await this.client.program.provider.send(tx)
   }
 
   /**
    * TODO:
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof JetReserve
    */
-  makeRefreshIx(): TransactionInstruction {
-    return this.client.program.instruction.refreshReserve({
-      accounts: {
+  makeRefreshIx(): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .refreshReserve()
+      .accounts({
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
         reserve: this.data.address,
@@ -401,8 +414,8 @@ export class JetReserve {
         depositNoteMint: this.data.depositNoteMint,
         pythOraclePrice: this.data.pythOraclePrice,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
   }
 
   /**

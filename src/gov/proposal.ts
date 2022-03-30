@@ -139,28 +139,23 @@ export class GovProposal implements GovProposalData {
    * @param {GovProposal} proposalData
    * @param {ProposalContent} content
    * @param {ProposalLifecycle} lifecycle
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovProposal
    */
   initProposalIx(
     proposalData: GovProposal,
     content: ProposalContent,
     lifecycle: ProposalLifecycle
-  ): TransactionInstruction {
-    return this.client.program.instruction.initProposal(
-      content.name,
-      content.description,
-      lifecycle.activate,
-      lifecycle.finalize,
-      {
-        accounts: {
-          owner: proposalData.owner,
-          realm: proposalData.realm,
-          proposal: proposalData.address,
-          systemProgram: SystemProgram.programId
-        }
-      }
-    )
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .initProposal(content.name, content.description, lifecycle.activate, lifecycle.finalize)
+      .accounts({
+        owner: proposalData.owner,
+        realm: proposalData.realm,
+        proposal: proposalData.address,
+        systemProgram: SystemProgram.programId
+      })
+      .instruction()
   }
 
   // TODO: edit_proposal.rs - checked
@@ -169,22 +164,23 @@ export class GovProposal implements GovProposalData {
    * @param {GovProposal} proposalData
    * @param {GovVoteRecord} voteRecord
    * @param {ProposalContent} content
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovProposal
    */
   editProposalIx(
     proposalData: GovProposal,
     voteRecord: GovVoteRecord,
     content: ProposalContent
-  ): TransactionInstruction {
-    return this.client.program.instruction.editProposal(content.name, content.description, {
-      accounts: {
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .editProposal(content.name, content.description)
+      .accounts({
         owner: proposalData.owner,
         realm: proposalData.realm,
         voter: voteRecord.owner,
         proposal: proposalData.address
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: transition_proposal.rs - checked
@@ -194,7 +190,7 @@ export class GovProposal implements GovProposalData {
    * @param {GovVoteRecord} voteRecord
    * @param {ProposalLifecycle} event
    * @param {Time} when
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovProposal
    */
   transitionProposalIx(
@@ -202,14 +198,15 @@ export class GovProposal implements GovProposalData {
     voteRecord: GovVoteRecord,
     event: ProposalLifecycle,
     when: Time
-  ): TransactionInstruction {
-    return this.client.program.instruction.transitionProposal(event, when, {
-      accounts: {
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .transitionProposal(event, when)
+      .accounts({
         owner: proposalData.owner,
         realm: proposalData.realm,
         voter: voteRecord.owner,
         proposal: voteRecord.proposal
-      }
-    })
+      })
+      .instruction()
   }
 }

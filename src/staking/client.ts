@@ -31,7 +31,7 @@ export class StakeClient {
   /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
-   * @returns {Promise<Program>} The client
+   * @returns {Promise<Program<StakeIdl>>} The client
    * @memberof StakeClient
    */
   static async connect(provider: Provider): Promise<Program<StakeIdl>> {

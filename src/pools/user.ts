@@ -193,8 +193,8 @@ export class JetUser implements JetUserData {
     const collateralAccounts = this.findReserveAccounts(collateralReserve)
 
     const tx = new Transaction()
-    tx.add(loanReserve.makeRefreshIx())
-    tx.add(collateralReserve.makeRefreshIx())
+    tx.add(await loanReserve.makeRefreshIx())
+    tx.add(await collateralReserve.makeRefreshIx())
     tx.add(
       this.makeLiquidateDexIx(
         collateralDexAccounts,
@@ -303,8 +303,8 @@ export class JetUser implements JetUserData {
     const { collateral } = this.findReserveAccounts(collateralReserve)
 
     const tx = new Transaction()
-    tx.add(loanReserve.makeRefreshIx())
-    tx.add(collateralReserve.makeRefreshIx())
+    tx.add(await loanReserve.makeRefreshIx())
+    tx.add(await collateralReserve.makeRefreshIx())
     tx.add(
       this.makeLiquidateIx(
         loanReserve,
@@ -375,7 +375,7 @@ export class JetUser implements JetUserData {
   async makeRepayTx(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
     const { loan } = this.findReserveAccounts(reserve)
     const tx = new Transaction()
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeRepayIx(reserve, loan, tokenAccount, amount))
     return tx
   }
@@ -438,7 +438,7 @@ export class JetUser implements JetUserData {
     }
 
     const tx = new Transaction()
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeWithdrawCollateralIx(reserve, collateral, deposits, bumpSeeds, amount))
     return tx
   }
@@ -497,7 +497,7 @@ export class JetUser implements JetUserData {
   async makeWithdrawTx(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<Transaction> {
     const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeWithdrawIx(reserve, accounts.deposits, tokenAccount, amount))
     return tx
   }
@@ -563,7 +563,7 @@ export class JetUser implements JetUserData {
       tx.add(this.makeInitDepositAccountIx(reserve, deposits))
     }
 
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeDepositIx(reserve, deposits, tokenAccount, amount))
 
     return tx
@@ -638,7 +638,7 @@ export class JetUser implements JetUserData {
       collateralAccount: collateral.bump
     }
 
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeDepositCollateralIx(reserve, deposits, collateral, bumpSeeds, amount))
     return tx
   }
@@ -700,7 +700,7 @@ export class JetUser implements JetUserData {
       tx.add(this.makeInitLoanAccountIx(reserve, accounts.loan))
     }
 
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(this.makeBorrowIx(reserve, accounts.loan, receiver, amount))
     return tx
   }
@@ -712,7 +712,7 @@ export class JetUser implements JetUserData {
   async closeDepositAccountTx(reserve: JetReserve, receiver: PublicKey): Promise<Transaction> {
     const accounts = this.findReserveAccounts(reserve)
     const tx = new Transaction()
-    tx.add(reserve.makeRefreshIx())
+    tx.add(await reserve.makeRefreshIx())
     tx.add(
       this.client.program.instruction.closeDepositAccount(accounts.deposits.bump, {
         accounts: {

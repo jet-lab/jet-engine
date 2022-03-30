@@ -8,6 +8,7 @@ import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
 import { getTokenOwnerRecordAddress, ProgramAccount, Realm } from "@solana/spl-governance"
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
+import { StakeIdl } from "./idl"
 
 export interface StakeAccountInfo {
   /** The account that has ownership over this stake */
@@ -38,13 +39,13 @@ export class StakeAccount {
   /**
    * TODO:
    * @static
-   * @param {Program} stakeProgram
+   * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
    * @returns {Promise<PublicKey>}
    * @memberof StakeAccount
    */
-  static deriveStakeAccount(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): PublicKey {
+  static deriveStakeAccount(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): PublicKey {
     return findDerivedAccount(stakeProgram.programId, stakePool, owner)
   }
 
@@ -108,13 +109,13 @@ export class StakeAccount {
   /**
    * TODO:
    * @static
-   * @param {Program} stakeProgram
+   * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
    * @returns {Promise<StakeAccount>}
    * @memberof StakeAccount
    */
-  static async load(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
+  static async load(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
     const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
     const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
@@ -125,13 +126,13 @@ export class StakeAccount {
   /**
    * TODO:
    * @static
-   * @param {Program} stakeProgram
+   * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
    * @returns {Promise<boolean>}
    * @memberof StakeAccount
    */
-  static async exists(stakeProgram: Program, stakePool: PublicKey, owner: PublicKey): Promise<boolean> {
+  static async exists(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): Promise<boolean> {
     const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
     const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(address)
     return stakeAccount !== null
@@ -140,24 +141,28 @@ export class StakeAccount {
   /**
    * Creates an instance of StakeAccount.
    * @private
-   * @param {Program} program
+   * @param {Program<StakeIdl>} program
    * @param {PublicKey} address
    * @param {StakeAccountInfo} stakeAccount
    * @memberof StakeAccount
    */
-  private constructor(public program: Program, public address: PublicKey, public stakeAccount: StakeAccountInfo) {}
+  private constructor(
+    public program: Program<StakeIdl>,
+    public address: PublicKey,
+    public stakeAccount: StakeAccountInfo
+  ) {}
 
   /**
    * TODO:
    * @static
-   * @param {Program} [stakeProgram]
+   * @param {Program<StakeIdl>} [stakeProgram]
    * @param {StakePool} [stakePool]
    * @param {(PublicKey | null)} [wallet]
    * @returns {(StakeAccount | undefined)}
    * @memberof StakeAccount
    */
   static use(
-    stakeProgram: Program | undefined,
+    stakeProgram: Program<StakeIdl> | undefined,
     stakePool: StakePool | undefined,
     wallet: PublicKey | undefined
   ): StakeAccount | undefined {
@@ -201,7 +206,7 @@ export class StakeAccount {
   /**
    * TODO:
    * @static
-   * @param {Program} stakeProgram
+   * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
    * @param {PublicKey} payer
@@ -209,7 +214,7 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async create(
-    stakeProgram: Program,
+    stakeProgram: Program<StakeIdl>,
     stakePool: PublicKey,
     owner: PublicKey,
     payer: PublicKey
@@ -261,14 +266,14 @@ export class StakeAccount {
    * TODO:
    * @static
    * @param {TransactionInstruction[]} instructions
-   * @param {Program} stakeProgram
+   * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
    * @memberof StakeAccount
    */
   static async withCreate(
     instructions: TransactionInstruction[],
-    stakeProgram: Program,
+    stakeProgram: Program<StakeIdl>,
     stakePool: PublicKey,
     owner: PublicKey,
     payer: PublicKey
@@ -286,16 +291,18 @@ export class StakeAccount {
     if (!info) {
       const auth = Auth.deriveUserAuthentication(owner)
 
-      const ix = stakeProgram.instruction.initStakeAccount({
-        accounts: {
+      const ix = await stakeProgram.methods
+        .initStakeAccount()
+        .accounts({
           owner,
           auth,
           stakePool,
           stakeAccount,
           payer,
           systemProgram: SystemProgram.programId
-        }
-      })
+        })
+        .instruction()
+
       instructions.push(ix)
     }
   }
@@ -321,16 +328,18 @@ export class StakeAccount {
   ) {
     const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
 
-    const ix = stakePool.program.instruction.addStake(amount, {
-      accounts: {
+    const ix = await stakePool.program.methods
+      .addStake(amount)
+      .accounts({
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.addresses.stakePoolVault,
         stakeAccount,
         payer,
         payerTokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
+
     instructions.push(ix)
   }
 
@@ -356,8 +365,9 @@ export class StakeAccount {
     const governanceVault = this.deriveGovernanceVault(realm.owner, realm.pubkey, realm.account.communityMint)
     const tokenOwnerRecord = await this.deriveGovernanceTokenOwnerRecord(realm, realm.account.communityMint, owner)
 
-    const ix = stakePool.program.instruction.mintVotes(amount, {
-      accounts: {
+    const ix = await stakePool.program.methods
+      .mintVotes(amount)
+      .accounts({
         owner: owner,
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.addresses.stakePoolVault,
@@ -372,8 +382,9 @@ export class StakeAccount {
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
-      }
-    })
+      })
+      .instruction()
+
     instructions.push(ix)
   }
 
@@ -396,8 +407,9 @@ export class StakeAccount {
     voterTokenAccount: PublicKey,
     amount: BN | null = null
   ) {
-    const ix = stakePool.program.instruction.burnVotes(amount, {
-      accounts: {
+    const ix = await stakePool.program.methods
+      .burnVotes(amount)
+      .accounts({
         owner,
         stakePool: stakePool.addresses.stakePool,
         stakeVoteMint: stakePool.addresses.stakeVoteMint,
@@ -405,8 +417,9 @@ export class StakeAccount {
         voterTokenAccount,
         voter: owner,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
+
     instructions.push(ix)
   }
 }

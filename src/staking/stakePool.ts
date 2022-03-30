@@ -1,10 +1,10 @@
-import { MintInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { AccountInfo as TokenAccountInfo } from "@solana/spl-token"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { findDerivedAccount } from "../common"
+import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
 import { Hooks } from "../common/hooks"
+import { StakeIdl } from "./idl"
 
 export interface StakePoolAccounts {
   stakePool: PublicKey
@@ -41,10 +41,6 @@ export interface StakePoolInfo {
 
   /** The amount of tokens stored by the pool's vault */
   vaultAmount: BN
-
-  /** A token to identify when unbond conversions are invalidated due to */
-  /** a withdraw of bonded tokens. */
-  unbondChangeIndex: BN
 
   /** Tokens that are currently bonded, */
   /** and the distinctly valued shares that represent stake in bonded tokens */
@@ -92,12 +88,12 @@ export class StakePool {
   /**
    * TODO:
    * @static
-   * @param {Program} program
+   * @param {Program<StakeIdl>} program
    * @param {string} seed
    * @returns {Promise<StakePool>}
    * @memberof StakePool
    */
-  static async load(program: Program, seed: string): Promise<StakePool> {
+  static async load(program: Program<StakeIdl>, seed: string): Promise<StakePool> {
     const addresses = this.deriveAccounts(program.programId, seed)
 
     const stakePool = (await program.account.stakePool.fetch(addresses.stakePool)) as StakePoolInfo
@@ -114,43 +110,43 @@ export class StakePool {
       throw new Error("Invalid mint")
     }
 
-    const voteMint = parseMintAccount(voteMintInfo.data as Buffer)
-    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer)
+    const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
+    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer)
+    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
 
     return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
   }
 
   /**
    * Creates an instance of StakePool.
-   * @param {Program} program
+   * @param {Program<StakeIdl>} program
    * @param {StakePoolAccounts} addresses
    * @param {StakePoolInfo} stakePool
    * @param {MintInfo} voteMint
    * @param {MintInfo} collateralMint
-   * @param {TokenAccountInfo} vault
+   * @param {JetTokenAccount} vault
    * @param {MintInfo} tokenMint
    * @memberof StakePool
    */
   constructor(
-    public program: Program,
+    public program: Program<StakeIdl>,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public voteMint: MintInfo,
-    public collateralMint: MintInfo,
-    public vault: TokenAccountInfo,
-    public tokenMint: MintInfo
+    public voteMint: JetMint,
+    public collateralMint: JetMint,
+    public vault: JetTokenAccount,
+    public tokenMint: JetMint
   ) {}
 
   /**
    * TODO:
    * @static
-   * @param {Program} [stakeProgram]
+   * @param {Program<StakeIdl>} [stakeProgram]
    * @returns {*}  {(StakePool | undefined)}
    * @memberof StakePool
    */
-  static use(stakeProgram: Program | undefined): StakePool | undefined {
+  static use(stakeProgram: Program<StakeIdl> | undefined): StakePool | undefined {
     return Hooks.usePromise(
       async () => stakeProgram && StakePool.load(stakeProgram, StakePool.CANONICAL_SEED),
       [stakeProgram]
@@ -181,12 +177,12 @@ export class StakePool {
   /**
    * TODO:
    * @static
-   * @param {Program} program
+   * @param {Program<StakeIdl>} program
    * @param {CreateStakePoolParams} params
    * @returns {Promise<string>}
    * @memberof StakePool
    */
-  static async create(program: Program, params: CreateStakePoolParams): Promise<string> {
+  static async create(program: Program<StakeIdl>, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
 
     const accounts = {

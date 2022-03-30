@@ -17,6 +17,7 @@
 
 import { Program, Provider } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
+import { RewardsIdl } from "."
 import { connect } from "../common"
 import { Hooks } from "../common/hooks"
 
@@ -26,10 +27,10 @@ export class RewardsClient {
   /**
    * Create a new client for interacting with the Jet rewards program
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
-   * @returns {Promise<Program>} The program
+   * @returns {Promise<Program<RewardsIdl>>} The program
    * @memberof RewardsClient
    */
-  static async connect(provider: Provider): Promise<Program> {
+  static async connect(provider: Provider): Promise<Program<RewardsIdl>> {
     return await connect(RewardsClient.PROGRAM_ID, provider)
   }
 
@@ -38,10 +39,10 @@ export class RewardsClient {
    *
    * @static
    * @param {Provider} provider
-   * @returns {(Program | undefined)} The program
+   * @returns {(Program<RewardsIdl> | undefined)} The program
    * @memberof RewardsClient
    */
-  static use(provider: Provider | undefined): Program | undefined {
+  static use(provider: Provider | undefined): Program<RewardsIdl> | undefined {
     return Hooks.usePromise(async () => provider && RewardsClient.connect(provider), [provider?.connection])
   }
 }
