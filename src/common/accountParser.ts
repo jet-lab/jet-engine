@@ -248,6 +248,30 @@ export const bnToNumber = (bn: BN | null | undefined): number => {
   return bn ? parseFloat(bn.toString()) : 0
 }
 
+/**
+ * Convert BigInt (spl) to BN (Anchor)
+ * @param {bigint} [bigInt]
+ * @returns {BN}
+ */
+export const bigIntToBn = (bigInt: bigint | null | undefined): BN => {
+  return bigInt ? new BN(bigInt.toString()) : new BN(0)
+}
+
+/**
+ * Convert BN (Anchor) to BigInt (spl)
+ * @param {bn} [bn]
+ * @returns {bigint}
+ */
+export const bnToBigInt = (bn: BN | number | null | undefined): bigint => {
+  let result: bigint
+  if (typeof bn === "number") {
+    result = BigInt(bn)
+  } else {
+    result = bn ? BigInt(bn.toNumber()) : BigInt(0)
+  }
+  return result
+}
+
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder("utf-8")
 
