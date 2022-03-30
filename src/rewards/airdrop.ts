@@ -221,7 +221,7 @@ export class Airdrop {
     }
     const stakePoolFilter: MemcmpFilter = {
       memcmp: {
-        offset: 112,
+        offset: 8 + 32 + 32 + 32 + 8, // airdrop.stake_pool
         bytes: stakePoolVault.toBase58()
       }
     }
