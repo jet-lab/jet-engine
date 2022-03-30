@@ -9,6 +9,7 @@ import { RewardsClient } from "./client"
 import _ from "lodash"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { StakeAccount } from "../staking/stakeAccount"
+import { RewardsIdl } from "./idl"
 
 /**
  * A distribution account from the rewards program.
@@ -167,12 +168,12 @@ export class Distribution {
   /**
    * Load the distribution account and its vault
    * @static
-   * @param {Program} rewardsProgram
+   * @param {Program<RewardsIdl>} rewardsProgram
    * @param {string} seed
    * @returns {Promise<Distribution>}
    * @memberof Distribution
    */
-  static async load(rewardsProgram: Program, seed: string): Promise<Distribution> {
+  static async load(rewardsProgram: Program<RewardsIdl>, seed: string): Promise<Distribution> {
     const addresses = Distribution.derive(seed)
     const vault = await AssociatedToken.loadAux(rewardsProgram.provider.connection, addresses.vault)
     const distribution = (await rewardsProgram.account.distribution.fetch(addresses.distribution)) as DistributionInfo
@@ -182,7 +183,15 @@ export class Distribution {
     return new Distribution(addresses, distribution, vault)
   }
 
-  static async loadAll(rewardsProgram: Program): Promise<Distribution[]> {
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {Program<RewardsIdl>} rewardsProgram
+   * @returns {Promise<Distribution[]>}
+   * @memberof Distribution
+   */
+  static async loadAll(rewardsProgram: Program<RewardsIdl>): Promise<Distribution[]> {
     const distributions = (await rewardsProgram.account.distribution.all()) as ProgramAccount<DistributionInfo>[]
     const addresses = distributions.map(dist => Distribution.derive(dist.account.seed, dist.account.seedLen))
     const vaultAddresses = addresses.map(address => address.vault)
@@ -210,8 +219,17 @@ export class Distribution {
     )
   }
 
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {Program<RewardsIdl>} rewardsProgram
+   * @param {StakePool} distributionTarget
+   * @param {DistributionCreateParams} params
+   * @memberof Distribution
+   */
   static async createForStakePool(
-    rewardsProgram: Program,
+    rewardsProgram: Program<RewardsIdl>,
     distributionTarget: StakePool,
     params: DistributionCreateParams
   ) {
@@ -220,31 +238,40 @@ export class Distribution {
     await this.create(rewardsProgram, stakePoolVault, tokenMint, params)
   }
 
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {Program<RewardsIdl>} rewardsProgram
+   * @param {PublicKey} targetAccount
+   * @param {PublicKey} tokenMint
+   * @param {DistributionCreateParams} params
+   * @returns {Promise<string>}
+   * @memberof Distribution
+   */
   static async create(
-    rewardsProgram: Program,
+    rewardsProgram: Program<RewardsIdl>,
     targetAccount: PublicKey,
     tokenMint: PublicKey,
     params: DistributionCreateParams
-  ) {
+  ): Promise<string> {
     const addresses = this.derive(params.args.seed)
-    return await rewardsProgram.rpc.distributionCreate(
-      {
+    return rewardsProgram.methods
+      .distributionCreate({
         ...params.args,
         targetAccount
-      },
-      {
-        accounts: {
-          ...params.accounts,
-          distribution: addresses.distribution,
-          vault: addresses.vault,
-          payerRent: rewardsProgram.provider.wallet.publicKey,
-          tokenMint,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY
-        }
-      }
-    )
+      })
+      .accounts({
+        ...params.accounts,
+        distribution: addresses.distribution,
+        vault: addresses.vault,
+        payerRent: rewardsProgram.provider.wallet.publicKey,
+        tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
+      })
+      .rpc()
   }
 
   /**
@@ -263,12 +290,12 @@ export class Distribution {
   /**
    * React hook to load the distribution account and its vault
    * @static
-   * @param {(Program | undefined)} rewardsProgram
+   * @param {(Program<RewardsIdl> | undefined)} rewardsProgram
    * @param {string} seed
    * @returns {Distribution | undefined}
    * @memberof Distribution
    */
-  static use(rewardsProgram: Program | undefined, seed: string): Distribution | undefined {
+  static use(rewardsProgram: Program<RewardsIdl> | undefined, seed: string): Distribution | undefined {
     return Hooks.usePromise(
       async () => rewardsProgram && Distribution.load(rewardsProgram, seed),
       [rewardsProgram, seed]
@@ -278,14 +305,22 @@ export class Distribution {
   /**
    * React hook to load all the distribution accounts and their vaults
    * @static
-   * @param {(Program | undefined)} rewardsProgram
+   * @param {(Program<RewardsIdl> | undefined)} rewardsProgram
    * @returns {Distribution[] | undefined}
    * @memberof Distribution
    */
-  static useAll(rewardsProgram: Program | undefined): Distribution[] | undefined {
+  static useAll(rewardsProgram: Program<RewardsIdl> | undefined): Distribution[] | undefined {
     return Hooks.usePromise(async () => rewardsProgram && Distribution.loadAll(rewardsProgram), [rewardsProgram])
   }
 
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {(Distribution[] | undefined)} distributions
+   * @returns {(Distribution[] | undefined)}
+   * @memberof Distribution
+   */
   static useActive(distributions: Distribution[] | undefined): Distribution[] | undefined {
     return useMemo(() => {
       if (!distributions) {
@@ -300,7 +335,14 @@ export class Distribution {
     }, [distributions])
   }
 
-  isActive(now: BN) {
+  /**
+   * TODO:
+   *
+   * @param {BN} now
+   * @returns {boolean}
+   * @memberof Distribution
+   */
+  isActive(now: BN): boolean {
     if (this.distribution.tokenDistribution.beginAt.gt(now)) {
       return false
     }
@@ -310,7 +352,23 @@ export class Distribution {
     return true
   }
 
-  static estimateYield(dist: Distribution, totalDeposits: number, totalShares: number, usersShares: number) {
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {Distribution} dist
+   * @param {number} totalDeposits
+   * @param {number} totalShares
+   * @param {number} usersShares
+   * @returns {DistributionYield}
+   * @memberof Distribution
+   */
+  static estimateYield(
+    dist: Distribution,
+    totalDeposits: number,
+    totalShares: number,
+    usersShares: number
+  ): DistributionYield {
     const tokenDist = dist.distribution.tokenDistribution
     if (tokenDist.kind.linear === undefined) {
       throw new Error("Calculatng non linear yield not implemented.")
@@ -331,23 +389,44 @@ export class Distribution {
     return new DistributionYield(apr, perDay, perMonth, perYear)
   }
 
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {Distribution[]} distributions
+   * @param {number} totalDeposits
+   * @param {number} totalShares
+   * @param {number} usersShares
+   * @returns {DistributionYield}
+   * @memberof Distribution
+   */
   static estimateCombinedYield(
     distributions: Distribution[],
     totalDeposits: number,
     totalShares: number,
     usersShares: number
-  ) {
+  ): DistributionYield {
     const initialValue = new DistributionYield()
     return distributions.reduce((combinedYield: DistributionYield, dist: Distribution) => {
       return Distribution.estimateYield(dist, totalDeposits, totalShares, usersShares).combine(combinedYield)
     }, initialValue)
   }
 
+  /**
+   * TODO:
+   *
+   * @static
+   * @param {(Distribution[] | undefined)} distributions
+   * @param {(StakePool | undefined)} stakePool
+   * @param {(StakeAccount | undefined)} stakeAccount
+   * @returns {(DistributionYield | undefined)}
+   * @memberof Distribution
+   */
   static useEstimateCombinedYield(
     distributions: Distribution[] | undefined,
     stakePool: StakePool | undefined,
     stakeAccount: StakeAccount | undefined
-  ) {
+  ): DistributionYield | undefined {
     return useMemo(() => {
       if (!distributions || !stakePool) {
         return undefined
@@ -373,7 +452,14 @@ export class Distribution {
 export class DistributionYield {
   constructor(public apr: number = 0, public perDay?: number, public perMonth?: number, public perYear?: number) {}
 
-  combine(other: DistributionYield) {
+  /**
+   * TODO:
+   *
+   * @param {DistributionYield} other
+   * @returns {DistributionYield}
+   * @memberof DistributionYield
+   */
+  combine(other: DistributionYield): DistributionYield {
     return new DistributionYield(
       this.apr + other.apr,
       (this.perDay ?? 0) + (other.perDay ?? 0),

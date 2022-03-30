@@ -167,18 +167,19 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {GovVoter} voter
    * @param {GovRealm} realm
    * @param {number} bumpSeed
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoteRecord
    */
-  async createVoterIx(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<TransactionInstruction> {
-    return this.client.program.instruction.initVoter(bumpSeed, {
-      accounts: {
+  createVoterIx(voter: GovVoter, realm: GovRealm, bumpSeed: number): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .initVoter(bumpSeed)
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         voter: voter.address,
         systemProgram: SystemProgram.programId
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: deposit_token.rs - checked
@@ -188,20 +189,26 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {GovVoter} voter
    * @param {PublicKey} tokenAccount
    * @param {Amount} amount
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoter
    */
-  depositTokenIx(realm: GovRealm, voter: GovVoter, tokenAccount: PublicKey, amount: Amount): TransactionInstruction {
-    return this.client.program.instruction.depositToken(amount.toRpcArg(), {
-      accounts: {
+  depositTokenIx(
+    realm: GovRealm,
+    voter: GovVoter,
+    tokenAccount: PublicKey,
+    amount: Amount
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .depositToken(amount.toRpcArg())
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         vault: realm.vault,
         voter: voter.address,
         tokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: withdraw_token.rs - checked
@@ -212,7 +219,7 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {PublicKey} tokenAccount
    * @param {number} bump
    * @param {Amount} amount
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoter
    */
   withdrawTokenIx(
@@ -221,9 +228,10 @@ export class GovVoteRecord implements GovVoteRecordData {
     tokenAccount: PublicKey,
     bump: number,
     amount: Amount
-  ): TransactionInstruction {
-    return this.client.program.instruction.withdrawToken(bump, amount.toRpcArg(), {
-      accounts: {
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .withdrawToken(bump, amount.toRpcArg())
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         authority: realm.authority,
@@ -231,8 +239,8 @@ export class GovVoteRecord implements GovVoteRecordData {
         voter: voter.address,
         tokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: cast_vote.rs - checked
@@ -243,7 +251,7 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {GovVoteRecord} voteRecord
    * @param {VoteCount} vote
    * @param {number} bump
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoter
    */
   voteIx(
@@ -252,17 +260,18 @@ export class GovVoteRecord implements GovVoteRecordData {
     voteRecord: GovVoteRecord,
     bump: number,
     vote: VoteCount
-  ): TransactionInstruction {
-    return this.client.program.instruction.castVote(bump, vote, {
-      accounts: {
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .castVote(bump, vote)
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         voter: voter.address,
         proposal: voteRecord.proposal,
         voteRecord: voteRecord.address,
         systemProgram: SystemProgram.programId
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: change_vote.rs - checked
@@ -273,19 +282,25 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {GovVoteRecord} voteRecord
    * @param {VoteCount} vote
    * @param {PublicKey} governanceTokenMint
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoter
    */
-  changeVoteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord, vote: VoteCount): TransactionInstruction {
-    return this.client.program.instruction.changeVote(vote, {
-      accounts: {
+  changeVoteIx(
+    realm: GovRealm,
+    voter: GovVoter,
+    voteRecord: GovVoteRecord,
+    vote: VoteCount
+  ): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .changeVote(vote)
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         voter: voter.address,
         proposal: voteRecord.proposal,
         voteRecord: voteRecord.address
-      }
-    })
+      })
+      .instruction()
   }
 
   // TODO: rescind_vote.rs - checked
@@ -294,18 +309,19 @@ export class GovVoteRecord implements GovVoteRecordData {
    * @param {GovRealm} realm
    * @param {GovVoter} voter
    * @param {GovVoteRecord} voteRecord
-   * @returns {TransactionInstruction}
+   * @returns {Promise<TransactionInstruction>}
    * @memberof GovVoter
    */
-  rescindVoteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord): TransactionInstruction {
-    return this.client.program.instruction.rescindVote({
-      accounts: {
+  rescindVoteIx(realm: GovRealm, voter: GovVoter, voteRecord: GovVoteRecord): Promise<TransactionInstruction> {
+    return this.client.program.methods
+      .rescindVote()
+      .accounts({
         owner: voter.owner,
         realm: realm.address,
         voter: voter.address,
         proposal: voteRecord.proposal,
         voteRecord: voteRecord.address
-      }
-    })
+      })
+      .instruction()
   }
 }
