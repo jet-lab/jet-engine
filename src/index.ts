@@ -24,14 +24,25 @@ export {
   AwardAddresses,
   AwardInfo,
   RewardsClient,
+  RewardsIdl,
   Distribution,
   DistributionKind,
   TokenDistribution,
   DistributionAddresses,
-  DistributionInfo
+  DistributionInfo,
+  DistributionYield
 } from "./rewards"
-export { Auth } from "./auth"
-export { TokenAmount, bnToNumber, bigIntToBn, bnToBigInt, AssociatedToken, TokenFaucet, DerivedAccount } from "./common"
+export { Auth, AuthIdl } from "./auth"
+export {
+  TokenAmount,
+  bnToNumber,
+  bigIntToBn,
+  bnToBigInt,
+  AssociatedToken,
+  TokenFaucet,
+  DerivedAccount,
+  JetMint
+} from "./common"
 export * from "./gov"
 // FIXME: export * from "./p2p"
 export * from "./pools"
