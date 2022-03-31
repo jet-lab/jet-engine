@@ -8,7 +8,7 @@ export * from "./tokenMintKeys"
 export { JetTokenAccount, JetMint } from "./types"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
-export { bnToNumber } from "./accountParser"
+export { bnToNumber, bnToBigInt, bigIntToBn } from "./accountParser"
 export { Hooks } from "./hooks"
 
 export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string | Buffer

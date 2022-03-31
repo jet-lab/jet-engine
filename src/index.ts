@@ -31,7 +31,7 @@ export {
   DistributionInfo
 } from "./rewards"
 export { Auth } from "./auth"
-export { TokenAmount, bnToNumber, AssociatedToken, TokenFaucet, DerivedAccount } from "./common"
+export { TokenAmount, bnToNumber, bigIntToBn, bnToBigInt, AssociatedToken, TokenFaucet, DerivedAccount } from "./common"
 export * from "./gov"
 // FIXME: export * from "./p2p"
 export * from "./pools"
