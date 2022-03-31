@@ -26,7 +26,8 @@ export {
   DistributionInfo,
   DistributionKind,
   TokenDistribution,
-  DistributionAddresses
+  DistributionAddresses,
+  DistributionYield
 } from "./distribution"
 
 export const JET_REWARDS_ID = new PublicKey("JET777rQuPU8BatFbhp6irc1NAbozxTheBqNo25eLQP")
