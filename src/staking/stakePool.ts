@@ -83,7 +83,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "amoose2"
+  public static readonly CANONICAL_SEED = "yea"
 
   /**
    * TODO:
