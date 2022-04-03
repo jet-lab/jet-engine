@@ -34,8 +34,8 @@ export interface UnbondingAmount {
 export class UnbondingAccount {
   private static readonly UINT32_MAXVALUE = 2 ** 32
 
-  /** The total amount of tokens unbonding */
-  public tokens: BN = new BN(0)
+  /** The total amount of shares unbonding */
+  public shares: BN = new BN(0)
 
   /**
    * TODO:
@@ -125,7 +125,7 @@ export class UnbondingAccount {
     public address: PublicKey,
     public unbondingAccount: UnbondingAccountInfo
   ) {
-    this.tokens = new BN(0)
+    this.shares = new BN(0)
   }
 
   /**
@@ -164,29 +164,27 @@ export class UnbondingAccount {
   /**
    * TODO:
    * @static
-   * @param {UnbondingAccount[] | undefined} [_unbondingAccounts]
+   * @param {UnbondingAccount[] | undefined} [unbondingAccounts]
    * @returns {UnbondingAmount}
    * @memberof UnbondingAccount
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static useUnbondingAmountTotal(_unbondingAccounts: UnbondingAccount[] | undefined): UnbondingAmount {
-    const unbondingQueue = new BN(0)
-    const unbondingComplete = new BN(0)
+  static useUnbondingAmountTotal(unbondingAccounts: UnbondingAccount[] | undefined): UnbondingAmount {
+    let unbondingQueue = new BN(0)
+    let unbondingComplete = new BN(0)
 
-    // FIXME: Calculate unbonding token amounts after breaking change
-    // if (unbondingAccounts) {
-    //   unbondingQueue = unbondingAccounts.reduce<BN>(
-    //     (total: BN, curr: UnbondingAccount) =>
-    //       total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.amount.tokenAmount),
-    //     new BN(0)
-    //   )
+    if (unbondingAccounts) {
+      unbondingQueue = unbondingAccounts.reduce<BN>(
+        (total: BN, curr: UnbondingAccount) =>
+          total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.shares),
+        new BN(0)
+      )
 
-    //   unbondingComplete = unbondingAccounts.reduce<BN>(
-    //     (total: BN, curr: UnbondingAccount) =>
-    //       total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.amount.tokenAmount : new BN(0)),
-    //     new BN(0)
-    //   )
-    // }
+      unbondingComplete = unbondingAccounts.reduce<BN>(
+        (total: BN, curr: UnbondingAccount) =>
+          total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.shares : new BN(0)),
+        new BN(0)
+      )
+    }
     return { unbondingQueue, unbondingComplete }
   }
 
