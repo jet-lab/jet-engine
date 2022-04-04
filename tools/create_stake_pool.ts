@@ -3,8 +3,8 @@
  * Jet tokens and minting vote tokens.
  */
 
-import { BN, Program, Provider } from "@project-serum/anchor"
-import { StakeClient, StakeIdl, StakePool } from "../src";
+import { BN, Provider } from "@project-serum/anchor"
+import { StakeClient, StakePool } from "../src"
 import { resolve } from "path"
 import { homedir } from "os";
 import process from "process";
@@ -44,7 +44,7 @@ async function main() {
   process.env.ANCHOR_WALLET = resolve(homedir(), ".config/solana/id.json");
   const provider = Provider.local(cluster);
 
-  const program = await StakeClient.connect(provider) as any as Program<StakeIdl>
+  const program = await StakeClient.connect(provider)
   try {
     await StakePool.create(program, {
       accounts: {
