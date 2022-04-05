@@ -82,14 +82,19 @@ export class UnbondingAccount {
    * @param {Program<StakeIdl>} program
    * @param {PublicKey} stakeAccount
    * @param {BN} seed
+   * @param {StakePool} stakePool
    * @returns {Promise<UnbondingAccount>}
    * @memberof UnbondingAccount
    */
-  static async load(program: Program<StakeIdl>, stakeAccount: PublicKey, seed: number): Promise<UnbondingAccount> {
+  static async load(
+    program: Program<StakeIdl>,
+    stakeAccount: PublicKey,
+    seed: number,
+    stakePool: StakePool
+  ): Promise<UnbondingAccount> {
     const address = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
-    const stakePool = await StakePool.load(program, StakePool.CANONICAL_SEED)
     return new UnbondingAccount(program, address, unbondingAccount as any, stakePool)
   }
 
@@ -98,10 +103,15 @@ export class UnbondingAccount {
    * @static
    * @param {Program<StakeIdl>} program
    * @param {PublicKey} stakeAccount
+   * @param {StakePool} stakePool
    * @returns {Promise<UnbondingAccount[]>}
    * @memberof UnbondingAccount
    */
-  static async loadByStakeAccount(program: Program<StakeIdl>, stakeAccount: PublicKey): Promise<UnbondingAccount[]> {
+  static async loadByStakeAccount(
+    program: Program<StakeIdl>,
+    stakeAccount: PublicKey,
+    stakePool: StakePool
+  ): Promise<UnbondingAccount[]> {
     // Filter by UnbondingAccount.stakeAccount
     const stakeAccountFilter: MemcmpFilter = {
       memcmp: {
@@ -111,7 +121,6 @@ export class UnbondingAccount {
     }
 
     const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
-    const stakePool = await StakePool.load(program, StakePool.CANONICAL_SEED)
     return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any, stakePool))
   }
 
@@ -127,9 +136,12 @@ export class UnbondingAccount {
     public unbondingAccount: UnbondingAccountInfo,
     public stakePool: StakePool
   ) {
-    this.tokens = unbondingAccount.shares
-      .mul(stakePool.stakePool.unbonding.tokens)
-      .div(stakePool.stakePool.unbonding.shares)
+    this.tokens = new BN(0)
+    if (stakePool.stakePool.unbonding.tokens !== new BN(0) && stakePool.stakePool.unbonding.shares !== new BN(0)) {
+      this.tokens = unbondingAccount.shares
+        .mul(stakePool.stakePool.unbonding.tokens)
+        .div(stakePool.stakePool.unbonding.shares)
+    }
   }
 
   /**
@@ -137,16 +149,20 @@ export class UnbondingAccount {
    * @static
    * @param {Program<StakeIdl>} [stakeProgram]
    * @param {StakeAccount} [stakeAccount]
+   *    @param {StakePool} stakePool
    * @returns {(UnbondingAccount[] | undefined)}
    * @memberof UnbondingAccount
    */
   static useByStakeAccount(
     stakeProgram: Program<StakeIdl> | undefined,
-    stakeAccount: StakeAccount | undefined
+    stakeAccount: StakeAccount | undefined,
+    stakePool: StakePool
   ): UnbondingAccount[] | undefined {
     return Hooks.usePromise(
       async () =>
-        stakeProgram && stakeAccount && UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address),
+        stakeProgram &&
+        stakeAccount &&
+        UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address, stakePool),
       [stakeProgram, stakeAccount?.address?.toBase58()]
     )
   }
