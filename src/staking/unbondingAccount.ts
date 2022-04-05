@@ -128,8 +128,8 @@ export class UnbondingAccount {
     public stakePool: StakePool
   ) {
     this.tokens = unbondingAccount.shares
-      .mul(stakePool.stakePool.unbonding.shares)
-      .div(stakePool.stakePool.unbonding.tokens)
+      .mul(stakePool.stakePool.unbonding.tokens)
+      .div(stakePool.stakePool.unbonding.shares)
   }
 
   /**
