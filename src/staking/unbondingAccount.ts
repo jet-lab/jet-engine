@@ -34,8 +34,8 @@ export interface UnbondingAmount {
 export class UnbondingAccount {
   private static readonly UINT32_MAXVALUE = 2 ** 32
 
-  /** The total amount of shares unbonding */
-  public shares: BN = new BN(0)
+  /** The total amount of tokens unbonding */
+  public tokens: BN = new BN(0)
 
   /**
    * TODO:
@@ -125,7 +125,7 @@ export class UnbondingAccount {
     public address: PublicKey,
     public unbondingAccount: UnbondingAccountInfo
   ) {
-    this.shares = new BN(0)
+    this.tokens = new BN(0)
   }
 
   /**
