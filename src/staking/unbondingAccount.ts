@@ -109,7 +109,7 @@ export class UnbondingAccount {
   static async loadByStakeAccount(
     program: Program<StakeIdl>,
     stakeAccount: PublicKey,
-    stakePool: StakePool | undefined
+    stakePool: StakePool
   ): Promise<UnbondingAccount[]> {
     // Filter by UnbondingAccount.stakeAccount
     const stakeAccountFilter: MemcmpFilter = {
@@ -133,9 +133,9 @@ export class UnbondingAccount {
     public program: Program<StakeIdl>,
     public address: PublicKey,
     public unbondingAccount: UnbondingAccountInfo,
-    public stakePool: StakePool | undefined
+    public stakePool: StakePool
   ) {
-    if (stakePool && !stakePool.stakePool.unbonding.shares.isZero()) {
+    if (!stakePool.stakePool.unbonding.shares.isZero()) {
       this.tokens = unbondingAccount.shares
         .mul(stakePool.stakePool.unbonding.tokens)
         .div(stakePool.stakePool.unbonding.shares)
