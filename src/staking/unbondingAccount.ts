@@ -3,7 +3,6 @@ import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "
 import { BN, Program, Provider } from "@project-serum/anchor"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
-import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { StakeIdl } from "./idl"
 
@@ -110,7 +109,7 @@ export class UnbondingAccount {
   static async loadByStakeAccount(
     program: Program<StakeIdl>,
     stakeAccount: PublicKey,
-    stakePool: StakePool
+    stakePool: StakePool | undefined
   ): Promise<UnbondingAccount[]> {
     // Filter by UnbondingAccount.stakeAccount
     const stakeAccountFilter: MemcmpFilter = {
@@ -134,37 +133,15 @@ export class UnbondingAccount {
     public program: Program<StakeIdl>,
     public address: PublicKey,
     public unbondingAccount: UnbondingAccountInfo,
-    public stakePool: StakePool
+    public stakePool: StakePool | undefined
   ) {
-    this.tokens = new BN(0)
-    if (stakePool.stakePool.unbonding.tokens !== new BN(0) && stakePool.stakePool.unbonding.shares !== new BN(0)) {
+    if (stakePool && !stakePool.stakePool.unbonding.shares.isZero()) {
       this.tokens = unbondingAccount.shares
         .mul(stakePool.stakePool.unbonding.tokens)
         .div(stakePool.stakePool.unbonding.shares)
+    } else {
+      this.tokens = new BN(0)
     }
-  }
-
-  /**
-   * TODO:
-   * @static
-   * @param {Program<StakeIdl>} [stakeProgram]
-   * @param {StakeAccount} [stakeAccount]
-   *    @param {StakePool} stakePool
-   * @returns {(UnbondingAccount[] | undefined)}
-   * @memberof UnbondingAccount
-   */
-  static useByStakeAccount(
-    stakeProgram: Program<StakeIdl> | undefined,
-    stakeAccount: StakeAccount | undefined,
-    stakePool: StakePool
-  ): UnbondingAccount[] | undefined {
-    return Hooks.usePromise(
-      async () =>
-        stakeProgram &&
-        stakeAccount &&
-        UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address, stakePool),
-      [stakeProgram, stakeAccount?.address?.toBase58()]
-    )
   }
 
   /**
