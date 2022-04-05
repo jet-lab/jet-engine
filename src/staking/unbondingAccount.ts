@@ -3,7 +3,6 @@ import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "
 import { BN, Program, Provider } from "@project-serum/anchor"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
-import { Hooks } from "../common/hooks"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { StakeIdl } from "./idl"
 
@@ -82,15 +81,20 @@ export class UnbondingAccount {
    * @param {Program<StakeIdl>} program
    * @param {PublicKey} stakeAccount
    * @param {BN} seed
+   * @param {StakePool} stakePool
    * @returns {Promise<UnbondingAccount>}
    * @memberof UnbondingAccount
    */
-  static async load(program: Program<StakeIdl>, stakeAccount: PublicKey, seed: number): Promise<UnbondingAccount> {
+  static async load(
+    program: Program<StakeIdl>,
+    stakeAccount: PublicKey,
+    seed: number,
+    stakePool: StakePool
+  ): Promise<UnbondingAccount> {
     const address = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
-
-    return new UnbondingAccount(program, address, unbondingAccount as any)
+    return new UnbondingAccount(program, address, unbondingAccount as any, stakePool)
   }
 
   /**
@@ -98,10 +102,15 @@ export class UnbondingAccount {
    * @static
    * @param {Program<StakeIdl>} program
    * @param {PublicKey} stakeAccount
+   * @param {StakePool} stakePool
    * @returns {Promise<UnbondingAccount[]>}
    * @memberof UnbondingAccount
    */
-  static async loadByStakeAccount(program: Program<StakeIdl>, stakeAccount: PublicKey): Promise<UnbondingAccount[]> {
+  static async loadByStakeAccount(
+    program: Program<StakeIdl>,
+    stakeAccount: PublicKey,
+    stakePool: StakePool
+  ): Promise<UnbondingAccount[]> {
     // Filter by UnbondingAccount.stakeAccount
     const stakeAccountFilter: MemcmpFilter = {
       memcmp: {
@@ -111,7 +120,7 @@ export class UnbondingAccount {
     }
 
     const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
-    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any))
+    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any, stakePool))
   }
 
   /**
@@ -123,28 +132,16 @@ export class UnbondingAccount {
   constructor(
     public program: Program<StakeIdl>,
     public address: PublicKey,
-    public unbondingAccount: UnbondingAccountInfo
+    public unbondingAccount: UnbondingAccountInfo,
+    public stakePool: StakePool
   ) {
-    this.tokens = new BN(0)
-  }
-
-  /**
-   * TODO:
-   * @static
-   * @param {Program<StakeIdl>} [stakeProgram]
-   * @param {StakeAccount} [stakeAccount]
-   * @returns {(UnbondingAccount[] | undefined)}
-   * @memberof UnbondingAccount
-   */
-  static useByStakeAccount(
-    stakeProgram: Program<StakeIdl> | undefined,
-    stakeAccount: StakeAccount | undefined
-  ): UnbondingAccount[] | undefined {
-    return Hooks.usePromise(
-      async () =>
-        stakeProgram && stakeAccount && UnbondingAccount.loadByStakeAccount(stakeProgram, stakeAccount.address),
-      [stakeProgram, stakeAccount?.address?.toBase58()]
-    )
+    if (!stakePool.stakePool.unbonding.shares.isZero()) {
+      this.tokens = unbondingAccount.shares
+        .mul(stakePool.stakePool.unbonding.tokens)
+        .div(stakePool.stakePool.unbonding.shares)
+    } else {
+      this.tokens = new BN(0)
+    }
   }
 
   /**
@@ -174,14 +171,12 @@ export class UnbondingAccount {
 
     if (unbondingAccounts) {
       unbondingQueue = unbondingAccounts.reduce<BN>(
-        (total: BN, curr: UnbondingAccount) =>
-          total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.unbondingAccount.shares),
+        (total: BN, curr: UnbondingAccount) => total.add(UnbondingAccount.isUnbonded(curr) ? new BN(0) : curr.tokens),
         new BN(0)
       )
 
       unbondingComplete = unbondingAccounts.reduce<BN>(
-        (total: BN, curr: UnbondingAccount) =>
-          total.add(UnbondingAccount.isUnbonded(curr) ? curr.unbondingAccount.shares : new BN(0)),
+        (total: BN, curr: UnbondingAccount) => total.add(UnbondingAccount.isUnbonded(curr) ? curr.tokens : new BN(0)),
         new BN(0)
       )
     }
