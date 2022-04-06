@@ -17,14 +17,11 @@ export interface StakeAccountInfo {
   /** The pool this account is associated with */
   stakePool: PublicKey
 
+  /** The address of the voter weight record for this account */
+  voterWeightRecord: PublicKey
+
   /** The stake balance (in share units) */
   bondedShares: BN
-
-  /** The token balance locked by existence of voting tokens */
-  mintedVotes: BN
-
-  /** The stake balance locked by existence of collateral tokens */
-  mintedCollateral: BN
 
   /** The total share of currently unbonding tokens to be withdrawn in the future */
   unbondingShares: BN

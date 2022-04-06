@@ -30,8 +30,11 @@ export interface StakePoolInfo {
   /** The token account owned by this pool, holding the staked tokens */
   stakePoolVault: PublicKey
 
-  /** The mint for the derived voting token */
-  stakeVoteMint: PublicKey
+  /* The address of the max vote weight record, which is read by the governance program */
+  maxVoterWeightRecord: PublicKey
+
+  /* The governance realm that this pool has voting power in. */
+  governanceRealm: PublicKey
 
   /** The mint for the derived collateral token */
   stakeCollateralMint: PublicKey
@@ -60,6 +63,87 @@ export interface SharedTokenPool {
   shares: BN
 }
 
+// ----- SPL Governance Addin -----
+
+/** The governance action VoterWeight is evaluated for */
+export type VoterWeightAction =
+  | {
+      /** Cast vote for a proposal. Target: Proposal */
+      CastVote: Record<string, never>
+    }
+  | {
+      CommentProposal: Record<string, never>
+    }
+  | {
+      CreateGovernance: Record<string, never>
+    }
+  | {
+      CreateProposal: Record<string, never>
+    }
+  | {
+      SignOffProposal: Record<string, never>
+    }
+
+export interface VoterWeightRecord {
+  /** The Realm the VoterWeightRecord belongs to */
+  realm: PublicKey
+
+  /** Governing Token Mint the VoterWeightRecord is associated with
+      Note: The addin can take deposits of any tokens and is not restricted to the community or council tokens only
+      The mint here is to link the record to either community or council mint of the realm */
+  governingTokenMint: PublicKey
+
+  /** The owner of the governing token and voter
+      This is the actual owner (voter) and corresponds to TokenOwnerRecord.governing_token_owner */
+  owner: PublicKey
+
+  /** The weight of the voter provided by the addin for the given realm, governing_token_mint and governing_token_owner (voter) */
+  voterWeight: PublicKey
+
+  /**  The slot when the voting weight expires
+       It should be set to None if the weight never expires
+       If the voter weight decays with time, for example for time locked based weights, then the expiry must be set
+       As a common pattern Revise instruction to update the weight should be invoked before governance instruction within the same transaction
+       and the expiry set to the current slot to provide up to date weight */
+  voterWeightExpiry: BN | undefined
+
+  /** The governance action the voter's weight pertains to
+      It allows to provided voter's weight specific to the particular action the weight is evaluated for
+      When the action is provided then the governance program asserts the executing action is the same as specified by the addin */
+  weightAction: VoterWeightAction | undefined
+
+  /** The target the voter's weight  action pertains to
+      It allows to provided voter's weight specific to the target the weight is evaluated for
+      For example when addin supplies weight to vote on a particular proposal then it must specify the proposal as the action target
+      When the target is provided then the governance program asserts the target is the same as specified by the addin */
+  weightTargetType: PublicKey | undefined
+
+  /** Reserved space for future versions */
+  reserved: number[]
+}
+
+export interface MaxVoterWeightRecord {
+  /** The Realm the MaxVoterWeightRecord belongs to */
+  realm: PublicKey
+
+  /** Governing Token Mint the MaxVoterWeightRecord is associated with
+      Note: The addin can take deposits of any tokens and is not restricted to the community or council tokens only
+      The mint here is to link the record to either community or council mint of the realm */
+  governingTokenMint: PublicKey
+
+  /** The max voter weight provided by the addin for the given realm and governing_token_mint */
+  maxVoterWeight: BN
+  /** The slot when the max voting weight expires
+      It should be set to None if the weight never expires
+      If the max vote weight decays with time, for example for time locked based weights, then the expiry must be set
+      As a pattern Revise instruction to update the max weight should be invoked before governance instruction within the same transaction
+      and the expiry set to the current slot to provide up to date weight */
+  maxVoterWeightExpiry: BN | undefined
+
+  /** Reserved space for future versions */
+  reserved: number[]
+}
+    
 // ----- Instructions -----
 
 interface CreateStakePoolParams {
