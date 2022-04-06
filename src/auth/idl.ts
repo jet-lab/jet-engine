@@ -72,6 +72,28 @@ export type AuthIdl = {
       }
     }
   ]
+  events: [
+    {
+      name: "AuthAccountCreated"
+      fields: [
+        {
+          name: "user"
+          type: "publicKey"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "Authenticated"
+      fields: [
+        {
+          name: "user"
+          type: "publicKey"
+          index: false
+        }
+      ]
+    }
+  ]
 }
 
 export const IDL: AuthIdl = {
@@ -146,6 +168,28 @@ export const IDL: AuthIdl = {
           }
         ]
       }
+    }
+  ],
+  events: [
+    {
+      name: "AuthAccountCreated",
+      fields: [
+        {
+          name: "user",
+          type: "publicKey",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "Authenticated",
+      fields: [
+        {
+          name: "user",
+          type: "publicKey",
+          index: false
+        }
+      ]
     }
   ]
 }

@@ -1,31 +1,16 @@
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program, Provider } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { findDerivedAccount } from "../common"
-import { AssociatedToken } from "../common/associatedToken"
 import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
-import { getTokenOwnerRecordAddress, ProgramAccount, Realm } from "@solana/spl-governance"
-import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
 import { StakeIdl } from "./idl"
+import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
-export interface StakeAccountInfo {
-  /** The account that has ownership over this stake */
-  owner: PublicKey
-
-  /** The pool this account is associated with */
-  stakePool: PublicKey
-
-  /** The address of the voter weight record for this account */
-  voterWeightRecord: PublicKey
-
-  /** The stake balance (in share units) */
-  bondedShares: BN
-
-  /** The total share of currently unbonding tokens to be withdrawn in the future */
-  unbondingShares: BN
-}
+export type StakeAccountInfo = TypeDef<AllAccountsMap<StakeIdl>["stakeAccount"], IdlTypes<StakeIdl>>
+export type VoterWeightRecord = TypeDef<AllAccountsMap<StakeIdl>["voterWeightRecord"], IdlTypes<StakeIdl>>
+export type VoterWeightAction = VoterWeightRecord["weightAction"]
 
 export interface StakeBalance {
   stakedJet: BN | undefined
@@ -47,63 +32,6 @@ export class StakeAccount {
   }
 
   /**
-   * The seed used by governance program PDAs.
-   *
-   * @private
-   * @static
-   * @memberof StakeAccount
-   */
-  private static readonly GOVERNANCE_PROGRAM_SEED = "governance"
-
-  /**
-   * Derive the token owner record for a realm community mint or council mint
-   *
-   * @private
-   * @static
-   * @param {ProgramAccount<Realm>} realm
-   * @param {PublicKey} governingTokenMint
-   * @param {PublicKey} governingTokenOwner
-   * @return {Promise<PublicKey>}
-   * @memberof StakeAccount
-   */
-  private static async deriveGovernanceTokenOwnerRecord(
-    realm: ProgramAccount<Realm>,
-    governingTokenMint: PublicKey,
-    governingTokenOwner: PublicKey
-  ): Promise<PublicKey> {
-    const tokenOwnerRecordAddress = await getTokenOwnerRecordAddress(
-      realm.owner,
-      realm.pubkey,
-      governingTokenMint,
-      governingTokenOwner
-    )
-    return tokenOwnerRecordAddress
-  }
-
-  /**
-   * Derive the vault token account that stores all communty or council tokens for a realm
-   *
-   * @private
-   * @static
-   * @param {PublicKey} governingProgramId
-   * @param {PublicKey} realm
-   * @param {PublicKey} governingTokenMint
-   * @return {PublicKey}
-   * @memberof StakeAccount
-   */
-  private static deriveGovernanceVault(
-    governingProgramId: PublicKey,
-    realm: PublicKey,
-    governingTokenMint: PublicKey
-  ): PublicKey {
-    const [governingTokenHoldingAddress] = findProgramAddressSync(
-      [Buffer.from(StakeAccount.GOVERNANCE_PROGRAM_SEED), realm.toBuffer(), governingTokenMint.toBuffer()],
-      governingProgramId
-    )
-    return governingTokenHoldingAddress
-  }
-
-  /**
    * TODO:
    * @static
    * @param {Program<StakeIdl>} stakeProgram
@@ -115,9 +43,12 @@ export class StakeAccount {
   static async load(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
     const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
-    const stakeAccount = await stakeProgram.account.stakeAccount.fetch(address)
+    const stakeAccount = (await stakeProgram.account.stakeAccount.fetch(address)) as StakeAccountInfo
+    const voterWeightRecord = (await stakeProgram.account.voterWeightRecord.fetch(
+      stakeAccount.voterWeightRecord
+    )) as VoterWeightRecord
 
-    return new StakeAccount(stakeProgram, address, stakeAccount as StakeAccountInfo)
+    return new StakeAccount(stakeProgram, address, stakeAccount, voterWeightRecord)
   }
 
   /**
@@ -146,7 +77,8 @@ export class StakeAccount {
   private constructor(
     public program: Program<StakeIdl>,
     public address: PublicKey,
-    public stakeAccount: StakeAccountInfo
+    public stakeAccount: StakeAccountInfo,
+    public VoterWeightRecord: VoterWeightRecord
   ) {}
 
   /**
@@ -237,22 +169,14 @@ export class StakeAccount {
   static async addStake(
     provider: Provider,
     stakePool: StakePool,
-    realm: ProgramAccount<Realm>,
     owner: PublicKey,
     collateralTokenAccount: PublicKey,
     amount: BN
   ): Promise<string> {
     const instructions: TransactionInstruction[] = []
 
-    const voterTokenAccount = await AssociatedToken.withCreate(
-      instructions,
-      provider,
-      owner,
-      stakePool.addresses.stakeVoteMint
-    )
     await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner, owner)
     await this.withAddStake(instructions, stakePool, owner, owner, collateralTokenAccount, amount)
-    await this.withMintVotes(instructions, stakePool, realm, owner, voterTokenAccount)
 
     return provider.send(new Transaction().add(...instructions))
   }
@@ -331,86 +255,6 @@ export class StakeAccount {
         stakeAccount,
         payer,
         payerTokenAccount: tokenAccount,
-        tokenProgram: TOKEN_PROGRAM_ID
-      })
-      .instruction()
-
-    instructions.push(ix)
-  }
-
-  /**
-   * TODO:
-   * @static
-   * @param {TransactionInstruction[]} instructions
-   * @param {StakePool} stakePool
-   * @param {Realm} realm
-   * @param {PublicKey} owner
-   * @param {PublicKey} voterTokenAccount
-   * @memberof StakeAccount
-   */
-  static async withMintVotes(
-    instructions: TransactionInstruction[],
-    stakePool: StakePool,
-    realm: ProgramAccount<Realm>,
-    owner: PublicKey,
-    voterTokenAccount: PublicKey,
-    amount: BN | null = null
-  ) {
-    const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
-    const governanceVault = this.deriveGovernanceVault(realm.owner, realm.pubkey, realm.account.communityMint)
-    const tokenOwnerRecord = await this.deriveGovernanceTokenOwnerRecord(realm, realm.account.communityMint, owner)
-
-    const ix = await stakePool.program.methods
-      .mintVotes(amount)
-      .accounts({
-        owner: owner,
-        stakePool: stakePool.addresses.stakePool,
-        stakePoolVault: stakePool.addresses.stakePoolVault,
-        stakeVoteMint: stakePool.addresses.stakeVoteMint,
-        stakeAccount,
-        voterTokenAccount,
-        governanceRealm: realm.pubkey,
-        governanceVault,
-        governanceOwnerRecord: tokenOwnerRecord,
-        payer: owner,
-        governanceProgram: realm.owner,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: SYSVAR_RENT_PUBKEY
-      })
-      .instruction()
-
-    instructions.push(ix)
-  }
-
-  /**
-   * TODO:
-   * @static
-   * @param {TransactionInstruction[]} instructions
-   * @param {StakePool} stakePool
-   * @param {StakeAccount} stakeAccount
-   * @param {PublicKey} owner
-   * @param {PublicKey} voterTokenAccount
-   * @param {BN} amount
-   * @memberof StakeAccount
-   */
-  static async withBurnVotes(
-    instructions: TransactionInstruction[],
-    stakePool: StakePool,
-    stakeAccount: StakeAccount,
-    owner: PublicKey,
-    voterTokenAccount: PublicKey,
-    amount: BN | null = null
-  ) {
-    const ix = await stakePool.program.methods
-      .burnVotes(amount)
-      .accounts({
-        owner,
-        stakePool: stakePool.addresses.stakePool,
-        stakeVoteMint: stakePool.addresses.stakeVoteMint,
-        stakeAccount: stakeAccount.address,
-        voterTokenAccount,
-        voter: owner,
         tokenProgram: TOKEN_PROGRAM_ID
       })
       .instruction()

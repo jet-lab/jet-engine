@@ -174,6 +174,16 @@ export type RewardsIdl = {
           isSigner: false
         },
         {
+          name: "voterWeightRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
           name: "stakingProgram"
           isMut: false
           isSigner: false
@@ -374,6 +384,16 @@ export type RewardsIdl = {
         },
         {
           name: "stakeAccount"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "voterWeightRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord"
           isMut: true
           isSigner: false
         },
@@ -785,6 +805,302 @@ export type RewardsIdl = {
       }
     }
   ]
+  events: [
+    {
+      name: "AirdropCreated"
+      fields: [
+        {
+          name: "airdrop"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "authority"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "tokenMint"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "params"
+          type: {
+            defined: "AirdropCreateParams"
+          }
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropRecipientsAdded"
+      fields: [
+        {
+          name: "airdrop"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "rewardAdditional"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "rewardTotal"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "recipientsAdditional"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "recipientsTotal"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "recipients"
+          type: {
+            vec: {
+              defined: "AirdropRecipientParam"
+            }
+          }
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropFinalized"
+      fields: [
+        {
+          name: "airdrop"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "rewardTotal"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "recipientsTotal"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "vaultBalance"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropClaimed"
+      fields: [
+        {
+          name: "airdrop"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "recipient"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "claimedAmount"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "remainingAmount"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "vaultBalance"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropClosed"
+      fields: [
+        {
+          name: "airdrop"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "vaultAmount"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardCreated"
+      fields: [
+        {
+          name: "award"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "tokenMint"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "params"
+          type: {
+            defined: "AwardCreateParams"
+          }
+          index: false
+        },
+        {
+          name: "distributionKind"
+          type: {
+            defined: "DistributionKind"
+          }
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardReleased"
+      fields: [
+        {
+          name: "award"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "amountReleased"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "totalReleased"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "vaultBalance"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardRevoked"
+      fields: [
+        {
+          name: "award"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "unreleasedAmount"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "totalReleased"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "vaultAmount"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardClosed"
+      fields: [
+        {
+          name: "award"
+          type: "publicKey"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionCreated"
+      fields: [
+        {
+          name: "distribution"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "authority"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "tokenMint"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "params"
+          type: {
+            defined: "DistributionCreateParams"
+          }
+          index: false
+        },
+        {
+          name: "distributionKind"
+          type: {
+            defined: "DistributionKind"
+          }
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionReleased"
+      fields: [
+        {
+          name: "distribution"
+          type: "publicKey"
+          index: false
+        },
+        {
+          name: "amountReleased"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "totalDistributed"
+          type: "u64"
+          index: false
+        },
+        {
+          name: "vaultBalance"
+          type: "u64"
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionClosed"
+      fields: [
+        {
+          name: "distribution"
+          type: "publicKey"
+          index: false
+        }
+      ]
+    }
+  ]
   errors: [
     {
       code: 13000
@@ -1001,6 +1317,16 @@ export const IDL: RewardsIdl = {
           isSigner: false
         },
         {
+          name: "voterWeightRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
           name: "stakingProgram",
           isMut: false,
           isSigner: false
@@ -1201,6 +1527,16 @@ export const IDL: RewardsIdl = {
         },
         {
           name: "stakeAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "voterWeightRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord",
           isMut: true,
           isSigner: false
         },
@@ -1610,6 +1946,302 @@ export const IDL: RewardsIdl = {
           }
         ]
       }
+    }
+  ],
+  events: [
+    {
+      name: "AirdropCreated",
+      fields: [
+        {
+          name: "airdrop",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "authority",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "tokenMint",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "params",
+          type: {
+            defined: "AirdropCreateParams"
+          },
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropRecipientsAdded",
+      fields: [
+        {
+          name: "airdrop",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "rewardAdditional",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "rewardTotal",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "recipientsAdditional",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "recipientsTotal",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "recipients",
+          type: {
+            vec: {
+              defined: "AirdropRecipientParam"
+            }
+          },
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropFinalized",
+      fields: [
+        {
+          name: "airdrop",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "rewardTotal",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "recipientsTotal",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "vaultBalance",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropClaimed",
+      fields: [
+        {
+          name: "airdrop",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "recipient",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "claimedAmount",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "remainingAmount",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "vaultBalance",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AirdropClosed",
+      fields: [
+        {
+          name: "airdrop",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "vaultAmount",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardCreated",
+      fields: [
+        {
+          name: "award",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "tokenMint",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "params",
+          type: {
+            defined: "AwardCreateParams"
+          },
+          index: false
+        },
+        {
+          name: "distributionKind",
+          type: {
+            defined: "DistributionKind"
+          },
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardReleased",
+      fields: [
+        {
+          name: "award",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "amountReleased",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "totalReleased",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "vaultBalance",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardRevoked",
+      fields: [
+        {
+          name: "award",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "unreleasedAmount",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "totalReleased",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "vaultAmount",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "AwardClosed",
+      fields: [
+        {
+          name: "award",
+          type: "publicKey",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionCreated",
+      fields: [
+        {
+          name: "distribution",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "authority",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "tokenMint",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "params",
+          type: {
+            defined: "DistributionCreateParams"
+          },
+          index: false
+        },
+        {
+          name: "distributionKind",
+          type: {
+            defined: "DistributionKind"
+          },
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionReleased",
+      fields: [
+        {
+          name: "distribution",
+          type: "publicKey",
+          index: false
+        },
+        {
+          name: "amountReleased",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "totalDistributed",
+          type: "u64",
+          index: false
+        },
+        {
+          name: "vaultBalance",
+          type: "u64",
+          index: false
+        }
+      ]
+    },
+    {
+      name: "DistributionClosed",
+      fields: [
+        {
+          name: "distribution",
+          type: "publicKey",
+          index: false
+        }
+      ]
     }
   ],
   errors: [

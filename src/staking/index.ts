@@ -17,6 +17,6 @@
 
 export { StakeClient } from "./client"
 export { StakeIdl } from "./idl"
-export { StakeAccount, StakeBalance } from "./stakeAccount"
-export { StakePool, VoterWeightAction, VoterWeightRecord, MaxVoterWeightRecord } from "./stakePool"
+export { StakeAccount, StakeAccountInfo, VoterWeightAction, StakeBalance, VoterWeightRecord } from "./stakeAccount"
+export { MaxVoterWeightRecord, StakePool, StakePoolInfo, SharedTokenPool, StakePoolAccounts } from "./stakePool"
 export { UnbondingAccount, UnbondingAmount } from "./unbondingAccount"

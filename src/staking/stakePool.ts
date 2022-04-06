@@ -65,63 +65,6 @@ export interface SharedTokenPool {
 
 // ----- SPL Governance Addin -----
 
-/** The governance action VoterWeight is evaluated for */
-export type VoterWeightAction =
-  | {
-      /** Cast vote for a proposal. Target: Proposal */
-      CastVote: Record<string, never>
-    }
-  | {
-      CommentProposal: Record<string, never>
-    }
-  | {
-      CreateGovernance: Record<string, never>
-    }
-  | {
-      CreateProposal: Record<string, never>
-    }
-  | {
-      SignOffProposal: Record<string, never>
-    }
-
-export interface VoterWeightRecord {
-  /** The Realm the VoterWeightRecord belongs to */
-  realm: PublicKey
-
-  /** Governing Token Mint the VoterWeightRecord is associated with
-      Note: The addin can take deposits of any tokens and is not restricted to the community or council tokens only
-      The mint here is to link the record to either community or council mint of the realm */
-  governingTokenMint: PublicKey
-
-  /** The owner of the governing token and voter
-      This is the actual owner (voter) and corresponds to TokenOwnerRecord.governing_token_owner */
-  owner: PublicKey
-
-  /** The weight of the voter provided by the addin for the given realm, governing_token_mint and governing_token_owner (voter) */
-  voterWeight: PublicKey
-
-  /**  The slot when the voting weight expires
-       It should be set to None if the weight never expires
-       If the voter weight decays with time, for example for time locked based weights, then the expiry must be set
-       As a common pattern Revise instruction to update the weight should be invoked before governance instruction within the same transaction
-       and the expiry set to the current slot to provide up to date weight */
-  voterWeightExpiry: BN | undefined
-
-  /** The governance action the voter's weight pertains to
-      It allows to provided voter's weight specific to the particular action the weight is evaluated for
-      When the action is provided then the governance program asserts the executing action is the same as specified by the addin */
-  weightAction: VoterWeightAction | undefined
-
-  /** The target the voter's weight  action pertains to
-      It allows to provided voter's weight specific to the target the weight is evaluated for
-      For example when addin supplies weight to vote on a particular proposal then it must specify the proposal as the action target
-      When the target is provided then the governance program asserts the target is the same as specified by the addin */
-  weightTargetType: PublicKey | undefined
-
-  /** Reserved space for future versions */
-  reserved: number[]
-}
-
 export interface MaxVoterWeightRecord {
   /** The Realm the MaxVoterWeightRecord belongs to */
   realm: PublicKey
@@ -143,7 +86,7 @@ export interface MaxVoterWeightRecord {
   /** Reserved space for future versions */
   reserved: number[]
 }
-    
+
 // ----- Instructions -----
 
 interface CreateStakePoolParams {
@@ -162,6 +105,8 @@ interface CreateStakePoolParams {
     seed: string
 
     unbondPeriod: BN
+
+    governanceRealm: PublicKey
   }
 }
 
@@ -194,12 +139,25 @@ export class StakePool {
       throw new Error("Invalid mint")
     }
 
+    const maxVoterWeightRecord = (await program.account.maxVoterWeightRecord.fetch(
+      stakePool.maxVoterWeightRecord
+    )) as MaxVoterWeightRecord
+
     const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
 
-    return new StakePool(program, addresses, stakePool, voteMint, collateralMint, vault, tokenMint)
+    return new StakePool(
+      program,
+      addresses,
+      stakePool,
+      voteMint,
+      collateralMint,
+      vault,
+      tokenMint,
+      maxVoterWeightRecord
+    )
   }
 
   /**
@@ -220,7 +178,8 @@ export class StakePool {
     public voteMint: JetMint,
     public collateralMint: JetMint,
     public vault: JetTokenAccount,
-    public tokenMint: JetMint
+    public tokenMint: JetMint,
+    public maxVoterWeightRecord: MaxVoterWeightRecord
   ) {}
 
   /**
@@ -277,6 +236,12 @@ export class StakePool {
       rent: SYSVAR_RENT_PUBKEY
     }
 
-    return program.rpc.initPool(params.args.seed, { unbondPeriod: params.args.unbondPeriod }, { accounts })
+    return await program.methods
+      .initPool(params.args.seed, {
+        unbondPeriod: params.args.unbondPeriod,
+        governanceRealm: params.args.governanceRealm
+      })
+      .accounts(accounts)
+      .rpc()
   }
 }
