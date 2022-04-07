@@ -29,20 +29,22 @@ const tokenMint = mainnet ?
   new PublicKey("JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz") :
   new PublicKey("FRuFWBrp1Kh6LpAi9CRvjk97C6YpCR7AERq62N2CZFUg")
 
+const governanceRealm = mainnet ? PublicKey.default : PublicKey.default
+
 /** The time period for unbonding staked tokens from the pool.
  
 Unit is seconds. */
-const unbondPeriod = mainnet ?
-  // 29.53059 Days
-  new BN(2551443) : 
-  // 1 Minute
-  new BN(60)
+const unbondPeriod = mainnet
+  ? // 29.53059 Days
+    new BN(2551443)
+  : // 1 Minute
+    new BN(60)
 
 // ------ Main ------
 
 async function main() {
-  process.env.ANCHOR_WALLET = resolve(homedir(), ".config/solana/id.json");
-  const provider = Provider.local(cluster);
+  process.env.ANCHOR_WALLET = resolve(homedir(), ".config/solana/id.json")
+  const provider = Provider.local(cluster)
 
   const program = await StakeClient.connect(provider)
   try {
@@ -50,22 +52,29 @@ async function main() {
       accounts: {
         payer: provider.wallet.publicKey,
         authority,
-        tokenMint,
+        tokenMint
       },
       args: {
         unbondPeriod,
-        seed
+        seed,
+        governanceRealm
       }
     })
-  } catch(err) {
+  } catch (err) {
     console.log("Error creating stake pool")
     console.log(err)
   }
 
   await new Promise<void>(r => setTimeout(() => r(), 5000))
-  const pool = await StakePool.load(program, seed);
+  const pool = await StakePool.load(program, seed)
 
-  console.log(JSON.stringify(Object.entries(pool.addresses).map(([key, value]) => [key, value.toBase58()]), null, 2))
+  console.log(
+    JSON.stringify(
+      Object.entries(pool.addresses).map(([key, value]) => [key, value.toBase58()]),
+      null,
+      2
+    )
+  )
   /**
    * [
    *   ["stakePool","83bqcdNH5G7kUwxczSd5WkJWf76f68SEMNiUd3sNLBQH"],
