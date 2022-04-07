@@ -25,11 +25,11 @@ const seed = StakePool.CANONICAL_SEED
 const authority = new PublicKey("EjvPni9o9ku9oeNBdXwEAY4YxzyNi5E335wQP97YQmdM")
 
 /** The mint for the tokens being staked into the pool. */
-const tokenMint = mainnet ?
-  new PublicKey("JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz") :
-  new PublicKey("FRuFWBrp1Kh6LpAi9CRvjk97C6YpCR7AERq62N2CZFUg")
+const tokenMint = mainnet
+  ? new PublicKey("JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz")
+  : new PublicKey("FRuFWBrp1Kh6LpAi9CRvjk97C6YpCR7AERq62N2CZFUg")
 
-const governanceRealm = mainnet ? PublicKey.default : PublicKey.default
+const realm = new PublicKey("34EMxuDbQuVGsBqjabYZqgC24VuBr12oXRt3sRgFvFdT")
 
 /** The time period for unbonding staked tokens from the pool.
  
@@ -44,7 +44,7 @@ const unbondPeriod = mainnet
 
 async function main() {
   process.env.ANCHOR_WALLET = resolve(homedir(), ".config/solana/id.json")
-  const provider = Provider.local(cluster)
+  const provider = Provider.local(cluster, { skipPreflight: true })
 
   const program = await StakeClient.connect(provider)
   try {
@@ -57,7 +57,7 @@ async function main() {
       args: {
         unbondPeriod,
         seed,
-        governanceRealm
+        governanceRealm: realm
       }
     })
   } catch (err) {

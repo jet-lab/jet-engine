@@ -9,7 +9,6 @@ import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cj
 
 export interface StakePoolAccounts {
   stakePool: PublicKey
-  stakeVoteMint: PublicKey
   stakeCollateralMint: PublicKey
   stakePoolVault: PublicKey
 }
@@ -45,7 +44,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "yea"
+  public static readonly CANONICAL_SEED = "alrht"
 
   /**
    * TODO:
@@ -60,37 +59,31 @@ export class StakePool {
 
     const stakePool = (await program.account.stakePool.fetch(addresses.stakePool)) as StakePoolInfo
 
-    const [voteMintInfo, collateralMintInfo, vaultInfo, tokenMintInfo] =
-      await program.provider.connection.getMultipleAccountsInfo([
-        addresses.stakeVoteMint,
-        addresses.stakeCollateralMint,
-        addresses.stakePoolVault,
-        stakePool.tokenMint
-      ])
+    const [collateralMintInfo, vaultInfo, tokenMintInfo] = await program.provider.connection.getMultipleAccountsInfo([
+      addresses.stakeCollateralMint,
+      addresses.stakePoolVault,
+      stakePool.tokenMint
+    ])
 
-    if (!voteMintInfo || !collateralMintInfo || !vaultInfo || !tokenMintInfo) {
-      throw new Error("Invalid mint")
+    if (!collateralMintInfo) {
+      throw new Error("Invalid collateral mint")
+    }
+    if (!vaultInfo) {
+      throw new Error("Invalid stake vault")
+    }
+    if (!tokenMintInfo) {
+      throw new Error("Invalid token mint")
     }
 
     const maxVoterWeightRecord = (await program.account.maxVoterWeightRecord.fetch(
       stakePool.maxVoterWeightRecord
     )) as MaxVoterWeightRecord
 
-    const voteMint = parseMintAccount(voteMintInfo.data as Buffer, addresses.stakeVoteMint)
     const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
 
-    return new StakePool(
-      program,
-      addresses,
-      stakePool,
-      voteMint,
-      collateralMint,
-      vault,
-      tokenMint,
-      maxVoterWeightRecord
-    )
+    return new StakePool(program, addresses, stakePool, collateralMint, vault, tokenMint, maxVoterWeightRecord)
   }
 
   /**
@@ -108,7 +101,6 @@ export class StakePool {
     public program: Program<StakeIdl>,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public voteMint: JetMint,
     public collateralMint: JetMint,
     public vault: JetTokenAccount,
     public tokenMint: JetMint,
@@ -139,12 +131,10 @@ export class StakePool {
    */
   static deriveAccounts(programId: PublicKey, seed: string): StakePoolAccounts {
     const stakePool = findDerivedAccount(programId, seed)
-    const stakeVoteMint = findDerivedAccount(programId, seed, "vote-mint")
     const stakeCollateralMint = findDerivedAccount(programId, seed, "collateral-mint")
     const stakePoolVault = findDerivedAccount(programId, seed, "vault")
     return {
       stakePool,
-      stakeVoteMint,
       stakeCollateralMint,
       stakePoolVault
     }
