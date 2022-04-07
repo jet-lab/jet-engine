@@ -249,6 +249,16 @@ export type StakeIdl = {
           isSigner: false
         },
         {
+          name: "voterWeightRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord"
+          isMut: true
+          isSigner: false
+        },
+        {
           name: "stakePool"
           isMut: true
           isSigner: false
@@ -1289,6 +1299,16 @@ export const IDL: StakeIdl = {
         },
         {
           name: "stakeAccount",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "voterWeightRecord",
+          isMut: true,
+          isSigner: false
+        },
+        {
+          name: "maxVoterWeightRecord",
           isMut: true,
           isSigner: false
         },
