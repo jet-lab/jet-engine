@@ -228,6 +228,7 @@ export class StakeAccount {
           auth,
           stakePool,
           stakeAccount: addresses.stakeAccount,
+          voterWeightRecord: addresses.voterWeightRecord,
           payer,
           systemProgram: SystemProgram.programId
         })
