@@ -354,7 +354,11 @@ export class Airdrop {
         /** The stake pool token vault */
         stakePoolVault: stakePool.vault.address,
         /** The account to own the stake being deposited */
-        stakeAccount: stakeAccount.address,
+        stakeAccount: stakeAccount.addresses,
+        /** The voter weight for the stake account */
+        voterWeightRecord: stakeAccount.stakeAccount.voterWeightRecord,
+        /** The max voter weight */
+        maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
         stakingProgram: StakeClient.PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID
       })

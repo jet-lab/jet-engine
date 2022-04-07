@@ -5,18 +5,10 @@ import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { StakeIdl } from "./idl"
+import { ProgramAccount, TokenOwnerRecord } from "@solana/spl-governance"
+import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
-export interface UnbondingAccountInfo {
-  /** The related account requesting to unstake  */
-  stakeAccount: PublicKey
-
-  /** The share of the unbonding tokens to be unstaked
-      These shares do not have equal value to the bonded shares */
-  shares: BN
-
-  /** The time after which the staked amount can be withdrawn */
-  unbondedAt: BN
-}
+export type UnbondingAccountInfo = TypeDef<AllAccountsMap<StakeIdl>["unbondingAccount"], IdlTypes<StakeIdl>>
 
 export interface FullAmount {
   tokenAmount: BN
@@ -189,6 +181,7 @@ export class UnbondingAccount {
    * @param {TransactionInstruction[]} instructions
    * @param {StakePool} stakePool
    * @param {StakeAccount} stakeAccount
+   * @param {ProgramAccount<TokenOwnerRecord>} tokenOwnerRecord
    * @param {PublicKey} payer
    * @param {BN} unbondingSeed
    * @param {BN} amount
@@ -198,20 +191,24 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     stakeAccount: StakeAccount,
+    tokenOwnerRecord: ProgramAccount<TokenOwnerRecord>,
     payer: PublicKey,
     unbondingSeed: number,
     amount: BN | null = null
   ) {
-    const address = UnbondingAccount.deriveUnbondingAccount(stakePool.program, stakeAccount.address, unbondingSeed)
+    const address = this.deriveUnbondingAccount(stakePool.program, stakeAccount.addresses.stakeAccount, unbondingSeed)
     const ix = await stakePool.program.methods
       .unbondStake(unbondingSeed, amount)
       .accounts({
         owner: stakeAccount.stakeAccount.owner,
         payer,
-        stakeAccount: stakeAccount.address,
+        stakeAccount: stakeAccount.addresses.stakeAccount,
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.addresses.stakePoolVault,
         unbondingAccount: address,
+        voterWeightRecord: stakeAccount.addresses.voterWeightRecord,
+        maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
+        tokenOwnerRecord: tokenOwnerRecord.pubkey,
         systemProgram: SystemProgram.programId
       })
       .instruction()
@@ -245,7 +242,7 @@ export class UnbondingAccount {
         owner: stakeAccount.stakeAccount.owner,
         closer: rentReceiver,
         tokenReceiver: tokenReceiver,
-        stakeAccount: stakeAccount.address,
+        stakeAccount: stakeAccount.addresses.stakeAccount,
         stakePool: stakeAccount.stakeAccount.stakePool,
         stakePoolVault: stakePool.addresses.stakePoolVault,
         unbondingAccount: unbondingAccount.address,
@@ -307,7 +304,7 @@ export class UnbondingAccount {
       .accounts({
         owner: stakeAccount.stakeAccount.owner,
         receiver: rentReceiver,
-        stakeAccount: stakeAccount.address,
+        stakeAccount: stakeAccount.addresses.stakeAccount,
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.vault.address,
         unbondingAccount: unbondingAccount.address

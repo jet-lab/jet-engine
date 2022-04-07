@@ -5,6 +5,7 @@ import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
 import { Hooks } from "../common/hooks"
 import { StakeIdl } from "./idl"
+import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
 export interface StakePoolAccounts {
   stakePool: PublicKey
@@ -15,77 +16,9 @@ export interface StakePoolAccounts {
 
 // ----- Account Info -----
 
-export interface StakePoolInfo {
-  /** The authority allowed to withdraw the staked tokens */
-  authority: PublicKey
-
-  /** The seed used to generate the pool address */
-  seed: number[]
-  seedLen: number
-  bumpSeed: number[]
-
-  /** The mint for the tokens being staked */
-  tokenMint: PublicKey
-
-  /** The token account owned by this pool, holding the staked tokens */
-  stakePoolVault: PublicKey
-
-  /* The address of the max vote weight record, which is read by the governance program */
-  maxVoterWeightRecord: PublicKey
-
-  /* The governance realm that this pool has voting power in. */
-  governanceRealm: PublicKey
-
-  /** The mint for the derived collateral token */
-  stakeCollateralMint: PublicKey
-
-  /** Length of the unbonding period */
-  unbondPeriod: BN
-
-  /** The amount of tokens stored by the pool's vault */
-  vaultAmount: BN
-
-  /** Tokens that are currently bonded, */
-  /** and the distinctly valued shares that represent stake in bonded tokens */
-  bonded: SharedTokenPool
-
-  /** Tokens that are in the process of unbonding, */
-  /** and the distinctly valued shares that represent stake in unbonding tokens */
-  unbonding: SharedTokenPool
-}
-
-export interface SharedTokenPool {
-  /** Number of tokens held by this pool */
-  tokens: BN
-
-  /** Number of shares that have been issued to users
-      to represent ownership of a portion of the tokens */
-  shares: BN
-}
-
-// ----- SPL Governance Addin -----
-
-export interface MaxVoterWeightRecord {
-  /** The Realm the MaxVoterWeightRecord belongs to */
-  realm: PublicKey
-
-  /** Governing Token Mint the MaxVoterWeightRecord is associated with
-      Note: The addin can take deposits of any tokens and is not restricted to the community or council tokens only
-      The mint here is to link the record to either community or council mint of the realm */
-  governingTokenMint: PublicKey
-
-  /** The max voter weight provided by the addin for the given realm and governing_token_mint */
-  maxVoterWeight: BN
-  /** The slot when the max voting weight expires
-      It should be set to None if the weight never expires
-      If the max vote weight decays with time, for example for time locked based weights, then the expiry must be set
-      As a pattern Revise instruction to update the max weight should be invoked before governance instruction within the same transaction
-      and the expiry set to the current slot to provide up to date weight */
-  maxVoterWeightExpiry: BN | undefined
-
-  /** Reserved space for future versions */
-  reserved: number[]
-}
+export type StakePoolInfo = TypeDef<AllAccountsMap<StakeIdl>["stakePool"], IdlTypes<StakeIdl>>
+export type MaxVoterWeightRecord = TypeDef<AllAccountsMap<StakeIdl>["maxVoterWeightRecord"], IdlTypes<StakeIdl>>
+export type SharedTokenPool = StakePoolInfo["bonded"]
 
 // ----- Instructions -----
 
@@ -218,6 +151,19 @@ export class StakePool {
   }
 
   /**
+   * Derive the MaxVoterWeightRecord for the realm
+   *
+   * @static
+   * @param {PublicKey} programId
+   * @param {PublicKey} realm
+   * @return {PublicKey}
+   * @memberof StakePool
+   */
+  static deriveMaxVoterWeightRecord(programId: PublicKey, realm: PublicKey): PublicKey {
+    return findDerivedAccount(programId, realm, "max-vote-weight-record")
+  }
+
+  /**
    * TODO:
    * @static
    * @param {Program<StakeIdl>} program
@@ -227,10 +173,12 @@ export class StakePool {
    */
   static async create(program: Program<StakeIdl>, params: CreateStakePoolParams): Promise<string> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
+    const maxVoterWeightRecord = this.deriveMaxVoterWeightRecord(program.programId, params.args.governanceRealm)
 
     const accounts = {
       ...params.accounts,
       ...derivedAccounts,
+      maxVoterWeightRecord,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY
