@@ -17,6 +17,11 @@ export interface StakeBalance {
   unbondingJet: BN | undefined
 }
 
+export interface StakeAccountAddresses {
+  stakeAccount: PublicKey
+  voterWeightRecord: PublicKey
+}
+
 export class StakeAccount {
   /**
    * TODO:
@@ -24,11 +29,17 @@ export class StakeAccount {
    * @param {Program<StakeIdl>} stakeProgram
    * @param {PublicKey} stakePool
    * @param {PublicKey} owner
-   * @returns {Promise<PublicKey>}
+   * @returns {StakeAccountAddresses}
    * @memberof StakeAccount
    */
-  static deriveStakeAccount(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): PublicKey {
-    return findDerivedAccount(stakeProgram.programId, stakePool, owner)
+  static deriveAccounts(
+    stakeProgram: Program<StakeIdl>,
+    stakePool: PublicKey,
+    owner: PublicKey
+  ): StakeAccountAddresses {
+    const stakeAccount = findDerivedAccount(stakeProgram.programId, stakePool, owner)
+    const voterWeightRecord = findDerivedAccount(stakeProgram.programId, "voter-weight-record", stakeAccount)
+    return { stakeAccount, voterWeightRecord }
   }
 
   /**
@@ -41,14 +52,14 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async load(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): Promise<StakeAccount> {
-    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const addresses = this.deriveAccounts(stakeProgram, stakePool, owner)
 
-    const stakeAccount = (await stakeProgram.account.stakeAccount.fetch(address)) as StakeAccountInfo
+    const stakeAccount = (await stakeProgram.account.stakeAccount.fetch(addresses.stakeAccount)) as StakeAccountInfo
     const voterWeightRecord = (await stakeProgram.account.voterWeightRecord.fetch(
-      stakeAccount.voterWeightRecord
+      addresses.voterWeightRecord
     )) as VoterWeightRecord
 
-    return new StakeAccount(stakeProgram, address, stakeAccount, voterWeightRecord)
+    return new StakeAccount(stakeProgram, addresses, stakeAccount, voterWeightRecord)
   }
 
   /**
@@ -61,8 +72,8 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async exists(stakeProgram: Program<StakeIdl>, stakePool: PublicKey, owner: PublicKey): Promise<boolean> {
-    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
-    const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(address)
+    const addresses = this.deriveAccounts(stakeProgram, stakePool, owner)
+    const stakeAccount = await stakeProgram.provider.connection.getAccountInfo(addresses.stakeAccount)
     return stakeAccount !== null
   }
 
@@ -70,15 +81,16 @@ export class StakeAccount {
    * Creates an instance of StakeAccount.
    * @private
    * @param {Program<StakeIdl>} program
-   * @param {PublicKey} address
+   * @param {StakeAccountAddresses} addresses
    * @param {StakeAccountInfo} stakeAccount
+   * @param {VoterWeightRecord} voterWeightRecord
    * @memberof StakeAccount
    */
   private constructor(
     public program: Program<StakeIdl>,
-    public address: PublicKey,
+    public addresses: StakeAccountAddresses,
     public stakeAccount: StakeAccountInfo,
-    public VoterWeightRecord: VoterWeightRecord
+    public voterWeightRecord: VoterWeightRecord
   ) {}
 
   /**
@@ -147,9 +159,8 @@ export class StakeAccount {
     payer: PublicKey
   ): Promise<string> {
     const instructions: TransactionInstruction[] = []
-    const address = this.deriveStakeAccount(stakeProgram, stakePool, owner)
 
-    await this.withCreate(instructions, stakeProgram, address, owner, payer)
+    await this.withCreate(instructions, stakeProgram, stakePool, owner, payer)
 
     return stakeProgram.provider.send(new Transaction().add(...instructions))
   }
@@ -197,9 +208,9 @@ export class StakeAccount {
     owner: PublicKey,
     payer: PublicKey
   ) {
-    const stakeAccount = this.deriveStakeAccount(stakeProgram, stakePool, owner)
+    const addresses = this.deriveAccounts(stakeProgram, stakePool, owner)
 
-    const info = await stakeProgram.provider.connection.getAccountInfo(stakeAccount)
+    const info = await stakeProgram.provider.connection.getAccountInfo(addresses.stakeAccount)
 
     // It would be nice to have seperate options
     // 1) The account is from the right program. Relevant to non PDAs
@@ -216,7 +227,7 @@ export class StakeAccount {
           owner,
           auth,
           stakePool,
-          stakeAccount,
+          stakeAccount: addresses.stakeAccount,
           payer,
           systemProgram: SystemProgram.programId
         })
@@ -245,14 +256,16 @@ export class StakeAccount {
     tokenAccount: PublicKey,
     amount: BN | null = null
   ) {
-    const stakeAccount = this.deriveStakeAccount(stakePool.program, stakePool.addresses.stakePool, owner)
+    const addresses = this.deriveAccounts(stakePool.program, stakePool.addresses.stakePool, owner)
 
     const ix = await stakePool.program.methods
       .addStake(amount)
       .accounts({
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.addresses.stakePoolVault,
-        stakeAccount,
+        stakeAccount: addresses.stakeAccount,
+        voterWeightRecord: addresses.voterWeightRecord,
+        maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
         payer,
         payerTokenAccount: tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID
