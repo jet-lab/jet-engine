@@ -6,17 +6,15 @@
 import { BN, Provider } from "@project-serum/anchor"
 import { StakeClient, StakePool } from "../src"
 import { resolve } from "path"
-import { homedir } from "os";
-import process from "process";
-import { PublicKey } from "@solana/web3.js";
+import { homedir } from "os"
+import process from "process"
+import { PublicKey } from "@solana/web3.js"
 
 // ------ Parameters ------
 
-const mainnet = false;
+const mainnet = false
 
-const cluster = mainnet ?
-  "https://api.mainnet.solana.com" :
-  "https://api.devnet.solana.com"
+const cluster = mainnet ? "https://api.mainnet.solana.com" : "https://api.devnet.solana.com"
 
 const seed = StakePool.CANONICAL_SEED
 
@@ -29,7 +27,7 @@ const tokenMint = mainnet
   ? new PublicKey("JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz")
   : new PublicKey("FRuFWBrp1Kh6LpAi9CRvjk97C6YpCR7AERq62N2CZFUg")
 
-const realm = new PublicKey("CMUC57nM9WrriAUSRF4ZCtxauS1HMSW5AvS2PDQcoLN9")
+const realm = new PublicKey("Hi4hNCJZk1oPj8Kny3HcNqCP7VN451eTaENqr4fn92e2")
 
 /** The time period for unbonding staked tokens from the pool.
  
@@ -79,7 +77,6 @@ async function main() {
    * [
    *   ["stakePool","83bqcdNH5G7kUwxczSd5WkJWf76f68SEMNiUd3sNLBQH"],
    *   ["stakeVoteMint","ESxCuVFgh88UR3DWuq5JKwb15ppEw67tnZnedCTERV6M"],
-   *   ["stakeCollateralMint","F47rk1FL92z7Pdy5NaCCQbd9j6FmipWskkbFBExttX5X"],
    *   ["stakePoolVault","CBMNo5LGWY3gksekivwd3uY42VMpa5tTcPJgAwWuig9P"]
    * ]
    */
