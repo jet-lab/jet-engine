@@ -356,7 +356,7 @@ export class Airdrop {
         /** The account to own the stake being deposited */
         stakeAccount: stakeAccount.addresses.stakeAccount,
         /** The voter weight for the stake account */
-        voterWeightRecord: stakeAccount.voterWeightRecord,
+        voterWeightRecord: stakeAccount.stakeAccount.voterWeightRecord,
         /** The max voter weight */
         maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
         stakingProgram: StakeClient.PROGRAM_ID,
