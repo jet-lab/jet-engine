@@ -305,6 +305,8 @@ export class UnbondingAccount {
         owner: stakeAccount.stakeAccount.owner,
         receiver: rentReceiver,
         stakeAccount: stakeAccount.addresses.stakeAccount,
+        voterWeightRecord: stakeAccount.voterWeightRecord,
+        maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
         stakePool: stakePool.addresses.stakePool,
         stakePoolVault: stakePool.vault.address,
         unbondingAccount: unbondingAccount.address
