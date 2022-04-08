@@ -29,7 +29,7 @@ const tokenMint = mainnet
   ? new PublicKey("JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz")
   : new PublicKey("FRuFWBrp1Kh6LpAi9CRvjk97C6YpCR7AERq62N2CZFUg")
 
-const realm = new PublicKey("34EMxuDbQuVGsBqjabYZqgC24VuBr12oXRt3sRgFvFdT")
+const realm = new PublicKey("CMUC57nM9WrriAUSRF4ZCtxauS1HMSW5AvS2PDQcoLN9")
 
 /** The time period for unbonding staked tokens from the pool.
  

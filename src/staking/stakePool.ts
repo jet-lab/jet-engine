@@ -44,7 +44,7 @@ interface CreateStakePoolParams {
 
 export class StakePool {
   /** The official Jet Stake Pool seed */
-  public static readonly CANONICAL_SEED = "alrht"
+  public static readonly CANONICAL_SEED = "Yolo"
 
   /**
    * TODO:
