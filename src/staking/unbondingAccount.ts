@@ -5,7 +5,6 @@ import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { StakeIdl } from "./idl"
-import { ProgramAccount, TokenOwnerRecord } from "@solana/spl-governance"
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
 export type UnbondingAccountInfo = TypeDef<AllAccountsMap<StakeIdl>["unbondingAccount"], IdlTypes<StakeIdl>>
@@ -191,7 +190,7 @@ export class UnbondingAccount {
     instructions: TransactionInstruction[],
     stakePool: StakePool,
     stakeAccount: StakeAccount,
-    tokenOwnerRecord: ProgramAccount<TokenOwnerRecord>,
+    tokenOwnerRecord: PublicKey,
     payer: PublicKey,
     unbondingSeed: number,
     amount: BN | null = null
@@ -208,7 +207,7 @@ export class UnbondingAccount {
         unbondingAccount: address,
         voterWeightRecord: stakeAccount.addresses.voterWeightRecord,
         maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
-        tokenOwnerRecord: tokenOwnerRecord.pubkey,
+        tokenOwnerRecord: tokenOwnerRecord,
         systemProgram: SystemProgram.programId
       })
       .instruction()
