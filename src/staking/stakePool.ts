@@ -9,7 +9,6 @@ import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cj
 
 export interface StakePoolAccounts {
   stakePool: PublicKey
-  stakeCollateralMint: PublicKey
   stakePoolVault: PublicKey
 }
 
@@ -60,7 +59,6 @@ export class StakePool {
     const stakePool = (await program.account.stakePool.fetch(addresses.stakePool)) as StakePoolInfo
 
     const [collateralMintInfo, vaultInfo, tokenMintInfo] = await program.provider.connection.getMultipleAccountsInfo([
-      addresses.stakeCollateralMint,
       addresses.stakePoolVault,
       stakePool.tokenMint
     ])
@@ -79,11 +77,10 @@ export class StakePool {
       stakePool.maxVoterWeightRecord
     )) as MaxVoterWeightRecord
 
-    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
     const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
     const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
 
-    return new StakePool(program, addresses, stakePool, collateralMint, vault, tokenMint, maxVoterWeightRecord)
+    return new StakePool(program, addresses, stakePool, vault, tokenMint, maxVoterWeightRecord)
   }
 
   /**
@@ -101,7 +98,6 @@ export class StakePool {
     public program: Program<StakeIdl>,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public collateralMint: JetMint,
     public vault: JetTokenAccount,
     public tokenMint: JetMint,
     public maxVoterWeightRecord: MaxVoterWeightRecord
@@ -131,11 +127,9 @@ export class StakePool {
    */
   static deriveAccounts(programId: PublicKey, seed: string): StakePoolAccounts {
     const stakePool = findDerivedAccount(programId, seed)
-    const stakeCollateralMint = findDerivedAccount(programId, seed, "collateral-mint")
     const stakePoolVault = findDerivedAccount(programId, seed, "vault")
     return {
       stakePool,
-      stakeCollateralMint,
       stakePoolVault
     }
   }
