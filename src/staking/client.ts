@@ -28,7 +28,7 @@ import { StakeIdl } from "./idl"
  */
 export class StakeClient {
   static readonly PROGRAM_ID = new PublicKey("JPLockxtkngHkaQT5AuRYow3HyUv5qWzmhwsCPd653n")
-  static readonly GOVERNANCE_PROGRAM_ID = new PublicKey("JPGov2SBA6f7XSJF5R4Si5jEJekGiyrwP2m7gSEqLUs ")
+  static readonly GOVERNANCE_PROGRAM_ID = new PublicKey("JPGov2SBA6f7XSJF5R4Si5jEJekGiyrwP2m7gSEqLUs")
   /**
    * Create a new client for interacting with the Jet staking program.
    * @param {Provider} provider The provider with wallet/network access that can be used to send transactions.
