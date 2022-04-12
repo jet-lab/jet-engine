@@ -1,6 +1,6 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
 import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
 import { Hooks } from "../common/hooks"
@@ -161,7 +161,11 @@ export class StakePool {
    * @returns {Promise<string>}
    * @memberof StakePool
    */
-  static async create(program: Program<StakeIdl>, params: CreateStakePoolParams): Promise<string> {
+  static async withCreate(
+    instructions: TransactionInstruction[],
+    program: Program<StakeIdl>,
+    params: CreateStakePoolParams
+  ): Promise<void> {
     const derivedAccounts = this.deriveAccounts(program.programId, params.args.seed)
     const maxVoterWeightRecord = this.deriveMaxVoterWeightRecord(program.programId, params.args.governanceRealm)
 
@@ -174,12 +178,13 @@ export class StakePool {
       rent: SYSVAR_RENT_PUBKEY
     }
 
-    return await program.methods
+    const ix = await program.methods
       .initPool(params.args.seed, {
         unbondPeriod: params.args.unbondPeriod,
         governanceRealm: params.args.governanceRealm
       })
       .accounts(accounts)
-      .rpc()
+      .instruction()
+    instructions.push(ix)
   }
 }
