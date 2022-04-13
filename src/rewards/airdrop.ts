@@ -335,8 +335,11 @@ export class Airdrop {
     rewardsProgram: Program<RewardsIdl>,
     airdrop: Airdrop,
     stakePool: StakePool,
-    stakeAccount: StakeAccount
+    stakeAccount: StakeAccount,
+    owner: PublicKey
   ) {
+    const addresses = StakeAccount.deriveAccounts(stakePool.program, stakePool.addresses.stakePool, owner)
+
     console.log("Claiming and staking the airdrop.")
     const ix = await rewardsProgram.methods
       .airdropClaim()
@@ -354,7 +357,7 @@ export class Airdrop {
         /** The stake pool token vault */
         stakePoolVault: stakePool.vault.address,
         /** The account to own the stake being deposited */
-        stakeAccount: stakeAccount.addresses.stakeAccount,
+        stakeAccount: addresses.stakeAccount,
         /** The voter weight for the stake account */
         voterWeightRecord: stakeAccount.stakeAccount.voterWeightRecord,
         /** The max voter weight */
@@ -381,10 +384,11 @@ export class Airdrop {
     rewardsProgram: Program<RewardsIdl>,
     airdrop: Airdrop,
     stakePool: StakePool,
-    stakeAccount: StakeAccount
+    stakeAccount: StakeAccount,
+    owner: PublicKey
   ): Promise<TransactionInstruction[]> {
     const ix: TransactionInstruction[] = []
-    await this.withClaim(ix, rewardsProgram, airdrop, stakePool, stakeAccount)
+    await this.withClaim(ix, rewardsProgram, airdrop, stakePool, stakeAccount, owner)
     console.log("claim ix", ix)
     return ix
   }
