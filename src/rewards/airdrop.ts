@@ -335,7 +335,6 @@ export class Airdrop {
     rewardsProgram: Program<RewardsIdl>,
     airdrop: Airdrop,
     stakePool: StakePool,
-    stakeAccount: StakeAccount,
     owner: PublicKey
   ) {
     const addresses = StakeAccount.deriveAccounts(stakePool.program, stakePool.addresses.stakePool, owner)
@@ -349,9 +348,9 @@ export class Airdrop {
         /** The token account to claim the rewarded tokens from */
         rewardVault: airdrop.rewardsVaultAddress,
         /** The address entitled to the airdrop, which must sign to claim */
-        recipient: stakeAccount.stakeAccount.owner,
+        recipient: owner,
         /** The address to receive rent recovered from the claim account */
-        receiver: stakeAccount.stakeAccount.owner,
+        receiver: owner,
         /** The stake pool to deposit stake into */
         stakePool: airdrop.airdrop.stakePool,
         /** The stake pool token vault */
@@ -359,7 +358,7 @@ export class Airdrop {
         /** The account to own the stake being deposited */
         stakeAccount: addresses.stakeAccount,
         /** The voter weight for the stake account */
-        voterWeightRecord: stakeAccount.stakeAccount.voterWeightRecord,
+        voterWeightRecord: addresses.voterWeightRecord,
         /** The max voter weight */
         maxVoterWeightRecord: stakePool.stakePool.maxVoterWeightRecord,
         stakingProgram: StakeClient.PROGRAM_ID,
@@ -376,7 +375,7 @@ export class Airdrop {
    * @param {Program<RewardsIdl>} rewardsProgram
    * @param {Airdrop} airdrop
    * @param {StakePool} stakePool
-   * @param {StakeAccount} stakeAccount
+   * @param {PublicKey} owner
    * @returns {Promise<TransactionInstruction[]>}
    * @memberof Airdrop
    */
@@ -384,11 +383,10 @@ export class Airdrop {
     rewardsProgram: Program<RewardsIdl>,
     airdrop: Airdrop,
     stakePool: StakePool,
-    stakeAccount: StakeAccount,
     owner: PublicKey
   ): Promise<TransactionInstruction[]> {
     const ix: TransactionInstruction[] = []
-    await this.withClaim(ix, rewardsProgram, airdrop, stakePool, stakeAccount, owner)
+    await this.withClaim(ix, rewardsProgram, airdrop, stakePool, owner)
     console.log("claim ix", ix)
     return ix
   }
