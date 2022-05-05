@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { BN } from "@project-serum/anchor"
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import BN from "bn.js"
 import { GovClient, GovRealm, VoteCount } from "."
 import { Amount } from "../."
 

@@ -1,8 +1,7 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
-import BN from "bn.js"
 import { AssociatedToken } from "./associatedToken"
-import { Provider } from "@project-serum/anchor"
+import { BN, Provider } from "@project-serum/anchor"
 
 export class TokenFaucet {
   /**

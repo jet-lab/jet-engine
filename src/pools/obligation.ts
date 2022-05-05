@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
-import BN from "bn.js"
 import { JetClient, JetMarket, JetMarketData, JetReserve, JetUser, ReserveData } from "."
 import { JetUserData } from "./user"
 import { TokenAmount } from ".."
