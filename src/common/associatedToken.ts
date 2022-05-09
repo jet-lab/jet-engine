@@ -6,7 +6,9 @@ import {
   createAssociatedTokenAccountInstruction,
   createCloseAccountInstruction,
   createTransferInstruction,
-  createSyncNativeInstruction
+  createSyncNativeInstruction,
+  Mint,
+  Account
 } from "@solana/spl-token"
 import {
   AccountInfo,
@@ -20,7 +22,6 @@ import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount, bnToNumber } from "."
-import { JetTokenAccount, JetMint } from "./types"
 
 export class AssociatedToken {
   address: PublicKey
@@ -59,7 +60,7 @@ export class AssociatedToken {
     if (!account) {
       return undefined
     }
-    const info = parseTokenAccount(account.data, address)
+    const info = parseTokenAccount(account, address)
     return new AssociatedToken(account, info)
   }
 
@@ -86,12 +87,12 @@ export class AssociatedToken {
    * @returns {(Promise<Mint | undefined>)}
    * @memberof AssociatedToken
    */
-  static async loadMint(connection: Connection, mint: PublicKey): Promise<JetMint | undefined> {
+  static async loadMint(connection: Connection, mint: PublicKey): Promise<Mint | undefined> {
     const mintInfo = await connection.getAccountInfo(mint)
     if (!mintInfo) {
       return undefined
     }
-    return parseMintAccount(mintInfo.data, mint)
+    return parseMintAccount(mintInfo, mint)
   }
 
   /**
@@ -101,7 +102,7 @@ export class AssociatedToken {
    * @param {JetTokenAccount} info
    * @memberof AssociatedToken
    */
-  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: JetTokenAccount) {
+  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: Account) {
     this.address = info.address
   }
 
@@ -164,7 +165,7 @@ export class AssociatedToken {
    * @returns {(Mint | undefined)}
    * @memberof AssociatedToken
    */
-  static useMint(connection: Connection | undefined, address: PublicKey | undefined): JetMint | undefined {
+  static useMint(connection: Connection | undefined, address: PublicKey | undefined): Mint | undefined {
     return Hooks.usePromise(
       async () => connection && address && AssociatedToken.loadMint(connection, address),
       [connection, address?.toBase58()]

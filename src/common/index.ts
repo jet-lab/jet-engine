@@ -1,14 +1,18 @@
 import { Idl, Program, Provider } from "@project-serum/anchor"
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
-import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
-import { useMemo } from "react"
+import { PublicKey } from "@solana/web3.js"
 
 export * from "./tokenAmount"
-export * from "./tokenMintKeys"
-export { JetTokenAccount, JetMint } from "./types"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
-export { bnToNumber, bnToBigInt, bigIntToBn } from "./accountParser"
+export {
+  parseMintAccount,
+  parseTokenAccount,
+  bnToNumber,
+  bnToBigInt,
+  bigIntToBn,
+  bigIntToNumber
+} from "./accountParser"
 export { Hooks } from "./hooks"
 
 export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string | Buffer
@@ -88,27 +92,4 @@ export async function connect<T extends Idl>(programId: PublicKey, provider: Pro
   }
 
   return new Program(idl, programId, provider)
-}
-
-const confirmOptions: ConfirmOptions = {
-  skipPreflight: true,
-  commitment: "recent" as Commitment,
-  preflightCommitment: "recent"
-}
-
-/**
- * TODO:
- * @export
- * @param {Connection} connection
- * @param {any} wallet
- * @returns {Provider}
- */
-export function useProvider(connection: Connection, wallet: any): Provider {
-  return useMemo(() => new Provider(connection, wallet, confirmOptions), [connection, wallet, confirmOptions])
-}
-
-export function checkNull(value: any): void {
-  if (value === null) {
-    throw new Error(`Invalid ${value}`)
-  }
 }
