@@ -1,8 +1,8 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { Account, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { Program } from "@project-serum/anchor"
-import { findDerivedAccount, checkNull, JetMint, JetTokenAccount } from "../common"
+import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./state"
 import { TokenMetadataInfo } from "../marginMetadata"
@@ -21,10 +21,10 @@ export class MarginPool {
     public program: Program,
     public addresses: MarginPoolAddresses,
     public marginPool: MarginPoolAccountInfo,
-    public vault: JetTokenAccount,
-    public depositNoteMint: JetMint,
-    public loanNoteMint: JetMint,
-    public poolTokenMint: JetMint
+    public vault: Account,
+    public depositNoteMint: Mint,
+    public loanNoteMint: Mint,
+    public poolTokenMint: Mint
   ) {}
 
   /**
@@ -46,15 +46,14 @@ export class MarginPool {
         addresses.loanNoteMint
       ])
 
-    checkNull(poolTokenMintInfo)
-    checkNull(vaultMintInfo)
-    checkNull(depositNoteMintInfo)
-    checkNull(loanNoteMintInfo)
+    if (!poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
+      throw new Error("Invalid margin pool")
+    }
 
-    const poolTokenMint = parseMintAccount(poolTokenMintInfo?.data as Buffer, tokenMint)
-    const vault = parseTokenAccount(vaultMintInfo?.data as Buffer, addresses.vault)
-    const depositNoteMint = parseMintAccount(depositNoteMintInfo?.data as Buffer, addresses.depositNoteMint)
-    const loanNoteMint = parseMintAccount(loanNoteMintInfo?.data as Buffer, addresses.loanNoteMint)
+    const poolTokenMint = parseMintAccount(poolTokenMintInfo, tokenMint)
+    const vault = parseTokenAccount(vaultMintInfo, addresses.vault)
+    const depositNoteMint = parseMintAccount(depositNoteMintInfo, addresses.depositNoteMint)
+    const loanNoteMint = parseMintAccount(loanNoteMintInfo, addresses.loanNoteMint)
 
     return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
   }

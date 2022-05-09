@@ -35,15 +35,16 @@ export {
 export { Auth, AuthIdl } from "./auth"
 export {
   TokenAmount,
+  parseMintAccount,
+  parseTokenAccount,
   bnToNumber,
   bigIntToBn,
   bnToBigInt,
+  bigIntToNumber,
   AssociatedToken,
   TokenFaucet,
-  DerivedAccount,
-  JetMint
+  DerivedAccount
 } from "./common"
 export * from "./gov"
-// FIXME: export * from "./p2p"
 export * from "./pools"
 export * from "./staking"

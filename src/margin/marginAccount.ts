@@ -3,7 +3,6 @@ import { Program } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { MarginAccountInfo } from "./state"
-import { checkNull } from "../common/index"
 
 export class MarginAccount {
   constructor(public marginProgram: Program, public address: PublicKey, public marginAccount: MarginAccountInfo) {}
@@ -19,7 +18,9 @@ export class MarginAccount {
     const address = this.derive(marginProgram.programId, owner, seed)
     const marginAccountInfo = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
 
-    checkNull(marginAccountInfo)
+    if (!marginAccountInfo) {
+      throw new Error("Invalid margin account")
+    }
 
     return new MarginAccount(marginProgram, address, marginAccountInfo)
   }

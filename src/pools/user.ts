@@ -970,7 +970,7 @@ export class JetUser implements JetUserData {
       }
 
       //parse token account
-      const tokenAccount = parseTokenAccount(info.data, account.address)
+      const tokenAccount = parseTokenAccount(info, account.address)
 
       //get token decimals
       const tokenAccountBalance = await this.conn.getTokenAccountBalance(tokenAccount.address)

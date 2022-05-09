@@ -1,8 +1,8 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { Account, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js"
 import { BN, Program } from "@project-serum/anchor"
-import { findDerivedAccount, JetTokenAccount, JetMint } from "../common"
+import { findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
 import { StakeIdl } from "./idl"
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
@@ -79,9 +79,9 @@ export class StakePool {
       stakePool.maxVoterWeightRecord
     )) as MaxVoterWeightRecord
 
-    const collateralMint = parseMintAccount(collateralMintInfo.data as Buffer, addresses.stakeCollateralMint)
-    const vault = parseTokenAccount(vaultInfo.data as Buffer, addresses.stakePoolVault)
-    const tokenMint = parseMintAccount(tokenMintInfo?.data as Buffer, stakePool.tokenMint)
+    const collateralMint = parseMintAccount(collateralMintInfo, addresses.stakeCollateralMint)
+    const vault = parseTokenAccount(vaultInfo, addresses.stakePoolVault)
+    const tokenMint = parseMintAccount(tokenMintInfo, stakePool.tokenMint)
 
     return new StakePool(program, addresses, stakePool, collateralMint, vault, tokenMint, maxVoterWeightRecord)
   }
@@ -101,9 +101,9 @@ export class StakePool {
     public program: Program<StakeIdl>,
     public addresses: StakePoolAccounts,
     public stakePool: StakePoolInfo,
-    public collateralMint: JetMint,
-    public vault: JetTokenAccount,
-    public tokenMint: JetMint,
+    public collateralMint: Mint,
+    public vault: Account,
+    public tokenMint: Mint,
     public maxVoterWeightRecord: MaxVoterWeightRecord
   ) {}
 

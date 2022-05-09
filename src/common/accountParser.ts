@@ -1,8 +1,19 @@
 import { BN } from "@project-serum/anchor"
-import { PublicKey } from "@solana/web3.js"
+import { AccountInfo, PublicKey } from "@solana/web3.js"
 import * as BL from "@solana/buffer-layout"
-import * as BLU from "@solana/buffer-layout-utils"
-import { JetTokenAccount, JetMint, RawTokenAccountInfo, RawMint } from "./types"
+import {
+  Account,
+  AccountLayout,
+  AccountState,
+  ACCOUNT_SIZE,
+  Mint,
+  MintLayout,
+  MINT_SIZE,
+  TokenAccountNotFoundError,
+  TokenInvalidAccountOwnerError,
+  TokenInvalidAccountSizeError,
+  TOKEN_PROGRAM_ID
+} from "@solana/spl-token"
 
 /**
  * TODO:
@@ -167,76 +178,55 @@ export function u64Field(property?: string): NumberField {
   return new NumberField(8, property)
 }
 
-const RawTokenAccountLayout = BL.struct<RawTokenAccountInfo>([
-  BLU.publicKey("mint"),
-  pubkeyField("owner"),
-  u64Field("amount"),
-  BL.u32("delegateOption"),
-  pubkeyField("delegate"),
-  BL.u8("state"),
-  BL.u32("isNativeOption"),
-  u64Field("isNative"),
-  u64Field("delegatedAmount"),
-  BL.u32("closeAuthorityOption"),
-  pubkeyField("closeAuthority")
-])
-
-/** Buffer layout for de/serializing a mint */
-export const RawMintLayout = BL.struct<RawMint>([
-  BL.u32("mintAuthorityOption"),
-  BLU.publicKey("mintAuthority"),
-  u64Field("supply"),
-  BL.u8("decimals"),
-  BLU.bool("isInitialized"),
-  BL.u32("freezeAuthorityOption"),
-  BLU.publicKey("freezeAuthority")
-])
-
 /**
- * Decode a token account
- * @param {Buffer} account
- * @param {PublicKey} accountPubkey
+ * Decode a token account. From @solana/spl-token
+ * @param {AccountInfo<Buffer>} inifo
+ * @param {PublicKey} address
  * @returns
  */
-export const parseTokenAccount = (account: Buffer, accountAddress: PublicKey): JetTokenAccount => {
-  const data = RawTokenAccountLayout.decode(account)
+export const parseTokenAccount = (info: AccountInfo<Buffer>, address: PublicKey): Account => {
+  if (!info) throw new TokenAccountNotFoundError()
+  if (!info.owner.equals(TOKEN_PROGRAM_ID)) throw new TokenInvalidAccountOwnerError()
+  if (info.data.length != ACCOUNT_SIZE) throw new TokenInvalidAccountSizeError()
 
-  // PublicKeys and BNs are currently Uint8 arrays and
-  // booleans are really Uint8s. Convert them
-  const decoded: JetTokenAccount = {
-    address: accountAddress,
-    mint: data.mint,
-    owner: data.owner,
-    amount: data.amount,
-    delegate: data.delegateOption === 1 ? data.delegate : undefined,
-    delegatedAmount: data.delegatedAmount,
-    isInitialized: data.state !== 0,
-    isFrozen: data.state === 2, //2 = frozen in AccountState enum
-    isNative: data.isNativeOption === 1,
-    rentExemptReserve: data.isNativeOption === 1 ? data.isNative : new BN(0),
-    closeAuthority: data.closeAuthorityOption === 1 ? data.closeAuthority : undefined
+  const rawAccount = AccountLayout.decode(info.data)
+
+  return {
+    address,
+    mint: rawAccount.mint,
+    owner: rawAccount.owner,
+    amount: rawAccount.amount,
+    delegate: rawAccount.delegateOption ? rawAccount.delegate : null,
+    delegatedAmount: rawAccount.delegatedAmount,
+    isInitialized: rawAccount.state !== AccountState.Uninitialized,
+    isFrozen: rawAccount.state === AccountState.Frozen,
+    isNative: !!rawAccount.isNativeOption,
+    rentExemptReserve: rawAccount.isNativeOption ? rawAccount.isNative : null,
+    closeAuthority: rawAccount.closeAuthorityOption ? rawAccount.closeAuthority : null
   }
-  return decoded
 }
 
 /**
  * Decode a mint account
- * @param {Buffer} mint
- * @param {PublicKey} mintAddress
+ * @param {AccountInfo<Buffer>} info
+ * @param {PublicKey} address
  * @returns {Mint}
  */
-export const parseMintAccount = (mint: Buffer, mintAddress: PublicKey): JetMint => {
-  const data = RawMintLayout.decode(mint)
+export const parseMintAccount = (info: AccountInfo<Buffer>, address: PublicKey): Mint => {
+  if (!info) throw new TokenAccountNotFoundError()
+  if (!info.owner.equals(TOKEN_PROGRAM_ID)) throw new TokenInvalidAccountOwnerError()
+  if (info.data.length != MINT_SIZE) throw new TokenInvalidAccountSizeError()
 
-  const decoded: JetMint = {
-    address: mintAddress,
-    mintAuthority: data.mintAuthorityOption === 1 ? data.mintAuthority : undefined,
-    supply: data.supply,
-    decimals: data.decimals,
-    isInitialized: data.isInitialized,
-    freezeAuthority: data.freezeAuthorityOption === 1 ? data.freezeAuthority : undefined
+  const rawMint = MintLayout.decode(info.data)
+
+  return {
+    address,
+    mintAuthority: rawMint.mintAuthorityOption ? rawMint.mintAuthority : null,
+    supply: rawMint.supply,
+    decimals: rawMint.decimals,
+    isInitialized: rawMint.isInitialized,
+    freezeAuthority: rawMint.freezeAuthorityOption ? rawMint.freezeAuthority : null
   }
-  return decoded
 }
 
 /**
@@ -257,6 +247,10 @@ export const bigIntToBn = (bigInt: bigint | null | undefined): BN => {
   return bigInt ? new BN(bigInt.toString()) : new BN(0)
 }
 
+export const bigIntToNumber = (bigint: bigint | null | undefined): number => {
+  return bigint ? Number(bigint.toString()) : 0
+}
+
 /**
  * Convert BN (Anchor) to BigInt (spl)
  * @param {bn} [bn]
@@ -267,7 +261,7 @@ export const bnToBigInt = (bn: BN | number | null | undefined): bigint => {
   if (typeof bn === "number") {
     result = BigInt(bn)
   } else {
-    result = bn ? BigInt(bn.toNumber()) : BigInt(0)
+    result = bn ? BigInt(bn.toString()) : BigInt(0)
   }
   return result
 }

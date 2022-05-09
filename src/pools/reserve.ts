@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { bigIntToBn } from "./../common/accountParser"
 import * as anchor from "@project-serum/anchor"
 import { Market as SerumMarket } from "@project-serum/serum"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { AccountInfo, Connection, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
-
 import { DEX_ID, DEX_ID_DEVNET } from "."
 import { JetClient } from "./client"
 import { JetMarket } from "./market"
@@ -219,7 +219,7 @@ export class JetReserve {
       data,
       pythOracle.priceData,
       pythOracle.productData,
-      mintInfo.data,
+      mintInfo,
       new BN(availableLiquidity)
     )
     return new JetReserve(client, market, reserveData)
@@ -257,7 +257,7 @@ export class JetReserve {
     }
 
     const vaults = (vaultInfos as AccountInfo<Buffer>[]).map((vault, i) =>
-      parseTokenAccount(vault.data, reserveInfos[i].vault)
+      parseTokenAccount(vault, reserveInfos[i].vault)
     )
 
     const multipleData = []
@@ -270,13 +270,13 @@ export class JetReserve {
     }
 
     //load mintInfo
-    const multipleMintInfo: Buffer[] = []
+    const multipleMintInfo: AccountInfo<Buffer>[] = []
     for (let i = 0; i < multipleData.length; i++) {
       const mintInfo = await client.program.provider.connection.getAccountInfo(multipleData[i].tokenMint)
       if (!mintInfo) {
         throw new Error("reserve tokenMint does not exist")
       }
-      multipleMintInfo.push(mintInfo.data)
+      multipleMintInfo.push(mintInfo)
     }
 
     const reserves = reserveInfos.map((reserveInfo, i) => {
@@ -287,7 +287,7 @@ export class JetReserve {
         pythOracle.priceData,
         pythOracle.productData,
         multipleMintInfo[i],
-        new BN(vaults[i].amount.toNumber())
+        bigIntToBn(vaults[i].amount)
       )
       return new JetReserve(client, market, data)
     })
@@ -325,7 +325,7 @@ export class JetReserve {
       data,
       pythOracle.priceData,
       pythOracle.productData,
-      mintInfo.data,
+      mintInfo,
       new BN(availableLiquidity)
     )
   }
@@ -350,7 +350,7 @@ export class JetReserve {
     data: any,
     priceData: PriceData,
     productData: ProductData,
-    mintData: Buffer,
+    mintData: AccountInfo<Buffer>,
     availableLiquidityLamports: BN
   ) {
     const mint = parseMintAccount(mintData, address)
