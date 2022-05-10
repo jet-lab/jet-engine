@@ -23,7 +23,7 @@ async function getBitcoinPosition() {
   const options = Provider.defaultOptions();
   const connection = new Connection("https://api.devnet.solana.com", options);
   // A wallet is not required in this example
-  const wallet = undefined as any as typeof Wallet;
+  const wallet = undefined as any as Wallet
   const provider = new Provider(connection, wallet, options);
 
   // Load the Anchor IDL from RPC
