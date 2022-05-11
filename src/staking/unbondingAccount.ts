@@ -85,7 +85,7 @@ export class UnbondingAccount {
     const address = this.deriveUnbondingAccount(program, stakeAccount, seed)
 
     const unbondingAccount = await program.account.unbondingAccount.fetch(address)
-    return new UnbondingAccount(program, address, unbondingAccount as any, stakePool)
+    return new UnbondingAccount(program, address, unbondingAccount, stakePool)
   }
 
   /**
@@ -111,7 +111,7 @@ export class UnbondingAccount {
     }
 
     const unbondingAccounts = await program.account.unbondingAccount.all([stakeAccountFilter])
-    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account as any, stakePool))
+    return unbondingAccounts.map(info => new UnbondingAccount(program, info.publicKey, info.account, stakePool))
   }
 
   /**

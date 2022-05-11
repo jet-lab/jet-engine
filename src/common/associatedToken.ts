@@ -73,8 +73,7 @@ export class AssociatedToken {
       if (!account) {
         return undefined
       }
-      //TODO - FIXME cast it as any for now
-      const info = parseTokenAccount(account.data as any, addresses[i])
+      const info = parseTokenAccount(account, addresses[i])
       return new AssociatedToken(account, info)
     })
   }
