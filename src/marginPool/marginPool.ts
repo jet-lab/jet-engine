@@ -4,7 +4,7 @@ import { PublicKey } from "@solana/web3.js"
 import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { MarginPoolData } from "./state"
-import { MarginPoolIdl } from "./idl"
+import { JetMarginPoolIdl } from ".."
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -17,7 +17,7 @@ export interface MarginPoolAddresses {
 
 export class MarginPool {
   constructor(
-    public program: Program<MarginPoolIdl>,
+    public program: Program<JetMarginPoolIdl>,
     public addresses: MarginPoolAddresses,
     public marginPool: MarginPoolData,
     public vault: Account,
@@ -28,11 +28,11 @@ export class MarginPool {
 
   /**
    * Load a Margin Pool Program Account
-   * @param {Program<MarginPoolIdl>} program
+   * @param {Program<JetMarginPoolIdl>} program
    * @param {Address} tokenMint
    * @returns {Promise<MarginPool>}
    */
-  static async load(program: Program<MarginPoolIdl>, tokenMint: Address): Promise<MarginPool> {
+  static async load(program: Program<JetMarginPoolIdl>, tokenMint: Address): Promise<MarginPool> {
     const tokenMintAddress = translateAddress(tokenMint)
     const addresses = this.derive(program.programId, tokenMintAddress)
 
@@ -83,7 +83,7 @@ export class MarginPool {
   // FIXME:
   // /**
   //  * Create a margin pool
-  //  * @param {Program<MarginPoolIdl>} program
+  //  * @param {Program<JetMarginPoolIdl>} program
   //  * @param {TokenMetaDataInfo} tokenMetaDataInfo
   //  * @param {PublicKey} authority
   //  * @param {CreatePoolParams} params
@@ -92,7 +92,7 @@ export class MarginPool {
   //  * @returns {Promise<string>}
   //  */
   // static async create(
-  //   program: Program<MarginPoolIdl>,
+  //   program: Program<JetMarginPoolIdl>,
   //   tokenMetaDataInfo: TokenMetadata,
   //   authority: PublicKey,
   //   params: CreatePoolParams,

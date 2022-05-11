@@ -1,4 +1,4 @@
-export type JetMargin = {
+export type JetMarginIdl = {
   version: "0.1.0"
   name: "jet_margin"
   constants: [
@@ -639,7 +639,7 @@ export type JetMargin = {
   ]
 }
 
-export const IDL: JetMargin = {
+export const IDL: JetMarginIdl = {
   version: "0.1.0",
   name: "jet_margin",
   constants: [

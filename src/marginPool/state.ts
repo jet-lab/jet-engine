@@ -1,11 +1,14 @@
 import { BN } from "@project-serum/anchor"
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 import { PublicKey } from "@solana/web3.js"
-import { MarginPoolIdl } from "./idl"
+import { JetMarginPoolIdl } from ".."
 
-export type MarginPoolData = TypeDef<AllAccountsMap<MarginPoolIdl>["marginPool"], IdlTypes<MarginPoolIdl>>
+export type MarginPoolData = TypeDef<AllAccountsMap<JetMarginPoolIdl>["marginPool"], IdlTypes<JetMarginPoolIdl>>
 export type MarginPoolConfigData = MarginPoolData["config"]
-export type MarginPoolOracleData = TypeDef<AllAccountsMap<MarginPoolIdl>["marginPoolOracle"], IdlTypes<MarginPoolIdl>>
+export type MarginPoolOracleData = TypeDef<
+  AllAccountsMap<JetMarginPoolIdl>["marginPoolOracle"],
+  IdlTypes<JetMarginPoolIdl>
+>
 
 export interface CreatePoolParams {
   /** The bump seed for the pool address */

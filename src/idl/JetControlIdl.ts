@@ -1,4 +1,4 @@
-export type JetControl = {
+export type JetControlIdl = {
   version: "0.1.0"
   name: "jet_control"
   instructions: [
@@ -342,7 +342,7 @@ export type JetControl = {
   ]
 }
 
-export const IDL: JetControl = {
+export const IDL: JetControlIdl = {
   version: "0.1.0",
   name: "jet_control",
   instructions: [

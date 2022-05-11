@@ -1,4 +1,4 @@
-export type JetMarginPool = {
+export type JetMarginPoolIdl = {
   version: "0.1.0"
   name: "jet_margin_pool"
   instructions: [
@@ -600,7 +600,7 @@ export type JetMarginPool = {
   ]
 }
 
-export const IDL: JetMarginPool = {
+export const IDL: JetMarginPoolIdl = {
   version: "0.1.0",
   name: "jet_margin_pool",
   instructions: [

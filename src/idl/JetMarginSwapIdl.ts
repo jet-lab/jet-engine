@@ -1,4 +1,4 @@
-export type JetMarginSwap = {
+export type JetMarginSwapIdl = {
   version: "0.1.0"
   name: "jet_margin_swap"
   instructions: [
@@ -135,7 +135,7 @@ export type JetMarginSwap = {
   ]
 }
 
-export const IDL: JetMarginSwap = {
+export const IDL: JetMarginSwapIdl = {
   version: "0.1.0",
   name: "jet_margin_swap",
   instructions: [

@@ -1,4 +1,4 @@
-export type JetMarginSerum = {
+export type JetMarginSerumIdl = {
   version: "0.1.0"
   name: "jet_margin_serum"
   instructions: [
@@ -398,7 +398,7 @@ export type JetMarginSerum = {
   ]
 }
 
-export const IDL: JetMarginSerum = {
+export const IDL: JetMarginSerumIdl = {
   version: "0.1.0",
   name: "jet_margin_serum",
   instructions: [
