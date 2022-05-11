@@ -1,10 +1,9 @@
-import { MarginIdl } from "./idl"
+import { JetMarginIdl } from ".."
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
-export type LiquidationData = TypeDef<AllAccountsMap<MarginIdl>["liquidation"], IdlTypes<MarginIdl>>
-export type MarginAccountData = TypeDef<AllAccountsMap<MarginIdl>["marginAccount"], IdlTypes<MarginIdl>>
+export type MarginAccountData = TypeDef<AllAccountsMap<JetMarginIdl>["marginAccount"], IdlTypes<JetMarginIdl>>
 
 /** A fixed-point decimal number 128 bits wide */
 type Number128 = BN

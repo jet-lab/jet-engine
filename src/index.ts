@@ -29,6 +29,14 @@ export {
   DerivedAccount
 } from "./common"
 export * from "./gov"
+export {
+  JetControlIdl,
+  JetMarginIdl,
+  JetMarginPoolIdl,
+  JetMarginSerumIdl,
+  JetMarginSwapIdl,
+  JetMetadataIdl
+} from "./idl"
 export { MarginPrograms, MarginClient, MarginAccount, MarginCluster, MarginConfig } from "./margin"
 export { MarginPool, MarginPoolAddresses } from "./marginPool"
 export * from "./pools"

@@ -1,20 +1,17 @@
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
-import { MarginMetaDataIdl } from "./idl"
+import { JetMetadataIdl } from ".."
 
 export type LiquidatorAdapterMetadata = TypeDef<
-  AllAccountsMap<MarginMetaDataIdl>["liquidatorAdapterMetadata"],
-  IdlTypes<MarginMetaDataIdl>
+  AllAccountsMap<JetMetadataIdl>["liquidatorAdapterMetadata"],
+  IdlTypes<JetMetadataIdl>
 >
-export type LiquidatorMetadata = TypeDef<
-  AllAccountsMap<MarginMetaDataIdl>["liquidatorMetadata"],
-  IdlTypes<MarginMetaDataIdl>
->
+export type LiquidatorMetadata = TypeDef<AllAccountsMap<JetMetadataIdl>["liquidatorMetadata"], IdlTypes<JetMetadataIdl>>
 export type MarginAdapterMetadata = TypeDef<
-  AllAccountsMap<MarginMetaDataIdl>["marginAdapterMetadata"],
-  IdlTypes<MarginMetaDataIdl>
+  AllAccountsMap<JetMetadataIdl>["marginAdapterMetadata"],
+  IdlTypes<JetMetadataIdl>
 >
 export type PositionTokenMetadata = TypeDef<
-  AllAccountsMap<MarginMetaDataIdl>["positionTokenMetadata"],
-  IdlTypes<MarginMetaDataIdl>
+  AllAccountsMap<JetMetadataIdl>["positionTokenMetadata"],
+  IdlTypes<JetMetadataIdl>
 >
-export type TokenMetadata = TypeDef<AllAccountsMap<MarginMetaDataIdl>["tokenMetadata"], IdlTypes<MarginMetaDataIdl>>
+export type TokenMetadata = TypeDef<AllAccountsMap<JetMetadataIdl>["tokenMetadata"], IdlTypes<JetMetadataIdl>>

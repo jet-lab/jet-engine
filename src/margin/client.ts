@@ -1,18 +1,14 @@
-import { MarginSwapIdl } from "./../marginSwap/idl"
 import { Program, Provider } from "@project-serum/anchor"
 import { fetchMultipleIdls } from "../common"
+import { JetMarginIdl, JetMarginPoolIdl, JetMarginSerumIdl, JetMarginSwapIdl, JetMetadataIdl } from ".."
 import MARGIN_CONFIG from "../margin/config.json"
-import { MarginMetaDataIdl } from "../marginMetadata/idl"
-import { MarginPoolIdl } from "../marginPool/idl"
-import { MarginSerumIdl } from "../marginSerum/idl"
-import { MarginIdl } from "./idl"
 
 export interface MarginPrograms {
-  margin: Program<MarginIdl>
-  metadata: Program<MarginMetaDataIdl>
-  marginPool: Program<MarginPoolIdl>
-  marginSerum: Program<MarginSerumIdl>
-  marginSwap: Program<MarginSwapIdl>
+  margin: Program<JetMarginIdl>
+  metadata: Program<JetMetadataIdl>
+  marginPool: Program<JetMarginPoolIdl>
+  marginSerum: Program<JetMarginSerumIdl>
+  marginSwap: Program<JetMarginSwapIdl>
 }
 
 export type MarginCluster = keyof typeof MARGIN_CONFIG | MarginConfig
@@ -24,7 +20,7 @@ export class MarginClient {
     const config = MarginClient.getConfig(cluster)
 
     const [marginIdl, metadataIdl, marginPoolIdl, marginSerumIdl, marginSwapIdl] = await fetchMultipleIdls<
-      [MarginIdl, MarginMetaDataIdl, MarginPoolIdl, MarginSerumIdl, MarginSwapIdl]
+      [JetMarginIdl, JetMetadataIdl, JetMarginPoolIdl, JetMarginSerumIdl, JetMarginSwapIdl]
     >(provider, [
       config.marginProgramId,
       config.metadataProgramId,
