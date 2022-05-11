@@ -1,4 +1,4 @@
-export type JetMarginSerumIdl = {
+export type MarginSerumIdl = {
   version: "0.1.0"
   name: "jet_margin_serum"
   instructions: [

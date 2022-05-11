@@ -15,6 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+export { Auth, AuthIdl } from "./auth"
+export {
+  TokenAmount,
+  parseMintAccount,
+  parseTokenAccount,
+  bnToNumber,
+  bigIntToBn,
+  bnToBigInt,
+  bigIntToNumber,
+  AssociatedToken,
+  TokenFaucet,
+  DerivedAccount
+} from "./common"
+export * from "./gov"
+export { MarginPrograms, MarginClient, MarginAccount, MarginCluster, MarginConfig } from "./margin"
+export { MarginPool, MarginPoolAddresses } from "./marginPool"
+export * from "./pools"
 export {
   Airdrop,
   AirdropInfo,
@@ -32,19 +49,4 @@ export {
   DistributionInfo,
   DistributionYield
 } from "./rewards"
-export { Auth, AuthIdl } from "./auth"
-export {
-  TokenAmount,
-  parseMintAccount,
-  parseTokenAccount,
-  bnToNumber,
-  bigIntToBn,
-  bnToBigInt,
-  bigIntToNumber,
-  AssociatedToken,
-  TokenFaucet,
-  DerivedAccount
-} from "./common"
-export * from "./gov"
-export * from "./pools"
 export * from "./staking"

@@ -1,11 +1,10 @@
-import { Account, Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { Account, Mint } from "@solana/spl-token"
 import { parseMintAccount, parseTokenAccount } from "../common/accountParser"
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
-import { Program } from "@project-serum/anchor"
+import { PublicKey } from "@solana/web3.js"
+import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { Hooks } from "../common/hooks"
-import { CreatePoolParams, MarginPoolAccountInfo, MarginPoolConfig } from "./state"
-import { TokenMetadataInfo } from "../marginMetadata"
+import { MarginPoolData } from "./state"
+import { MarginPoolIdl } from "./idl"
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -18,9 +17,9 @@ export interface MarginPoolAddresses {
 
 export class MarginPool {
   constructor(
-    public program: Program,
+    public program: Program<MarginPoolIdl>,
     public addresses: MarginPoolAddresses,
-    public marginPool: MarginPoolAccountInfo,
+    public marginPool: MarginPoolData,
     public vault: Account,
     public depositNoteMint: Mint,
     public loanNoteMint: Mint,
@@ -29,14 +28,15 @@ export class MarginPool {
 
   /**
    * Load a Margin Pool Program Account
-   * @param {Program} program
-   * @param {PublicKey} tokenMint
+   * @param {Program<MarginPoolIdl>} program
+   * @param {Address} tokenMint
    * @returns {Promise<MarginPool>}
    */
-  static async load(program: Program, tokenMint: PublicKey): Promise<MarginPool> {
-    const addresses = this.derive(program.programId, tokenMint)
+  static async load(program: Program<MarginPoolIdl>, tokenMint: Address): Promise<MarginPool> {
+    const tokenMintAddress = translateAddress(tokenMint)
+    const addresses = this.derive(program.programId, tokenMintAddress)
 
-    const marginPool = (await program.account.marginPool.fetch(addresses.marginPool)) as MarginPoolAccountInfo
+    const marginPool = await program.account.marginPool.fetch(addresses.marginPool)
 
     const [poolTokenMintInfo, vaultMintInfo, depositNoteMintInfo, loanNoteMintInfo] =
       await program.provider.connection.getMultipleAccountsInfo([
@@ -50,7 +50,7 @@ export class MarginPool {
       throw new Error("Invalid margin pool")
     }
 
-    const poolTokenMint = parseMintAccount(poolTokenMintInfo, tokenMint)
+    const poolTokenMint = parseMintAccount(poolTokenMintInfo, tokenMintAddress)
     const vault = parseTokenAccount(vaultMintInfo, addresses.vault)
     const depositNoteMint = parseMintAccount(depositNoteMintInfo, addresses.depositNoteMint)
     const loanNoteMint = parseMintAccount(loanNoteMintInfo, addresses.loanNoteMint)
@@ -58,25 +58,21 @@ export class MarginPool {
     return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
   }
 
-  static use(program: Program | undefined, tokenMint: PublicKey): MarginPool | undefined {
-    return Hooks.usePromise(async () => program && MarginPool.load(program, tokenMint), [program])
-  }
-
   /**
    * Derive accounts from tokenMint
-   * @param {PublicKey} programId
-   * @param {PublicKey} tokenMint
+   * @param {Address} programId
+   * @param {Address} tokenMint
    * @returns {PublicKey} Margin Pool Address
    */
-  private static derive(programId: PublicKey, tokenMint: PublicKey): MarginPoolAddresses {
-    //add
-    const marginPool = findDerivedAccount(programId, tokenMint)
+  static derive(programId: Address, tokenMint: Address): MarginPoolAddresses {
+    const tokenMintAddress = translateAddress(tokenMint)
+    const marginPool = findDerivedAccount(programId, tokenMintAddress)
     const vault = findDerivedAccount(programId, tokenMint, "vault")
     const depositNoteMint = findDerivedAccount(programId, tokenMint, "deposit-note-mint")
     const loanNoteMint = findDerivedAccount(programId, tokenMint, "loan-note-mint")
 
     return {
-      tokenMint,
+      tokenMint: tokenMintAddress,
       marginPool,
       vault,
       depositNoteMint,
@@ -84,47 +80,48 @@ export class MarginPool {
     }
   }
 
-  /**
-   * Create a margin pool
-   * @param {Program} program
-   * @param {TokenMetaDataInfo} tokenMetaDataInfo
-   * @param {PublicKey} authority
-   * @param {CreatePoolParams} params
-   * @param {PublicKey} feeDestination
-   * @param {MarginPoolConfig} marginPoolConfig
-   * @returns {Promise<string>}
-   */
-  static create(
-    program: Program,
-    tokenMetaDataInfo: TokenMetadataInfo,
-    authority: PublicKey,
-    params: CreatePoolParams,
-    feeDestination: PublicKey,
-    marginPoolConfig: MarginPoolConfig
-  ): Promise<string> {
-    //derive pool accounts
-    const addresses = this.derive(program.programId, tokenMetaDataInfo.tokenMint)
+  // FIXME:
+  // /**
+  //  * Create a margin pool
+  //  * @param {Program<MarginPoolIdl>} program
+  //  * @param {TokenMetaDataInfo} tokenMetaDataInfo
+  //  * @param {PublicKey} authority
+  //  * @param {CreatePoolParams} params
+  //  * @param {PublicKey} _feeDestination
+  //  * @param {MarginPoolConfig} _marginPoolConfig
+  //  * @returns {Promise<string>}
+  //  */
+  // static async create(
+  //   program: Program<MarginPoolIdl>,
+  //   tokenMetaDataInfo: TokenMetadata,
+  //   authority: PublicKey,
+  //   params: CreatePoolParams,
+  //   _feeDestination: PublicKey,
+  //   _marginPoolConfig: MarginPoolConfigData
+  // ): Promise<void> {
+  //   //derive pool accounts
+  //   const addresses = this.derive(program.programId, tokenMetaDataInfo.tokenMint)
 
-    //info to pass into createPool
-    const createPoolInfo = {
-      accounts: {
-        marginPool: addresses.marginPool,
-        vault: addresses.vault,
-        depositNoteMint: addresses.depositNoteMint,
-        loanNoteMint: addresses.loanNoteMint,
-        tokenMint: addresses.tokenMint,
-        pythProduct: tokenMetaDataInfo.pythProduct,
-        pythPrice: tokenMetaDataInfo.pythPrice,
-        authority: authority,
-        payer: program.provider.wallet.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: SYSVAR_RENT_PUBKEY
-      },
-      args: {
-        params: params
-      }
-    }
-    return program.rpc.createPool(feeDestination, marginPoolConfig, createPoolInfo)
-  }
+  //   //info to pass into createPool
+  //   const _createPoolInfo = {
+  //     accounts: {
+  //       marginPool: addresses.marginPool,
+  //       vault: addresses.vault,
+  //       depositNoteMint: addresses.depositNoteMint,
+  //       loanNoteMint: addresses.loanNoteMint,
+  //       tokenMint: addresses.tokenMint,
+  //       pythProduct: tokenMetaDataInfo.pythProduct,
+  //       pythPrice: tokenMetaDataInfo.pythPrice,
+  //       authority: authority,
+  //       payer: program.provider.wallet.publicKey,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       systemProgram: SystemProgram.programId,
+  //       rent: SYSVAR_RENT_PUBKEY
+  //     },
+  //     args: {
+  //       params: params
+  //     }
+  //   }
+  //   return program.rpc.createPool(feeDestination, marginPoolConfig, createPoolInfo)
+  // }
 }

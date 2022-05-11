@@ -1,4 +1,4 @@
-export type JetMarginSwapIdl = {
+export type MarginSwapIdl = {
   version: "0.1.0"
   name: "jet_margin_swap"
   instructions: [

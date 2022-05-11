@@ -1,4 +1,4 @@
-export type JetMarginPoolIdl = {
+export type MarginPoolIdl = {
   version: "0.1.0"
   name: "jet_margin_pool"
   instructions: [
