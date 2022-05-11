@@ -1,55 +1,42 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
-import { Program } from "@project-serum/anchor"
+import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { Hooks } from "../common/hooks"
-import { MarginAccountInfo } from "./state"
-import { checkNull } from "../common/index"
+import { MarginAccountData } from "./state"
+import { MarginIdl } from "./idl"
 
 export class MarginAccount {
-  constructor(public marginProgram: Program, public address: PublicKey, public marginAccount: MarginAccountInfo) {}
+  static SEED_MAX_VALUE = 65535
+  constructor(public marginProgram: Program<MarginIdl>, public address: PublicKey, public info: MarginAccountData) {}
 
   /**
    *
-   * @param {Program} marginProgram
-   * @param {PublicKey} marginPoolAddress
-   * @param {PublicKey} owner
+   * @param {Program<MarginIdl>} marginProgram
+   * @param {Address} owner
+   * @param {number} seed
    * @returns {Promise<MarginAccount>}
    */
-  static async load(marginProgram: Program, owner: PublicKey, seed: number): Promise<MarginAccount> {
-    const address = this.derive(marginProgram.programId, owner, seed)
-    const marginAccountInfo = (await marginProgram.account.MarginPool.fetch(address)) as MarginAccountInfo
-
-    checkNull(marginAccountInfo)
-
-    return new MarginAccount(marginProgram, address, marginAccountInfo)
+  static async load(marginProgram: Program<MarginIdl>, owner: Address, seed: number): Promise<MarginAccount> {
+    const ownerPubkey = translateAddress(owner)
+    const address = this.derive(marginProgram.programId, ownerPubkey, seed)
+    const marginAccount = await marginProgram.account.marginAccount.fetch(address)
+    return new MarginAccount(marginProgram, address, marginAccount)
   }
+
   /**
+   * Derive PDA from pool address and owner address
    *
-   * @param {Program | undefined} program
-   * @param {PublicKey | undefined} marginPoolAddress
-   * @param {PublicKey | undefined} owner
-   * @returns {MarginAccount}
+   * @private
+   * @static
+   * @param {Address} marginProgramId
+   * @param {Address} owner
+   * @param {number} seed
+   * @return {*}  {PublicKey}
+   * @memberof MarginAccount
    */
-  static use(
-    program: Program | undefined,
-    owner: PublicKey | undefined,
-    seed: number | undefined
-  ): MarginAccount | undefined {
-    return Hooks.usePromise(async () => {
-      if (seed !== undefined && program && owner) {
-        return await MarginAccount.load(program, owner, seed)
-      }
-    }, [program, owner, seed])
-  }
-
-  /**
-   * derive PDA from pool address and owner address
-   * @param {PublicKey} marginProgramId
-   * @param {PublicKey} marginPoolAddress
-   * @param {PublicKey} owner
-   * @returns {PublicKey} Derive a margin account
-   */
-  private static derive(marginProgramId: PublicKey, owner: PublicKey, seed: number): PublicKey {
+  static derive(marginProgramId: Address, owner: Address, seed: number): PublicKey {
+    if (seed > this.SEED_MAX_VALUE || seed < 0) {
+      console.log(`Seed is not within the range: 0 <= seed <= ${this.SEED_MAX_VALUE}.`)
+    }
     const buffer = Buffer.alloc(2)
     buffer.writeUInt16LE(seed)
     return findDerivedAccount(marginProgramId, owner, buffer)
@@ -57,14 +44,22 @@ export class MarginAccount {
 
   /**
    * Build instruction for Create Margin Account
-   * @param {Program} program
-   * @param {PublicKey} marginPool
-   * @param {PublicKey} owner
+   *
+   * @static
+   * @param {TransactionInstruction[]} instructions
+   * @param {Program<MarginIdl>} program
+   * @param {Address} owner
    * @param {number} seed
-   * @returns {TransactionInstruction} create margin account IX
+   * @memberof MarginAccount
    */
-  static withCreate(instructions: TransactionInstruction[], program: Program, owner: PublicKey, seed: number) {
-    const marginAccount = this.derive(program.programId, owner, seed)
+  static withCreate(
+    instructions: TransactionInstruction[],
+    program: Program<MarginIdl>,
+    owner: Address,
+    seed: number
+  ): void {
+    const ownerAddress = translateAddress(owner)
+    const marginAccount = this.derive(program.programId, ownerAddress, seed)
 
     const createInfo = {
       accounts: {
@@ -79,7 +74,5 @@ export class MarginAccount {
     }
 
     instructions.push(program.instruction.createAccount(seed, createInfo))
-
-    return instructions
   }
 }

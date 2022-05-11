@@ -1,4 +1,4 @@
-export type JetMarginMetaDataIdl = {
+export type MarginMetaDataIdl = {
   version: "0.1.0"
   name: "jet_metadata"
   instructions: [

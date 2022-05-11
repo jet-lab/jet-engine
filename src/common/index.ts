@@ -1,14 +1,22 @@
-import { Idl, Program, Provider } from "@project-serum/anchor"
+import { inflate } from "pako"
+import { Address, Idl, Program, Provider, translateAddress } from "@project-serum/anchor"
+import { decodeIdlAccount, idlAddress } from "@project-serum/anchor/dist/cjs/idl"
+import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes"
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey"
-import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js"
-import { useMemo } from "react"
+import { PublicKey } from "@solana/web3.js"
+import bs58 from "bs58"
 
 export * from "./tokenAmount"
-export * from "./tokenMintKeys"
-export { JetTokenAccount, JetMint } from "./types"
 export { TokenFaucet } from "./tokenFaucet"
 export { AssociatedToken } from "./associatedToken"
-export { bnToNumber, bnToBigInt, bigIntToBn } from "./accountParser"
+export {
+  parseMintAccount,
+  parseTokenAccount,
+  bnToNumber,
+  bnToBigInt,
+  bigIntToBn,
+  bigIntToNumber
+} from "./accountParser"
 export { Hooks } from "./hooks"
 
 export type AccountSeed = { toBytes(): Uint8Array } | { publicKey: PublicKey } | Uint8Array | string | Buffer
@@ -31,10 +39,15 @@ export interface DerivedAccount {
  * @returns {Promise<PublicKey>}
  * @memberof JetClient
  */
-export function findDerivedAccount(programId: PublicKey, ...seeds: AccountSeed[]): PublicKey {
+export function findDerivedAccount(programId: Address, ...seeds: AccountSeed[]): PublicKey {
   const seedBytes = seeds.map(s => {
     if (typeof s == "string") {
-      return Buffer.from(s)
+      const pubkeyBytes = bs58.decodeUnsafe(s)
+      if (!pubkeyBytes || pubkeyBytes.length !== 32) {
+        return Buffer.from(s)
+      } else {
+        return translateAddress(s).toBytes()
+      }
     } else if ("publicKey" in s) {
       return s.publicKey.toBytes()
     } else if ("toBytes" in s) {
@@ -44,7 +57,7 @@ export function findDerivedAccount(programId: PublicKey, ...seeds: AccountSeed[]
     }
   })
 
-  const [address] = findProgramAddressSync(seedBytes, programId)
+  const [address] = findProgramAddressSync(seedBytes, translateAddress(programId))
   return address
 }
 
@@ -90,25 +103,46 @@ export async function connect<T extends Idl>(programId: PublicKey, provider: Pro
   return new Program(idl, programId, provider)
 }
 
-const confirmOptions: ConfirmOptions = {
-  skipPreflight: true,
-  commitment: "recent" as Commitment,
-  preflightCommitment: "recent"
-}
-
 /**
- * TODO:
- * @export
- * @param {Connection} connection
- * @param {any} wallet
- * @returns {Provider}
+ * Fetches multiple idls from the blockchain.
+ *
+ * In order to use this method, an IDL must have been previously initialized
+ * via the anchor CLI's `anchor idl init` command.
+ *
+ * @param programIds The on-chain addresses of the programs.
+ * @param provider   The network and wallet context.
  */
-export function useProvider(connection: Connection, wallet: any): Provider {
-  return useMemo(() => new Provider(connection, wallet, confirmOptions), [connection, wallet, confirmOptions])
-}
+export async function fetchMultipleIdls<Idls extends Idl[] = Idl[]>(
+  provider: Provider,
+  programIds: Address[]
+): Promise<Idls> {
+  const idlAddresses: PublicKey[] = []
+  for (const programId of programIds) {
+    const programAddress = translateAddress(programId)
 
-export function checkNull(value: any): void {
-  if (value === null) {
-    throw new Error(`Invalid ${value}`)
+    const idlAddr = await idlAddress(programAddress)
+    idlAddresses.push(idlAddr)
   }
+
+  const accountInfos = await provider.connection.getMultipleAccountsInfo(idlAddresses)
+  console.log(
+    "Program Ids",
+    programIds.map(id => translateAddress(id).toBase58())
+  )
+  console.log(
+    "Idls",
+    idlAddresses.map(id => id.toBase58())
+  )
+
+  const idls: Idl[] = []
+  for (const accountInfo of accountInfos) {
+    if (!accountInfo) {
+      throw new Error("Idl does not exists")
+    }
+    const idlAccount = decodeIdlAccount(accountInfo.data.slice(8))
+    const inflatedIdl = inflate(idlAccount.data)
+    const idl = JSON.parse(utf8.decode(inflatedIdl))
+    idls.push(idl)
+  }
+  return idls as Idls
 }

@@ -1,38 +1,56 @@
+import { MarginSwapIdl } from "./../marginSwap/idl"
 import { Program, Provider } from "@project-serum/anchor"
-import { PublicKey } from "@solana/web3.js"
-import { connect, Hooks } from "../common"
+import { fetchMultipleIdls } from "../common"
 import MARGIN_CONFIG from "../margin/config.json"
-import { JetMarginIdl } from "./idl"
+import { MarginMetaDataIdl } from "../marginMetadata/idl"
+import { MarginPoolIdl } from "../marginPool/idl"
+import { MarginSerumIdl } from "../marginSerum/idl"
+import { MarginIdl } from "./idl"
+
+export interface MarginPrograms {
+  margin: Program<MarginIdl>
+  metadata: Program<MarginMetaDataIdl>
+  marginPool: Program<MarginPoolIdl>
+  marginSerum: Program<MarginSerumIdl>
+  marginSwap: Program<MarginSwapIdl>
+}
+
+export type MarginCluster = keyof typeof MARGIN_CONFIG | MarginConfig
+
+export type MarginConfig = typeof MARGIN_CONFIG.devnet
 
 export class MarginClient {
-  /**
-   *
-   * @param {Program<JetMarginClient>} program
-   */
-  constructor(public program: Program<JetMarginIdl>) {}
+  static async connect(provider: Provider, cluster: MarginCluster): Promise<MarginPrograms> {
+    const config = MarginClient.getConfig(cluster)
 
-  /**
-   *
-   * @param {Provider} provider
-   * @returns
-   */
-  static async connect(
-    provider: Provider,
-    cluster: keyof typeof MARGIN_CONFIG = "mainnet-beta"
-  ): Promise<Program<JetMarginIdl>> {
-    const config = MARGIN_CONFIG[cluster]
-    if (!config) {
-      throw new Error(`Unhandled cluster: ${cluster}`)
+    const [marginIdl, metadataIdl, marginPoolIdl, marginSerumIdl, marginSwapIdl] = await fetchMultipleIdls<
+      [MarginIdl, MarginMetaDataIdl, MarginPoolIdl, MarginSerumIdl, MarginSwapIdl]
+    >(provider, [
+      config.marginProgramId,
+      config.metadataProgramId,
+      config.marginPoolProgramId,
+      config.marginSerumProgramId,
+      config.marginSwapProgramId
+    ])
+
+    const programs: MarginPrograms = {
+      margin: new Program(marginIdl, config.marginProgramId, provider),
+      metadata: new Program(metadataIdl, config.metadataProgramId, provider),
+      marginPool: new Program(marginPoolIdl, config.marginPoolProgramId, provider),
+      marginSerum: new Program(marginSerumIdl, config.marginSerumProgramId, provider),
+      marginSwap: new Program(marginSwapIdl, config.marginSwapProgramId, provider)
     }
-    return await connect(new PublicKey(config.marginProgramId), provider)
+
+    return programs
   }
 
-  /**
-   *
-   * @param {Provider} provider
-   * @returns
-   */
-  static use(provider: Provider): Program<JetMarginIdl> | undefined {
-    return Hooks.usePromise(async () => provider && MarginClient.connect(provider), [provider])
+  static getConfig(cluster: MarginCluster): MarginConfig {
+    if (typeof cluster === "string") {
+      // FIXME: Suble differences between configs as faucet and faucetLimit are sometimes undefined.
+      // Remove `as MarginConfig` when there is an interface for the configs
+      return MARGIN_CONFIG[cluster] as MarginConfig
+    } else {
+      return cluster
+    }
   }
 }

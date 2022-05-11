@@ -1,4 +1,3 @@
-import { useMemo } from "react"
 import { StakePool } from "./../staking/stakePool"
 import { bnToNumber, utf8ToString } from "./../common/accountParser"
 import { BN, Program, ProgramAccount } from "@project-serum/anchor"
@@ -8,7 +7,6 @@ import { Hooks } from "../common/hooks"
 import { RewardsClient } from "./client"
 import _ from "lodash"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { StakeAccount } from "../staking/stakeAccount"
 import { RewardsIdl } from "./idl"
 
 /**
@@ -316,28 +314,6 @@ export class Distribution {
   /**
    * TODO:
    *
-   * @static
-   * @param {(Distribution[] | undefined)} distributions
-   * @returns {(Distribution[] | undefined)}
-   * @memberof Distribution
-   */
-  static useActive(distributions: Distribution[] | undefined): Distribution[] | undefined {
-    return useMemo(() => {
-      if (!distributions) {
-        return undefined
-      }
-      const now = new BN(new Date().getTime() / 1000)
-      return (
-        distributions
-          // Ignore inactive proposals
-          .filter(dist => dist.isActive(now))
-      )
-    }, [distributions])
-  }
-
-  /**
-   * TODO:
-   *
    * @param {BN} now
    * @returns {boolean}
    * @memberof Distribution
@@ -410,42 +386,6 @@ export class Distribution {
     return distributions.reduce((combinedYield: DistributionYield, dist: Distribution) => {
       return Distribution.estimateYield(dist, totalDeposits, totalShares, usersShares).combine(combinedYield)
     }, initialValue)
-  }
-
-  /**
-   * TODO:
-   *
-   * @static
-   * @param {(Distribution[] | undefined)} distributions
-   * @param {(StakePool | undefined)} stakePool
-   * @param {(StakeAccount | undefined)} stakeAccount
-   * @returns {(DistributionYield | undefined)}
-   * @memberof Distribution
-   */
-  static useEstimateCombinedYield(
-    distributions: Distribution[] | undefined,
-    stakePool: StakePool | undefined,
-    stakeAccount: StakeAccount | undefined
-  ): DistributionYield | undefined {
-    return useMemo(() => {
-      if (!distributions || !stakePool) {
-        return undefined
-      }
-      let usersShares: number
-      const totalShares = bnToNumber(stakePool.stakePool.bonded.shares)
-      const totalDeposits = bnToNumber(stakePool.vault.amount)
-      if (stakeAccount) {
-        usersShares = bnToNumber(stakeAccount.stakeAccount.bondedShares)
-      } else {
-        usersShares = 1
-      }
-      const combinedYield = Distribution.estimateCombinedYield(distributions, totalDeposits, totalShares, usersShares)
-      if (stakePool) {
-        return combinedYield
-      }
-
-      return new DistributionYield(combinedYield.apr)
-    }, [distributions, stakePool, stakeAccount])
   }
 }
 
