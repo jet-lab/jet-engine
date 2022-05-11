@@ -1,20 +1,10 @@
+import { MarginIdl } from "./idl"
 import { BN } from "@project-serum/anchor"
 import { PublicKey } from "@solana/web3.js"
+import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
 
-export interface MarginAccountInfo {
-  version: number
-  bumpSeed: number[]
-  userSeed: number[]
-  reserve0: number[]
-  /** The owner of this account, which generally has to sign for any changes to it */
-  owner: PublicKey
-  /** The state of an active liquidation for this account */
-  liquidations: PublicKey
-  /**  The active liquidator for this account */
-  liquidator: PublicKey
-  /** The storage for tracking account balances */
-  positions: number[]
-}
+export type LiquidationData = TypeDef<AllAccountsMap<MarginIdl>["liquidation"], IdlTypes<MarginIdl>>
+export type MarginAccountData = TypeDef<AllAccountsMap<MarginIdl>["marginAccount"], IdlTypes<MarginIdl>>
 
 /** A fixed-point decimal number 128 bits wide */
 type Number128 = BN

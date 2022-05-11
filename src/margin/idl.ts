@@ -1,4 +1,4 @@
-export type JetMarginIdl = {
+export type MarginIdl = {
   version: "0.1.0"
   name: "jet_margin"
   constants: [
