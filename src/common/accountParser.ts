@@ -160,17 +160,27 @@ export class SignedNumberField extends BL.Layout<BN> {
 }
 
 /**
- * Returns an unsigned number field that is 24 bytes wide
+ * Returns an unsigned number field that is 192 bits wide
  * @export
  * @param {string} [property]
  * @returns {NumberField}
  */
-export function numberField(property?: string): NumberField {
+export function number192Field(property?: string): NumberField {
   return new NumberField(24, property)
 }
 
 /**
- * Returns an unsigned number field that is 8 bytes wide
+ * Returns an unsigned number field that is 128 bts wide
+ * @export
+ * @param {string} [property]
+ * @returns {NumberField}
+ */
+export function number128Field(property?: string): NumberField {
+  return new NumberField(16, property)
+}
+
+/**
+ * Returns an unsigned number field that is 64 bits wide
  * @param property
  * @returns
  */

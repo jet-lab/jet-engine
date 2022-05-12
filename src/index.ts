@@ -37,7 +37,18 @@ export {
   JetMarginSwapIdl,
   JetMetadataIdl
 } from "./idl"
-export { MarginPrograms, MarginClient, MarginAccount, MarginCluster, MarginConfig } from "./margin"
+export {
+  JetPrograms,
+  JetClient,
+  MarginAccount,
+  JetCluster,
+  JetConfig,
+  JetMarketConfig,
+  JetOracleConfig,
+  JetTokenConfig,
+  JetTokens,
+  JET_CONFIG
+} from "./margin"
 export { MarginPool, MarginPoolAddresses } from "./marginPool"
 export * from "./pools"
 export {

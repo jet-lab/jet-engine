@@ -93,7 +93,7 @@ export function findDerivedAccountWithBump(programId: PublicKey, ...seeds: Accou
  * @returns {Promise<Program<Idl>>} The client
  * @memberof JetClient
  */
-export async function connect<T extends Idl>(programId: PublicKey, provider: Provider): Promise<Program<T>> {
+export async function connect<T extends Idl>(programId: Address, provider: Provider): Promise<Program<T>> {
   const idl = await Program.fetchIdl<T>(programId, provider)
 
   if (!idl) {
