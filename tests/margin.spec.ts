@@ -26,7 +26,7 @@ describe("MarginAccount", () => {
 
   describe("Test Margin Program Functionality", () => {
     test("check seed max value", async () => {
-      expect(MarginAccount.SEED_MAX_VALUE).toEqual(65535)
+      expect(MarginAccount.SEED_MAX_VALUE).toEqual(65534)
     })
   })
 })
