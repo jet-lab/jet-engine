@@ -1,12 +1,17 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { MarginAccountData } from "./state"
+import { AccountPositionList, AccountPositionListLayout, MarginAccountData } from "./state"
 import { JetMarginIdl } from ".."
 
 export class MarginAccount {
   static SEED_MAX_VALUE = 65535
-  constructor(public marginProgram: Program<JetMarginIdl>, public address: PublicKey, public info: MarginAccountData) {}
+  constructor(
+    public marginProgram: Program<JetMarginIdl>,
+    public address: PublicKey,
+    public info: MarginAccountData,
+    public positions: AccountPositionList
+  ) {}
 
   /**
    *
@@ -19,7 +24,10 @@ export class MarginAccount {
     const ownerPubkey = translateAddress(owner)
     const address = this.derive(marginProgram.programId, ownerPubkey, seed)
     const marginAccount = await marginProgram.account.marginAccount.fetch(address)
-    return new MarginAccount(marginProgram, address, marginAccount)
+
+    const positions = AccountPositionListLayout.decode(new Uint8Array(marginAccount.positions))
+
+    return new MarginAccount(marginProgram, address, marginAccount, positions)
   }
 
   /**
