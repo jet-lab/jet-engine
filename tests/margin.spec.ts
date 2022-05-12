@@ -18,20 +18,15 @@
 //import { Provider } from "@project-serum/anchor"
 //import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
 //import { clusterApiUrl, Connection, Keypair, MemcmpFilter, PublicKey } from "@solana/web3.js"
-import { MarginAccount} from "../src/margin"
+import { MarginAccount } from "../src/margin"
 //import { findDerivedAccount } from "../src/common"
 
-
-
 describe("MarginAccount", () => {
-  beforeAll(async () => {
-
-  })
+  beforeAll(async () => {})
 
   describe("Test Margin Program Functionality", () => {
     test("check seed max value", async () => {
       expect(MarginAccount.SEED_MAX_VALUE).toEqual(65535)
     })
   })
-
 })
