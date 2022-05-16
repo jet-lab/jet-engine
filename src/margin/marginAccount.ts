@@ -1,8 +1,10 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { Address, translateAddress } from "@project-serum/anchor"
-import { findDerivedAccount } from "../common"
+import { AssociatedToken, findDerivedAccount } from "../common"
 import { AccountPositionList, AccountPositionListLayout, MarginAccountData } from "./state"
 import { JetPrograms } from "./client"
+import { JetTokens } from "./config"
+import { NATIVE_MINT } from "@solana/spl-token"
 
 export class MarginAccount {
   static SEED_MAX_VALUE = 65535
@@ -15,7 +17,7 @@ export class MarginAccount {
 
   /**
    *
-   * @param {Program<JetMarginIdl>} marginProgram
+   * @param {JetPrograms} programs
    * @param {Address} owner
    * @param {number} seed
    * @returns {Promise<MarginAccount>}
@@ -28,6 +30,25 @@ export class MarginAccount {
     const positions = AccountPositionListLayout.decode(new Uint8Array(marginAccount.positions))
 
     return new MarginAccount(programs, address, marginAccount, positions)
+  }
+
+  static async loadTokens(programs: JetPrograms, owner: Address): Promise<Record<JetTokens, AssociatedToken>> {
+    const tokenConfigs = Object.values(programs.config.tokens)
+
+    const mints = tokenConfigs
+      .filter(token => !translateAddress(token.mint).equals(NATIVE_MINT))
+      .map(token => token.mint)
+    const decimals = tokenConfigs
+      .filter(token => !translateAddress(token.mint).equals(NATIVE_MINT))
+      .map(token => token.decimals)
+
+    const tokens = await AssociatedToken.loadMultiple(programs.margin.provider.connection, mints, decimals, owner)
+
+    const tokensMap: Record<string, AssociatedToken> = {}
+    for (let i = 0; i < tokens.length; i++) {
+      tokensMap[tokenConfigs[i].symbol] = tokens[i]
+    }
+    return tokensMap
   }
 
   static async exists(programs: JetPrograms, owner: Address, seed: number): Promise<boolean> {
@@ -45,7 +66,7 @@ export class MarginAccount {
    * @param {Address} marginProgramId
    * @param {Address} owner
    * @param {number} seed
-   * @return {*}  {PublicKey}
+   * @return {PublicKey}
    * @memberof MarginAccount
    */
   static derive(marginProgramId: Address, owner: Address, seed: number): PublicKey {
@@ -68,7 +89,7 @@ export class MarginAccount {
    *
    * @static
    * @param {TransactionInstruction[]} instructions
-   * @param {Program<JetMarginIdl>} program
+   * @param {Programs} programs
    * @param {Address} owner
    * @param {number} seed
    * @memberof MarginAccount
