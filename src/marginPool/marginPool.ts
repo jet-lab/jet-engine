@@ -69,7 +69,7 @@ export class MarginPool {
   static async loadAll(programs: JetPrograms): Promise<Record<JetTokens, MarginPool>> {
     // FIXME: This could be faster with fewer round trips to rpc
     const pools: Record<string, MarginPool> = {}
-    for (const token of programs.config.tokens) {
+    for (const token of Object.values(programs.config.tokens)) {
       const pool = await this.load(programs, token.mint)
       pools[token.symbol.toString()] = pool
     }

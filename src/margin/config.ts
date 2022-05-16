@@ -2,6 +2,8 @@ import { Address } from "@project-serum/anchor"
 import JET_CONFIG from "./config.json"
 
 export type JetTokens = "BTC" | "ETH" | "SOL" | "USDC"
+export type JetOracles = "BTC_USD" | "ETH_USD" | "SOL_USD"
+export type JetMarkets = "BTC_USDC" | "ETH_USDC" | "SOL_USDC"
 
 export type JetCluster = keyof typeof JET_CONFIG | JetConfig
 
@@ -16,9 +18,9 @@ export interface JetConfig {
   serumProgramId: Address
   serumReferralAuthority: Address
   url: string
-  tokens: JetTokenConfig[]
-  oracles: JetOracleConfig[]
-  markets: JetMarketConfig[]
+  tokens: Record<JetTokens, JetTokenConfig>
+  oracles: Record<JetOracles, JetOracleConfig>
+  markets: Record<JetMarkets, JetMarketConfig>
 }
 
 export interface JetTokenConfig {
