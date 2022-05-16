@@ -125,14 +125,6 @@ export async function fetchMultipleIdls<Idls extends Idl[] = Idl[]>(
   }
 
   const accountInfos = await provider.connection.getMultipleAccountsInfo(idlAddresses)
-  console.log(
-    "Program Ids",
-    programIds.map(id => translateAddress(id).toBase58())
-  )
-  console.log(
-    "Idls",
-    idlAddresses.map(id => id.toBase58())
-  )
 
   const idls: Idl[] = []
   for (const accountInfo of accountInfos) {

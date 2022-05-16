@@ -1,13 +1,15 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
-import { Address, Program, translateAddress } from "@project-serum/anchor"
-import { findDerivedAccount } from "../common"
+import { Address, translateAddress } from "@project-serum/anchor"
+import { AssociatedToken, findDerivedAccount } from "../common"
 import { AccountPositionList, AccountPositionListLayout, MarginAccountData } from "./state"
-import { JetMarginIdl } from ".."
+import { JetPrograms } from "./client"
+import { JetTokens } from "./config"
+import { NATIVE_MINT } from "@solana/spl-token"
 
 export class MarginAccount {
   static SEED_MAX_VALUE = 65535
   constructor(
-    public marginProgram: Program<JetMarginIdl>,
+    public programs: JetPrograms,
     public address: PublicKey,
     public info: MarginAccountData,
     public positions: AccountPositionList
@@ -15,19 +17,45 @@ export class MarginAccount {
 
   /**
    *
-   * @param {Program<JetMarginIdl>} marginProgram
+   * @param {JetPrograms} programs
    * @param {Address} owner
    * @param {number} seed
    * @returns {Promise<MarginAccount>}
    */
-  static async load(marginProgram: Program<JetMarginIdl>, owner: Address, seed: number): Promise<MarginAccount> {
+  static async load(programs: JetPrograms, owner: Address, seed: number): Promise<MarginAccount> {
     const ownerPubkey = translateAddress(owner)
-    const address = this.derive(marginProgram.programId, ownerPubkey, seed)
-    const marginAccount = await marginProgram.account.marginAccount.fetch(address)
+    const address = this.derive(programs.margin.programId, ownerPubkey, seed)
+    const marginAccount = await programs.margin.account.marginAccount.fetch(address)
 
     const positions = AccountPositionListLayout.decode(new Uint8Array(marginAccount.positions))
 
-    return new MarginAccount(marginProgram, address, marginAccount, positions)
+    return new MarginAccount(programs, address, marginAccount, positions)
+  }
+
+  static async loadTokens(programs: JetPrograms, owner: Address): Promise<Record<JetTokens, AssociatedToken>> {
+    const tokenConfigs = Object.values(programs.config.tokens)
+
+    const mints = tokenConfigs
+      .filter(token => !translateAddress(token.mint).equals(NATIVE_MINT))
+      .map(token => token.mint)
+    const decimals = tokenConfigs
+      .filter(token => !translateAddress(token.mint).equals(NATIVE_MINT))
+      .map(token => token.decimals)
+
+    const tokens = await AssociatedToken.loadMultiple(programs.margin.provider.connection, mints, decimals, owner)
+
+    const tokensMap: Record<string, AssociatedToken> = {}
+    for (let i = 0; i < tokens.length; i++) {
+      tokensMap[tokenConfigs[i].symbol] = tokens[i]
+    }
+    return tokensMap
+  }
+
+  static async exists(programs: JetPrograms, owner: Address, seed: number): Promise<boolean> {
+    const ownerPubkey = translateAddress(owner)
+    const address = this.derive(programs.margin.programId, ownerPubkey, seed)
+    const info = await programs.margin.provider.connection.getAccountInfo(address)
+    return !!info
   }
 
   /**
@@ -38,7 +66,7 @@ export class MarginAccount {
    * @param {Address} marginProgramId
    * @param {Address} owner
    * @param {number} seed
-   * @return {*}  {PublicKey}
+   * @return {PublicKey}
    * @memberof MarginAccount
    */
   static derive(marginProgramId: Address, owner: Address, seed: number): PublicKey {
@@ -50,37 +78,43 @@ export class MarginAccount {
     return findDerivedAccount(marginProgramId, owner, buffer)
   }
 
+  static async create(programs: JetPrograms, owner: Address, seed: number) {
+    const ix: TransactionInstruction[] = []
+    await this.withCreate(ix, programs, owner, seed)
+    return ix
+  }
+
   /**
    * Build instruction for Create Margin Account
    *
    * @static
    * @param {TransactionInstruction[]} instructions
-   * @param {Program<JetMarginIdl>} program
+   * @param {Programs} programs
    * @param {Address} owner
    * @param {number} seed
    * @memberof MarginAccount
    */
-  static withCreate(
+  static async withCreate(
     instructions: TransactionInstruction[],
-    program: Program<JetMarginIdl>,
+    programs: JetPrograms,
     owner: Address,
     seed: number
-  ): void {
-    const ownerAddress = translateAddress(owner)
-    const marginAccount = this.derive(program.programId, ownerAddress, seed)
-
-    const createInfo = {
-      accounts: {
-        owner: owner,
-        payer: program.provider.wallet.publicKey,
-        marginAccount: marginAccount,
-        systemProgram: SystemProgram.programId
-      },
-      args: {
-        seed: seed
-      }
+  ): Promise<void> {
+    if (await this.exists(programs, owner, seed)) {
+      return
     }
 
-    instructions.push(program.instruction.createAccount(seed, createInfo))
+    const ownerAddress = translateAddress(owner)
+    const marginAccount = this.derive(programs.margin.programId, ownerAddress, seed)
+
+    const accounts = {
+      owner: owner,
+      payer: programs.margin.provider.wallet.publicKey,
+      marginAccount,
+      systemProgram: SystemProgram.programId
+    }
+    const ix = await programs.margin.methods.createAccount(seed).accounts(accounts).instruction()
+
+    instructions.push(ix)
   }
 }
