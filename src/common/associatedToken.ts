@@ -1,4 +1,4 @@
-import { Provider, BN } from "@project-serum/anchor"
+import { Provider, BN, Address, translateAddress } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -28,52 +28,55 @@ export class AssociatedToken {
   /**
    * Get the address for the associated token account
    * @static
-   * @param {PublicKey} mint Token mint account
-   * @param {PublicKey} owner Owner of the new account
+   * @param {Address} mint Token mint account
+   * @param {Address} owner Owner of the new account
    * @returns {Promise<PublicKey>} Public key of the associated token account
    * @memberof AssociatedToken
    */
-  static derive(mint: PublicKey, owner: PublicKey): PublicKey {
-    return findDerivedAccount(ASSOCIATED_TOKEN_PROGRAM_ID, owner, TOKEN_PROGRAM_ID, mint)
+  static derive(mint: Address, owner: Address): PublicKey {
+    const mintAddress = translateAddress(mint)
+    const ownerAddress = translateAddress(owner)
+    return findDerivedAccount(ASSOCIATED_TOKEN_PROGRAM_ID, ownerAddress, TOKEN_PROGRAM_ID, mintAddress)
   }
 
   /**
    * TODO:
    * @static
    * @param {Provider} provider
-   * @param {PublicKey} mint
-   * @param {PublicKey} owner
+   * @param {Address} mint
+   * @param {Address} owner
    * @returns {(Promise<AssociatedToken | undefined>)}
    * @memberof AssociatedToken
    */
-  static async load(connection: Connection, mint: PublicKey, owner: PublicKey): Promise<AssociatedToken | undefined> {
-    const address = this.derive(mint, owner)
+  static async load(connection: Connection, mint: Address, owner: Address): Promise<AssociatedToken | undefined> {
+    const mintAddress = translateAddress(mint)
+    const ownerAddress = translateAddress(owner)
+    const address = this.derive(mintAddress, ownerAddress)
     const token = await this.loadAux(connection, address)
-    if (token && !token.info.owner.equals(owner)) {
+    if (token && !token.info.owner.equals(ownerAddress)) {
       throw new Error("Unexpected owner of the associated token")
     }
     return token
   }
 
-  static async loadAux(connection: Connection, address: PublicKey) {
-    const account = await connection.getAccountInfo(address)
+  static async loadAux(connection: Connection, address: Address) {
+    const pubkey = translateAddress(address)
+    const account = await connection.getAccountInfo(pubkey)
     if (!account) {
       return undefined
     }
-    const info = parseTokenAccount(account, address)
+    const info = parseTokenAccount(account, pubkey)
     return new AssociatedToken(account, info)
   }
 
-  static async loadMultipleAux(
-    connection: Connection,
-    addresses: PublicKey[]
-  ): Promise<(AssociatedToken | undefined)[]> {
-    const accounts = await connection.getMultipleAccountsInfo(addresses)
+  static async loadMultipleAux(connection: Connection, addresses: Address[]): Promise<(AssociatedToken | undefined)[]> {
+    const pubkeys = addresses.map(translateAddress)
+    const accounts = await connection.getMultipleAccountsInfo(pubkeys)
     return accounts.map((account, i) => {
       if (!account) {
         return undefined
       }
-      const info = parseTokenAccount(account, addresses[i])
+      const info = parseTokenAccount(account, pubkeys[i])
       return new AssociatedToken(account, info)
     })
   }
@@ -82,21 +85,21 @@ export class AssociatedToken {
    * Get mint info
    * @static
    * @param {Provider} connection
-   * @param {PublicKey} mint
+   * @param {Address} mint
    * @returns {(Promise<Mint | undefined>)}
    * @memberof AssociatedToken
    */
-  static async loadMint(connection: Connection, mint: PublicKey): Promise<Mint | undefined> {
-    const mintInfo = await connection.getAccountInfo(mint)
+  static async loadMint(connection: Connection, mint: Address): Promise<Mint | undefined> {
+    const mintAddress = translateAddress(mint)
+    const mintInfo = await connection.getAccountInfo(mintAddress)
     if (!mintInfo) {
       return undefined
     }
-    return parseMintAccount(mintInfo, mint)
+    return parseMintAccount(mintInfo, mintAddress)
   }
 
   /**
    * Creates an instance of AssociatedToken.
-   * @param {PublicKey} address
    * @param {AccountInfo<Buffer>} account
    * @param {JetTokenAccount} info
    * @memberof AssociatedToken

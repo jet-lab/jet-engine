@@ -4,7 +4,9 @@ import { PublicKey } from "@solana/web3.js"
 import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
 import { MarginPoolData } from "./state"
-import { MarginPoolIdl } from "./idl"
+import { JetMarginPoolIdl } from ".."
+import { JetPrograms } from "../margin/client"
+import { JetTokens } from "../margin/config"
 
 export interface MarginPoolAddresses {
   /** The pool's token mint i.e. BTC or SOL mint address*/
@@ -17,7 +19,7 @@ export interface MarginPoolAddresses {
 
 export class MarginPool {
   constructor(
-    public program: Program<MarginPoolIdl>,
+    public program: Program<JetMarginPoolIdl>,
     public addresses: MarginPoolAddresses,
     public marginPool: MarginPoolData,
     public vault: Account,
@@ -27,35 +29,51 @@ export class MarginPool {
   ) {}
 
   /**
-   * Load a Margin Pool Program Account
-   * @param {Program<MarginPoolIdl>} program
+   * Load a Margin Pool Account
+   * @param {Program<JetMarginPoolIdl>} program
    * @param {Address} tokenMint
    * @returns {Promise<MarginPool>}
    */
-  static async load(program: Program<MarginPoolIdl>, tokenMint: Address): Promise<MarginPool> {
+  static async load(programs: JetPrograms, tokenMint: Address): Promise<MarginPool> {
+    const poolProgram = programs.marginPool
     const tokenMintAddress = translateAddress(tokenMint)
-    const addresses = this.derive(program.programId, tokenMintAddress)
+    const addresses = this.derive(poolProgram.programId, tokenMintAddress)
 
-    const marginPool = await program.account.marginPool.fetch(addresses.marginPool)
-
-    const [poolTokenMintInfo, vaultMintInfo, depositNoteMintInfo, loanNoteMintInfo] =
-      await program.provider.connection.getMultipleAccountsInfo([
-        marginPool.tokenMint,
+    const [marginPoolInfo, poolTokenMintInfo, vaultMintInfo, depositNoteMintInfo, loanNoteMintInfo] =
+      await poolProgram.provider.connection.getMultipleAccountsInfo([
+        addresses.marginPool,
+        addresses.tokenMint,
         addresses.vault,
         addresses.depositNoteMint,
         addresses.loanNoteMint
       ])
 
-    if (!poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
+    if (!marginPoolInfo || !poolTokenMintInfo || !vaultMintInfo || !depositNoteMintInfo || !loanNoteMintInfo) {
       throw new Error("Invalid margin pool")
     }
 
+    const marginPool = poolProgram.coder.accounts.decode<MarginPoolData>("marginPool", marginPoolInfo.data)
     const poolTokenMint = parseMintAccount(poolTokenMintInfo, tokenMintAddress)
     const vault = parseTokenAccount(vaultMintInfo, addresses.vault)
     const depositNoteMint = parseMintAccount(depositNoteMintInfo, addresses.depositNoteMint)
     const loanNoteMint = parseMintAccount(loanNoteMintInfo, addresses.loanNoteMint)
 
-    return new MarginPool(program, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
+    return new MarginPool(poolProgram, addresses, marginPool, vault, depositNoteMint, loanNoteMint, poolTokenMint)
+  }
+
+  /**
+   * Load every Margin Pool in the config.
+   * @param programs
+   * @returns
+   */
+  static async loadAll(programs: JetPrograms): Promise<Record<JetTokens, MarginPool>> {
+    // FIXME: This could be faster with fewer round trips to rpc
+    const pools: Record<string, MarginPool> = {}
+    for (const token of programs.config.tokens) {
+      const pool = await this.load(programs, token.mint)
+      pools[token.symbol.toString()] = pool
+    }
+    return pools
   }
 
   /**
@@ -83,7 +101,7 @@ export class MarginPool {
   // FIXME:
   // /**
   //  * Create a margin pool
-  //  * @param {Program<MarginPoolIdl>} program
+  //  * @param {Program<JetMarginPoolIdl>} program
   //  * @param {TokenMetaDataInfo} tokenMetaDataInfo
   //  * @param {PublicKey} authority
   //  * @param {CreatePoolParams} params
@@ -92,7 +110,7 @@ export class MarginPool {
   //  * @returns {Promise<string>}
   //  */
   // static async create(
-  //   program: Program<MarginPoolIdl>,
+  //   program: Program<JetMarginPoolIdl>,
   //   tokenMetaDataInfo: TokenMetadata,
   //   authority: PublicKey,
   //   params: CreatePoolParams,

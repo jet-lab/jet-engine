@@ -1,25 +1,33 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
 import { Address, Program, translateAddress } from "@project-serum/anchor"
 import { findDerivedAccount } from "../common"
-import { MarginAccountData } from "./state"
-import { MarginIdl } from "./idl"
+import { AccountPositionList, AccountPositionListLayout, MarginAccountData } from "./state"
+import { JetMarginIdl } from ".."
 
 export class MarginAccount {
   static SEED_MAX_VALUE = 65535
-  constructor(public marginProgram: Program<MarginIdl>, public address: PublicKey, public info: MarginAccountData) {}
+  constructor(
+    public marginProgram: Program<JetMarginIdl>,
+    public address: PublicKey,
+    public info: MarginAccountData,
+    public positions: AccountPositionList
+  ) {}
 
   /**
    *
-   * @param {Program<MarginIdl>} marginProgram
+   * @param {Program<JetMarginIdl>} marginProgram
    * @param {Address} owner
    * @param {number} seed
    * @returns {Promise<MarginAccount>}
    */
-  static async load(marginProgram: Program<MarginIdl>, owner: Address, seed: number): Promise<MarginAccount> {
+  static async load(marginProgram: Program<JetMarginIdl>, owner: Address, seed: number): Promise<MarginAccount> {
     const ownerPubkey = translateAddress(owner)
     const address = this.derive(marginProgram.programId, ownerPubkey, seed)
     const marginAccount = await marginProgram.account.marginAccount.fetch(address)
-    return new MarginAccount(marginProgram, address, marginAccount)
+
+    const positions = AccountPositionListLayout.decode(new Uint8Array(marginAccount.positions))
+
+    return new MarginAccount(marginProgram, address, marginAccount, positions)
   }
 
   /**
@@ -47,14 +55,14 @@ export class MarginAccount {
    *
    * @static
    * @param {TransactionInstruction[]} instructions
-   * @param {Program<MarginIdl>} program
+   * @param {Program<JetMarginIdl>} program
    * @param {Address} owner
    * @param {number} seed
    * @memberof MarginAccount
    */
   static withCreate(
     instructions: TransactionInstruction[],
-    program: Program<MarginIdl>,
+    program: Program<JetMarginIdl>,
     owner: Address,
     seed: number
   ): void {
