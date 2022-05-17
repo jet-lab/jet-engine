@@ -24,7 +24,7 @@ export interface JetConfig {
 }
 
 export interface JetTokenConfig {
-  symbol: string
+  symbol: JetTokens
   decimals: number
   faucet?: Address
   faucetLimit?: number

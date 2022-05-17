@@ -214,7 +214,11 @@ export class Airdrop {
    * @returns {Promise<Airdrop[]>}
    * @memberof Airdrop
    */
-  static async loadAll(rewardsProgram: Program<RewardsIdl>, stakePoolVault: PublicKey): Promise<Airdrop[]> {
+  static async loadAll(
+    rewardsProgram: Program<RewardsIdl>,
+    stakePoolVault: PublicKey,
+    decimals: number
+  ): Promise<Airdrop[]> {
     const dataSizeFilter: DataSizeFilter = {
       dataSize: 400464
     }
@@ -227,7 +231,11 @@ export class Airdrop {
     const airdropInfos = await rewardsProgram.account.airdrop.all([dataSizeFilter, stakePoolFilter])
 
     const rewardVaultAddresses = airdropInfos.map(airdrop => this.deriveRewardsVault(airdrop.publicKey))
-    const rewardVaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, rewardVaultAddresses)
+    const rewardVaults = await AssociatedToken.loadMultipleAux(
+      rewardsProgram.provider.connection,
+      rewardVaultAddresses,
+      decimals
+    )
 
     const airdrops: Airdrop[] = []
     for (let i = 0; i < airdropInfos.length; i++) {
@@ -300,12 +308,14 @@ export class Airdrop {
    */
   static useAll(
     rewardsProgram: Program<RewardsIdl> | undefined,
-    stakePoolVault: PublicKey | undefined
+    stakePoolVault: PublicKey | undefined,
+    decimals: number | undefined
   ): Airdrop[] | undefined {
-    return Hooks.usePromise(
-      async () => rewardsProgram && stakePoolVault && Airdrop.loadAll(rewardsProgram, stakePoolVault),
-      [rewardsProgram, stakePoolVault]
-    )
+    return Hooks.usePromise(async () => {
+      if (decimals !== undefined) {
+        return rewardsProgram && stakePoolVault && Airdrop.loadAll(rewardsProgram, stakePoolVault, decimals)
+      }
+    }, [rewardsProgram, stakePoolVault])
   }
 
   /**
