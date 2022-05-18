@@ -189,11 +189,11 @@ export class Distribution {
    * @returns {Promise<Distribution[]>}
    * @memberof Distribution
    */
-  static async loadAll(rewardsProgram: Program<RewardsIdl>): Promise<Distribution[]> {
+  static async loadAll(rewardsProgram: Program<RewardsIdl>, decimals: number): Promise<Distribution[]> {
     const distributions = (await rewardsProgram.account.distribution.all()) as ProgramAccount<DistributionInfo>[]
     const addresses = distributions.map(dist => Distribution.derive(dist.account.seed, dist.account.seedLen))
     const vaultAddresses = addresses.map(address => address.vault)
-    const vaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, vaultAddresses)
+    const vaults = await AssociatedToken.loadMultipleAux(rewardsProgram.provider.connection, vaultAddresses, decimals)
 
     return (
       _.zip(addresses, distributions, vaults)
@@ -307,8 +307,15 @@ export class Distribution {
    * @returns {Distribution[] | undefined}
    * @memberof Distribution
    */
-  static useAll(rewardsProgram: Program<RewardsIdl> | undefined): Distribution[] | undefined {
-    return Hooks.usePromise(async () => rewardsProgram && Distribution.loadAll(rewardsProgram), [rewardsProgram])
+  static useAll(
+    rewardsProgram: Program<RewardsIdl> | undefined,
+    decimals: number | undefined
+  ): Distribution[] | undefined {
+    return Hooks.usePromise(async () => {
+      if (decimals !== undefined) {
+        return rewardsProgram && Distribution.loadAll(rewardsProgram, decimals)
+      }
+    }, [rewardsProgram])
   }
 
   /**

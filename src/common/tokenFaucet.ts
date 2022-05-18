@@ -1,7 +1,12 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
+import {
+  createAssociatedTokenAccountInstruction,
+  createMintToInstruction,
+  NATIVE_MINT,
+  TOKEN_PROGRAM_ID
+} from "@solana/spl-token"
+import { Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AssociatedToken } from "./associatedToken"
-import { BN, Provider } from "@project-serum/anchor"
+import { Address, BN, Provider, translateAddress } from "@project-serum/anchor"
 
 export class TokenFaucet {
   /**
@@ -72,5 +77,81 @@ export class TokenFaucet {
 
     // Execute airdrop
     return provider.send(new Transaction().add(...instructions))
+  }
+
+  static async airdrop(
+    provider: Provider,
+    lamports: BN,
+    mint: Address,
+    owner: Address,
+    faucet?: Address
+  ): Promise<string> {
+    const mintAddress = translateAddress(mint)
+    const ownerAddress = translateAddress(owner)
+
+    const ix: TransactionInstruction[] = []
+
+    const destination = await AssociatedToken.load(provider.connection, mintAddress, ownerAddress)
+
+    // Optionally create a token account for wallet
+    if (!mintAddress.equals(NATIVE_MINT) && !destination.exists) {
+      const createTokenAccountIx = createAssociatedTokenAccountInstruction(
+        ownerAddress,
+        destination.address,
+        ownerAddress,
+        mintAddress
+      )
+      ix.push(createTokenAccountIx)
+    }
+
+    if (mintAddress.equals(NATIVE_MINT)) {
+      // Sol airdrop
+      // Use a specific endpoint. A hack because some devnet endpoints are unable to airdrop
+      const endpoint = new Connection("https://api.devnet.solana.com", Provider.defaultOptions().commitment)
+      const airdropTxnId = await endpoint.requestAirdrop(ownerAddress, parseInt(lamports.toString()))
+      await endpoint.confirmTransaction(airdropTxnId)
+      return airdropTxnId
+    } else if (faucet) {
+      // Faucet airdrop
+      await this.withAirdrop(ix, mintAddress, translateAddress(faucet), destination.address)
+      return await provider.send(new Transaction().add(...ix))
+    } else {
+      // Mint to the destination token account
+      const mintToIx = createMintToInstruction(
+        mintAddress,
+        destination.address,
+        ownerAddress,
+        BigInt(lamports.toString())
+      )
+      ix.push(mintToIx)
+      return await provider.send(new Transaction().add(...ix))
+    }
+  }
+
+  static async buildFaucetAirdropIx(
+    amount: BN,
+    tokenMintPublicKey: PublicKey,
+    destinationAccountPubkey: PublicKey,
+    faucetPubkey: PublicKey
+  ) {
+    const pubkeyNonce = await PublicKey.findProgramAddress([new TextEncoder().encode("faucet")], this.FAUCET_PROGRAM_ID)
+
+    const keys = [
+      { pubkey: pubkeyNonce[0], isSigner: false, isWritable: false },
+      {
+        pubkey: tokenMintPublicKey,
+        isSigner: false,
+        isWritable: true
+      },
+      { pubkey: destinationAccountPubkey, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: faucetPubkey, isSigner: false, isWritable: false }
+    ]
+
+    return new TransactionInstruction({
+      programId: this.FAUCET_PROGRAM_ID,
+      data: Buffer.from([1, ...amount.toArray("le", 8)]),
+      keys
+    })
   }
 }
