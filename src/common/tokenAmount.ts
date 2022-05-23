@@ -1,16 +1,19 @@
 import { BN } from "@project-serum/anchor"
 import { Account, Mint } from "@solana/spl-token"
+import { PublicKey } from "@solana/web3.js"
 import { bigIntToBn } from "./accountParser"
 
 export class TokenAmount {
   /** Raw amount of token lamports */
   public lamports: BN
-  /** Number of decimals configured for token's mint. */
+  /** Number of decimals configured for token's mint */
   public decimals: number
   /** Token amount as string for UI, accounts for decimals. Imprecise at large numbers */
   public uiTokens: string
   /** Token amount as a float, accounts for decimals. Imprecise at large numbers */
   public tokens: number
+
+  public mint: PublicKey
 
   /**
    * Creates an instance of TokenAmount.
@@ -19,13 +22,14 @@ export class TokenAmount {
    * @param {PublicKey} mint
    * @memberof TokenAmount
    */
-  constructor(lamports: BN, decimals: number) {
+  constructor(lamports: BN, decimals: number, mint: PublicKey) {
     if (!BN.isBN(lamports)) {
       console.warn("Amount is not a BN", lamports)
       lamports = new BN(0)
     }
     this.lamports = lamports
     this.decimals = decimals
+    this.mint = mint
     this.tokens = TokenAmount.tokenAmount(lamports, decimals)
     this.uiTokens = this.tokens.toLocaleString("fullwide", { useGrouping: true }) //to prevent scientific numbers. Grouping adds commas
   }
@@ -37,8 +41,8 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static zero(decimals: number): TokenAmount {
-    return new TokenAmount(new BN(0), decimals)
+  public static zero(decimals: number, mint: PublicKey): TokenAmount {
+    return new TokenAmount(new BN(0), decimals, mint)
   }
 
   /**
@@ -49,7 +53,7 @@ export class TokenAmount {
    * @memberof TokenAmount
    */
   public static tokenAccount(tokenAccount: Account, decimals: number): TokenAmount {
-    return new TokenAmount(bigIntToBn(tokenAccount.amount), decimals)
+    return new TokenAmount(bigIntToBn(tokenAccount.amount), decimals, tokenAccount.mint)
   }
 
   /**
@@ -59,8 +63,8 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static mint(mint: Mint): TokenAmount {
-    return new TokenAmount(bigIntToBn(mint.supply), mint.decimals)
+  public static mint(mint: Mint, mintAddress: PublicKey): TokenAmount {
+    return new TokenAmount(bigIntToBn(mint.supply), mint.decimals, mintAddress)
   }
 
   /**
@@ -71,8 +75,8 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static tokens(tokenAmount: string, decimals: number): TokenAmount {
-    return new TokenAmount(TokenAmount.tokensToLamports(tokenAmount, decimals), decimals)
+  public static tokens(tokenAmount: string, decimals: number, mint: PublicKey): TokenAmount {
+    return new TokenAmount(TokenAmount.tokensToLamports(tokenAmount, decimals), decimals, mint)
   }
 
   /**
@@ -97,9 +101,9 @@ export class TokenAmount {
    * @returns {TokenAmount}
    * @memberof TokenAmount
    */
-  public static tokenPrice(marketValue: number, price: number, decimals: number): TokenAmount {
+  public static tokenPrice(marketValue: number, price: number, decimals: number, mint: PublicKey): TokenAmount {
     const tokens = price !== 0 ? marketValue / price : 0
-    return TokenAmount.tokens(tokens.toFixed(decimals), decimals)
+    return TokenAmount.tokens(tokens.toFixed(decimals), decimals, mint)
   }
 
   /**
@@ -154,11 +158,11 @@ export class TokenAmount {
   }
 
   public addb(b: BN): TokenAmount {
-    return new TokenAmount(this.lamports.add(b), this.decimals)
+    return new TokenAmount(this.lamports.add(b), this.decimals, this.mint)
   }
 
   public addn(b: number): TokenAmount {
-    return new TokenAmount(this.lamports.addn(b), this.decimals)
+    return new TokenAmount(this.lamports.addn(b), this.decimals, this.mint)
   }
 
   public sub(b: TokenAmount): TokenAmount {
@@ -166,11 +170,11 @@ export class TokenAmount {
   }
 
   public subb(b: BN): TokenAmount {
-    return new TokenAmount(this.lamports.sub(b), this.decimals)
+    return new TokenAmount(this.lamports.sub(b), this.decimals, this.mint)
   }
 
   public subn(b: number): TokenAmount {
-    return new TokenAmount(this.lamports.subn(b), this.decimals)
+    return new TokenAmount(this.lamports.subn(b), this.decimals, this.mint)
   }
 
   public mul(b: TokenAmount): TokenAmount {
@@ -178,11 +182,11 @@ export class TokenAmount {
   }
 
   public mulb(b: BN): TokenAmount {
-    return new TokenAmount(this.lamports.mul(b), this.decimals)
+    return new TokenAmount(this.lamports.mul(b), this.decimals, this.mint)
   }
 
   public muln(b: number): TokenAmount {
-    return new TokenAmount(this.lamports.muln(b), this.decimals)
+    return new TokenAmount(this.lamports.muln(b), this.decimals, this.mint)
   }
 
   public div(b: TokenAmount): TokenAmount {
@@ -190,11 +194,11 @@ export class TokenAmount {
   }
 
   public divb(b: BN): TokenAmount {
-    return new TokenAmount(this.lamports.div(b), this.decimals)
+    return new TokenAmount(this.lamports.div(b), this.decimals, this.mint)
   }
 
   public divn(b: number): TokenAmount {
-    return new TokenAmount(this.lamports.divn(b), this.decimals)
+    return new TokenAmount(this.lamports.divn(b), this.decimals, this.mint)
   }
 
   public lt(b: TokenAmount): boolean {
@@ -216,9 +220,9 @@ export class TokenAmount {
   private do(b: TokenAmount, fn: (b: BN) => BN): TokenAmount {
     if (this.decimals !== b.decimals) {
       console.warn("Decimal mismatch")
-      return TokenAmount.zero(this.decimals)
+      return TokenAmount.zero(this.decimals, this.mint)
     }
     const amount = fn.call(this.lamports, b.lamports)
-    return new TokenAmount(amount, this.decimals)
+    return new TokenAmount(amount, this.decimals, this.mint)
   }
 }

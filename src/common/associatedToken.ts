@@ -10,15 +10,21 @@ import {
   Mint,
   Account
 } from "@solana/spl-token"
-import { Connection, PublicKey, TransactionInstruction, SystemProgram } from "@solana/web3.js"
+import {
+  AccountInfo,
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  ParsedAccountData,
+  SystemProgram
+} from "@solana/web3.js"
 import { useMemo } from "react"
 import { parseMintAccount, parseTokenAccount } from "./accountParser"
 import { Hooks } from "./hooks"
 import { findDerivedAccount, bnToNumber } from "."
-import { TokenAmount } from "./tokenAmount"
 
 export class AssociatedToken {
-  exists: boolean
+  address: PublicKey
   /**
    * Get the address for the associated token account
    * @static
@@ -36,103 +42,42 @@ export class AssociatedToken {
   /**
    * TODO:
    * @static
-   * @param {Connection} connection
+   * @param {Provider} provider
    * @param {Address} mint
    * @param {Address} owner
-   * @param {number} decimals
-   * @returns {(Promise<AssociatedToken>)}
+   * @returns {(Promise<AssociatedToken | undefined>)}
    * @memberof AssociatedToken
    */
-  static async load(
-    connection: Connection,
-    mint: Address,
-    owner: Address,
-    decimals?: number
-  ): Promise<AssociatedToken> {
+  static async load(connection: Connection, mint: Address, owner: Address): Promise<AssociatedToken | undefined> {
     const mintAddress = translateAddress(mint)
     const ownerAddress = translateAddress(owner)
     const address = this.derive(mintAddress, ownerAddress)
-    const token = await this.loadAux(connection, address, decimals)
-    if (token.info && !token.info.owner.equals(ownerAddress)) {
+    const token = await this.loadAux(connection, address)
+    if (token && !token.info.owner.equals(ownerAddress)) {
       throw new Error("Unexpected owner of the associated token")
     }
     return token
   }
 
-  static async loadAux(connection: Connection, address: Address, decimals?: number) {
+  static async loadAux(connection: Connection, address: Address) {
     const pubkey = translateAddress(address)
     const account = await connection.getAccountInfo(pubkey)
-    let info: Account | null, amount: TokenAmount
-    if (account) {
-      info = parseTokenAccount(account, pubkey)
-      if (decimals === undefined) {
-        const mint = await this.loadMint(connection, info.mint)
-        if (!mint) {
-          throw new Error(`Invalid mint for account ${pubkey.toBase58()}`)
-        }
-        decimals = mint.decimals
-      }
-      amount = TokenAmount.tokenAccount(info, decimals)
-    } else {
-      info = null
-      amount = TokenAmount.zero(decimals ?? 0)
+    if (!account) {
+      return undefined
     }
-    return new AssociatedToken(pubkey, info, amount)
+    const info = parseTokenAccount(account, pubkey)
+    return new AssociatedToken(account, info)
   }
 
-  static zero(mint: Address, owner: Address, decimals: number) {
-    const address = this.derive(mint, owner)
-    return this.zeroAux(address, decimals)
-  }
-
-  static zeroAux(address: Address, decimals: number) {
-    const pubkey = translateAddress(address)
-    const info = null
-    const amount = TokenAmount.zero(decimals)
-    return new AssociatedToken(pubkey, info, amount)
-  }
-
-  static async loadMultiple(
-    connection: Connection,
-    mints: Address[],
-    decimals: number | number[],
-    owners: Address | Address[]
-  ): Promise<AssociatedToken[]> {
-    if (Array.isArray(owners) && owners.length !== mints.length) {
-      throw new Error("Owners array length does not equal mints array length")
-    }
-    if (Array.isArray(decimals) && decimals.length !== mints.length) {
-      throw new Error("Decimals array length does not equal mints array length")
-    }
-
-    const addresses: PublicKey[] = []
-    for (let i = 0; i < mints.length; i++) {
-      const mint = mints[i]
-      const owner = Array.isArray(owners) ? owners[i] : owners
-      addresses.push(AssociatedToken.derive(mint, owner))
-    }
-
-    return await this.loadMultipleAux(connection, addresses, decimals)
-  }
-
-  static async loadMultipleAux(
-    connection: Connection,
-    addresses: Address[],
-    decimals: number | number[]
-  ): Promise<AssociatedToken[]> {
-    if (Array.isArray(decimals) && decimals.length !== addresses.length) {
-      throw new Error("Decimals array length does not equal addresses array length")
-    }
-
-    const pubkeys = addresses.map(address => translateAddress(address))
-
+  static async loadMultipleAux(connection: Connection, addresses: Address[]): Promise<(AssociatedToken | undefined)[]> {
+    const pubkeys = addresses.map(translateAddress)
     const accounts = await connection.getMultipleAccountsInfo(pubkeys)
     return accounts.map((account, i) => {
-      const pubkey = pubkeys[i]
-      const decimal = Array.isArray(decimals) ? decimals[i] : decimals
-      const info = account ? parseTokenAccount(account, pubkeys[i]) : null
-      const amount = info ? TokenAmount.tokenAccount(info, decimal) : TokenAmount.zero(decimal)
-      return new AssociatedToken(pubkey, info, amount)
+      if (!account) {
+        return undefined
+      }
+      const info = parseTokenAccount(account, pubkeys[i])
+      return new AssociatedToken(account, info)
     })
   }
 
@@ -155,14 +100,12 @@ export class AssociatedToken {
 
   /**
    * Creates an instance of AssociatedToken.
-   *
-   * @param {PublicKey} address
-   * @param {Account | null} info
-   * @param {TokenAmount} amount
+   * @param {AccountInfo<Buffer>} account
+   * @param {JetTokenAccount} info
    * @memberof AssociatedToken
    */
-  constructor(public address: PublicKey, public info: Account | null, public amount: TokenAmount) {
-    this.exists = !!info
+  constructor(public account: AccountInfo<Buffer | ParsedAccountData>, public info: Account) {
+    this.address = info.address
   }
 
   /**

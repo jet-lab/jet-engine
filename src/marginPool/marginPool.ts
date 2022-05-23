@@ -30,7 +30,7 @@ export class MarginPool {
 
   /**
    * Load a Margin Pool Account
-   * @param {JetPrograms} programs
+   * @param {Program<JetMarginPoolIdl>} program
    * @param {Address} tokenMint
    * @returns {Promise<MarginPool>}
    */

@@ -354,18 +354,22 @@ export class JetReserve {
     availableLiquidityLamports: BN
   ) {
     const mint = parseMintAccount(mintData, address)
-    const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals)
+    const availableLiquidity = new TokenAmount(availableLiquidityLamports, mint.decimals, data.tokenMint)
     const decodedData = ReserveStateStruct.decode(new Uint8Array(data.state))
 
-    const calculatedOutstandingDebt = new TokenAmount(decodedData.outstandingDebt.div(new BN(1e15)), mint.decimals)
+    const calculatedOutstandingDebt = new TokenAmount(
+      decodedData.outstandingDebt.div(new BN(1e15)),
+      mint.decimals,
+      data.tokenMint
+    )
 
     const state: ReserveStateData = {
       accruedUntil: decodedData.accruedUntil,
       outstandingDebt: calculatedOutstandingDebt,
-      uncollectedFees: new TokenAmount(decodedData.uncollectedFees, mint.decimals),
-      totalDeposits: new TokenAmount(decodedData.totalDeposits, mint.decimals),
-      totalDepositNotes: new TokenAmount(decodedData.totalDepositNotes, mint.decimals),
-      totalLoanNotes: new TokenAmount(decodedData.totalLoanNotes, mint.decimals)
+      uncollectedFees: new TokenAmount(decodedData.uncollectedFees, mint.decimals, data.tokenMint),
+      totalDeposits: new TokenAmount(decodedData.totalDeposits, mint.decimals, data.tokenMint),
+      totalDepositNotes: new TokenAmount(decodedData.totalDepositNotes, mint.decimals, data.depositNoteMint),
+      totalLoanNotes: new TokenAmount(decodedData.totalLoanNotes, mint.decimals, data.loanNoteMint)
     }
 
     const reserve: ReserveData = {
