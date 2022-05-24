@@ -31,7 +31,7 @@ const PriceInfoLayout = BL.struct<PriceInfo>([
   BL.u8("isValid"),
   BL.blob(3, "_reserved")
 ])
-console.assert(PriceInfoLayout.span === 24, "Unexpected PriceInfoLayout span", PriceInfoLayout.span, "expected", 24)
+console.assert(PriceInfoLayout.span === 24)
 
 export interface AccountPosition {
   /// The address of the token/mint of the asset */
@@ -81,16 +81,9 @@ const AccountPositionLayout = BL.struct<AccountPosition>([
   BL.u32("kind"),
   BL.s16("exponent"),
   BL.u16("collateralWeight"),
-  u64Field("collateralMaxStaleness"),
-  BL.blob(24, "_reserved")
+  u64Field("collateralMaxStaleness")
 ])
-console.assert(
-  AccountPositionLayout.span === 192,
-  "Unexpected AccountPositionLayout span",
-  AccountPositionLayout.span,
-  "expected",
-  192
-)
+console.assert(AccountPositionLayout.span === 192)
 
 export interface AccountPositionKey {
   /* The address of the mint for the position token */
@@ -101,13 +94,7 @@ export interface AccountPositionKey {
 }
 
 const AccountPositionKeyLayout = BL.struct<AccountPositionKey>([pubkeyField("mint"), u64Field("index")])
-console.assert(
-  AccountPositionKeyLayout.span === 40,
-  "Unexpected AccountPositionKeyLayout span",
-  AccountPositionKeyLayout.span,
-  "expected",
-  40
-)
+console.assert(AccountPositionKeyLayout.span === 40)
 
 export interface AccountPositionList {
   length: BN
@@ -120,10 +107,4 @@ export const AccountPositionListLayout = BL.struct<AccountPositionList>([
   BL.seq(AccountPositionKeyLayout, 32, "map"),
   BL.seq(AccountPositionLayout, 32, "positions")
 ])
-console.assert(
-  AccountPositionListLayout.span === 7432,
-  "Unexpected AccountPositionListLayout span",
-  AccountPositionListLayout.span,
-  "expected",
-  7432
-)
+console.assert(AccountPositionListLayout.span === 7432)

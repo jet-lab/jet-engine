@@ -157,21 +157,24 @@ export class JetObligation implements Obligation {
       if (!reserveCache.reserve.equals(reserve.address)) {
         throw new Error("market reserves do not match reserve list.")
       }
-      // FIXME!
-      const depositNotes: TokenAmount | undefined = TokenAmount.zero(deposits[0].decimals)
-      const collateralNotes: TokenAmount | undefined = TokenAmount.zero(collateral[0].decimals)
-      const loanNotes: TokenAmount | undefined = TokenAmount.zero(loans[0].decimals)
+      const depositNotes = deposits.find(deposit => deposit.mint.equals(reserve.depositNoteMint))
+      const collateralNotes = collateral.find(collateral => collateral.mint.equals(reserve.depositNoteMint))
+      const loanNotes = loans.find(loan => loan.mint.equals(reserve.loanNoteMint))
 
       const balance: Position = {
         reserve: reserve,
         depositNotes,
         depositBalance:
-          depositNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ?? TokenAmount.zero(0),
+          depositNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.depositNoteMint),
         collateralNotes: collateralNotes,
         collateralBalance:
-          collateralNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ?? TokenAmount.zero(0),
+          collateralNotes?.mulb(reserveCache.depositNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.depositNoteMint),
         loanNotes: loanNotes,
-        loanBalance: loanNotes?.mulb(reserveCache.loanNoteExchangeRate).divb(new BN(1e15)) ?? TokenAmount.zero(0),
+        loanBalance:
+          loanNotes?.mulb(reserveCache.loanNoteExchangeRate).divb(new BN(1e15)) ??
+          TokenAmount.zero(0, reserve.loanNoteMint),
         //todo fixme
         maxDepositAmount: undefined as any as TokenAmount,
         maxWithdrawAmount: undefined as any as TokenAmount,
