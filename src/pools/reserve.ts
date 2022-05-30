@@ -260,7 +260,7 @@ export class JetReserve {
       parseTokenAccount(vault, reserveInfos[i].vault)
     )
 
-    const multipleData = []
+    const multipleData: any[] = []
     for (let i = 0; i < reserveAddresses.length; i++) {
       const data = await client.program.account.reserve.fetch(reserveAddresses[i])
       if (!data) {

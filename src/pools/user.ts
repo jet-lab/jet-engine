@@ -265,7 +265,7 @@ export class JetUser implements JetUserData {
       accounts: {
         market: this.market.address,
         marketAuthority: this.market.marketAuthority,
-        obligation: this.obligation,
+        obligation: this.obligation.address,
         reserve: loanReserve.data.address,
         collateralReserve: collateralReserve.data.address,
         vault: loanReserve.data.vault,
