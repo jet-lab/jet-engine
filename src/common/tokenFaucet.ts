@@ -1,7 +1,7 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AssociatedToken } from "./associatedToken"
-import { BN, Provider } from "@project-serum/anchor"
+import { AnchorProvider, BN } from "@project-serum/anchor"
 
 export class TokenFaucet {
   /**
@@ -60,7 +60,12 @@ export class TokenFaucet {
    * @returns {Promise<string>}
    * @memberof TokenFaucet
    */
-  static async airdropToken(provider: Provider, faucet: PublicKey, user: PublicKey, mint: PublicKey): Promise<string> {
+  static async airdropToken(
+    provider: AnchorProvider,
+    faucet: PublicKey,
+    user: PublicKey,
+    mint: PublicKey
+  ): Promise<string> {
     const instructions: TransactionInstruction[] = []
 
     // Check for user token account
@@ -71,6 +76,6 @@ export class TokenFaucet {
     await this.withAirdrop(instructions, mint, faucet, address)
 
     // Execute airdrop
-    return provider.send(new Transaction().add(...instructions))
+    return provider.sendAndConfirm(new Transaction().add(...instructions))
   }
 }

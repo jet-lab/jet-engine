@@ -1,4 +1,4 @@
-import { Provider, BN, Address, translateAddress } from "@project-serum/anchor"
+import { BN, Address, translateAddress, AnchorProvider } from "@project-serum/anchor"
 import { TOKEN_PROGRAM_ID } from "@project-serum/serum/lib/token-instructions"
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -186,7 +186,7 @@ export class AssociatedToken {
    */
   static async withCreate(
     instructions: TransactionInstruction[],
-    provider: Provider,
+    provider: AnchorProvider,
     owner: PublicKey,
     mint: PublicKey
   ): Promise<PublicKey> {
@@ -230,7 +230,7 @@ export class AssociatedToken {
    */
   static async withWrapIfNativeMint(
     instructions: TransactionInstruction[],
-    provider: Provider,
+    provider: AnchorProvider,
     owner: PublicKey,
     mint: PublicKey,
     amount: BN
@@ -261,7 +261,7 @@ export class AssociatedToken {
    */
   static async withUnwrapIfNative(
     instructions: TransactionInstruction[],
-    provider: Provider,
+    provider: AnchorProvider,
     owner: PublicKey, //user pubkey
     tokenAccount: PublicKey,
     mint: PublicKey,

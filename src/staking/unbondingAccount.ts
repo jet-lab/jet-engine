@@ -1,6 +1,6 @@
 import { AssociatedToken } from "./../common/associatedToken"
 import { MemcmpFilter, PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js"
-import { BN, Program, Provider } from "@project-serum/anchor"
+import { AnchorProvider, BN, Program } from "@project-serum/anchor"
 import { bnToNumber, findDerivedAccount } from "../common"
 import { StakeAccount, StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
@@ -267,7 +267,7 @@ export class UnbondingAccount {
     unbondingAccount: UnbondingAccount,
     stakeAccount: StakeAccount,
     stakePool: StakePool,
-    provider: Provider
+    provider: AnchorProvider
   ): Promise<TransactionInstruction[]> {
     const ix: TransactionInstruction[] = []
     const tokenReceiver = await AssociatedToken.withCreate(

@@ -1,6 +1,5 @@
 import { Program, Provider } from "@project-serum/anchor"
-import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
-import { PublicKey, Transaction } from "@solana/web3.js"
+import { Keypair, PublicKey, Transaction } from "@solana/web3.js"
 import { useEffect, useState } from "react"
 import { connect, findDerivedAccount } from "../common"
 import { PubkeyField } from "../common/accountParser"
@@ -156,8 +155,11 @@ export class Auth {
    * @returns {Promise<Transaction>}
    * @memberof Auth
    */
-  static approveAuthentication(authProgram: Program<AuthIdl>, user: PublicKey): Promise<Transaction> {
-    const authority = (authProgram.provider.wallet as NodeWallet).payer
+  static approveAuthentication(
+    authProgram: Program<AuthIdl>,
+    authority: Keypair,
+    user: PublicKey
+  ): Promise<Transaction> {
     return authProgram.methods
       .authenticate()
       .accounts({

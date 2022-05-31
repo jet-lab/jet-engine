@@ -1,6 +1,6 @@
 import { StakePool } from "./../staking/stakePool"
 import { bnToNumber, utf8ToString } from "./../common/accountParser"
-import { BN, Program, ProgramAccount } from "@project-serum/anchor"
+import { AnchorProvider, BN, Program, ProgramAccount } from "@project-serum/anchor"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { AssociatedToken, findDerivedAccount } from "../common"
 import { Hooks } from "../common/hooks"
@@ -228,12 +228,13 @@ export class Distribution {
    */
   static async createForStakePool(
     rewardsProgram: Program<RewardsIdl>,
+    provider: AnchorProvider,
     distributionTarget: StakePool,
     params: DistributionCreateParams
   ) {
     const stakePoolVault = distributionTarget.addresses.stakePoolVault
     const tokenMint = distributionTarget.stakePool.tokenMint
-    await this.create(rewardsProgram, stakePoolVault, tokenMint, params)
+    await this.create(rewardsProgram, provider, stakePoolVault, tokenMint, params)
   }
 
   /**
@@ -249,6 +250,7 @@ export class Distribution {
    */
   static async create(
     rewardsProgram: Program<RewardsIdl>,
+    provider: AnchorProvider,
     targetAccount: PublicKey,
     tokenMint: PublicKey,
     params: DistributionCreateParams
@@ -263,7 +265,7 @@ export class Distribution {
         ...params.accounts,
         distribution: addresses.distribution,
         vault: addresses.vault,
-        payerRent: rewardsProgram.provider.wallet.publicKey,
+        payerRent: provider.wallet.publicKey,
         tokenMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

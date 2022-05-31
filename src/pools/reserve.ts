@@ -33,6 +33,7 @@ import { findDerivedAccountWithBump } from "../common"
 import { DerivedAccount } from "../common"
 import { Hooks } from "../common"
 import { ReserveStateStruct } from "./layout"
+import { WalletNotConnectedError } from "@solana/spl-governance"
 
 export interface ReserveConfig {
   utilizationRate1: number
@@ -203,10 +204,7 @@ export class JetReserve {
 
     const {
       value: { amount: availableLiquidity }
-    } = await client.program.provider.connection.getTokenAccountBalance(
-      data.vault,
-      client.program.provider.opts.commitment
-    )
+    } = await client.program.provider.connection.getTokenAccountBalance(data.vault)
 
     const mintInfo = await client.program.provider.connection.getAccountInfo(data.tokenMint)
 
@@ -311,10 +309,7 @@ export class JetReserve {
     ] = await Promise.all([
       this.market.refresh(),
       JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct),
-      this.client.program.provider.connection.getTokenAccountBalance(
-        data.vault,
-        this.client.program.provider.opts.commitment
-      )
+      this.client.program.provider.connection.getTokenAccountBalance(data.vault)
     ])
     const mintInfo = await this.client.program.provider.connection.getAccountInfo(data.tokenMint)
     if (!mintInfo) {
@@ -395,7 +390,10 @@ export class JetReserve {
 
   async sendRefreshTx(): Promise<string> {
     const tx = new Transaction().add(await this.makeRefreshIx())
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
