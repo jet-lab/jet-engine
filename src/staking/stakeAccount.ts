@@ -1,5 +1,5 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js"
-import { BN, Program, Provider } from "@project-serum/anchor"
+import { AnchorProvider, BN, Program } from "@project-serum/anchor"
 import { StakePool } from "."
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { findDerivedAccount } from "../common"
@@ -7,6 +7,7 @@ import { Hooks } from "../common/hooks"
 import { Auth } from "../auth"
 import { StakeIdl } from "./idl"
 import { AllAccountsMap, IdlTypes, TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types"
+import { WalletNotConnectedError } from "@solana/spl-governance"
 
 export type StakeAccountInfo = TypeDef<AllAccountsMap<StakeIdl>["stakeAccount"], IdlTypes<StakeIdl>>
 export type VoterWeightRecord = TypeDef<AllAccountsMap<StakeIdl>["voterWeightRecord"], IdlTypes<StakeIdl>>
@@ -162,7 +163,10 @@ export class StakeAccount {
 
     await this.withCreate(instructions, stakeProgram, stakePool, owner, payer)
 
-    return stakeProgram.provider.send(new Transaction().add(...instructions))
+    if (!stakeProgram.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return stakeProgram.provider.sendAndConfirm(new Transaction().add(...instructions))
   }
 
   /**
@@ -178,7 +182,7 @@ export class StakeAccount {
    * @memberof StakeAccount
    */
   static async addStake(
-    provider: Provider,
+    provider: AnchorProvider,
     stakePool: StakePool,
     owner: PublicKey,
     collateralTokenAccount: PublicKey,
@@ -189,7 +193,7 @@ export class StakeAccount {
     await this.withCreate(instructions, stakePool.program, stakePool.addresses.stakePool, owner, owner)
     await this.withAddStake(instructions, stakePool, owner, owner, collateralTokenAccount, amount)
 
-    return provider.send(new Transaction().add(...instructions))
+    return provider.sendAndConfirm(new Transaction().add(...instructions))
   }
 
   /**

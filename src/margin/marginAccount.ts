@@ -71,8 +71,8 @@ export class MarginAccount {
 
     const createInfo = {
       accounts: {
-        owner: owner,
-        payer: program.provider.wallet.publicKey,
+        owner,
+        payer: owner,
         marginAccount: marginAccount,
         systemProgram: SystemProgram.programId
       },

@@ -35,6 +35,7 @@ import { TokenAmount } from ".."
 import { parseTokenAccount } from "../common/accountParser"
 import { findDerivedAccountWithBump, Hooks } from "../common"
 import { DerivedAccount } from "../common"
+import { WalletNotConnectedError } from "@solana/spl-governance"
 
 export interface JetUserData {
   address: PublicKey
@@ -127,7 +128,10 @@ export class JetUser implements JetUserData {
    */
   async liquidateDex(loanReserve: JetReserve, collateralReserve: JetReserve): Promise<string> {
     const tx = await this.makeLiquidateDexTx(loanReserve, collateralReserve)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -235,7 +239,10 @@ export class JetUser implements JetUserData {
       amount,
       minCollateral
     )
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -330,7 +337,10 @@ export class JetUser implements JetUserData {
    */
   async repay(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
     const tx = await this.makeRepayTx(reserve, tokenAccount, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -389,7 +399,10 @@ export class JetUser implements JetUserData {
    */
   async withdrawCollateral(reserve: JetReserve, amount: Amount): Promise<string> {
     const tx = await this.makeWithdrawCollateralTx(reserve, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -453,7 +466,10 @@ export class JetUser implements JetUserData {
    */
   async withdraw(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
     const tx = await this.makeWithdrawTx(reserve, tokenAccount, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -512,7 +528,10 @@ export class JetUser implements JetUserData {
    */
   async deposit(reserve: JetReserve, tokenAccount: PublicKey, amount: Amount): Promise<string> {
     const tx = await this.makeDepositTx(reserve, tokenAccount, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -578,7 +597,10 @@ export class JetUser implements JetUserData {
    */
   async depositCollateral(reserve: JetReserve, amount: Amount): Promise<string> {
     const tx = await this.makeDepositCollateralTx(reserve, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -653,7 +675,10 @@ export class JetUser implements JetUserData {
    */
   async borrow(reserve: JetReserve, receiver: PublicKey, amount: Amount): Promise<string> {
     const tx = await this.makeBorrowTx(reserve, receiver, amount)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
 
   /**
@@ -707,7 +732,10 @@ export class JetUser implements JetUserData {
 
   async closeDepositAccount(reserve: JetReserve, receiver: PublicKey): Promise<string> {
     const tx = await this.closeDepositAccountTx(reserve, receiver)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
   async closeDepositAccountTx(reserve: JetReserve, receiver: PublicKey): Promise<Transaction> {
     const accounts = this.findReserveAccounts(reserve)
@@ -733,7 +761,10 @@ export class JetUser implements JetUserData {
 
   async closeCollateralAccount(reserve: JetReserve): Promise<string> {
     const tx = await this.closeCollateralAccountTx(reserve)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
   async closeCollateralAccountTx(reserve: JetReserve): Promise<Transaction> {
     const accounts = this.findReserveAccounts(reserve)
@@ -756,7 +787,10 @@ export class JetUser implements JetUserData {
 
   async closeLoanAccount(reserve: JetReserve): Promise<string> {
     const tx = await this.closeLoanAccountTx(reserve)
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
   async closeLoanAccountTx(reserve: JetReserve): Promise<Transaction> {
     const accounts = this.findReserveAccounts(reserve)
@@ -778,7 +812,10 @@ export class JetUser implements JetUserData {
 
   async closeObligationAccount(): Promise<string> {
     const tx = await this.closeObligationAccountTx()
-    return await this.client.program.provider.send(tx)
+    if (!this.client.program.provider.sendAndConfirm) {
+      throw new WalletNotConnectedError()
+    }
+    return await this.client.program.provider.sendAndConfirm(tx)
   }
   async closeObligationAccountTx(): Promise<Transaction> {
     const tx = new Transaction()
