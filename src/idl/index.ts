@@ -1,6 +1,0 @@
-export { JetControlIdl } from "./JetControlIdl"
-export { JetMarginIdl } from "./JetMarginIdl"
-export { JetMetadataIdl } from "./JetMetadataIdl"
-export { JetMarginPoolIdl } from "./JetMarginPoolIdl"
-export { JetMarginSerumIdl } from "./JetMarginSerumIdl"
-export { JetMarginSwapIdl } from "./JetMarginSwapIdl"

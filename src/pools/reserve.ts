@@ -240,14 +240,31 @@ export class JetReserve {
       throw new Error(`Jet Reserve at address ${reserveAddresses[nullReserveIndex]} is invalid.`)
     }
 
-    const [pythOracles, vaultInfos] = await Promise.all([
-      Promise.all(
-        reserveInfos.map(reserveInfo =>
-          JetReserve.loadPythOracle(client, reserveInfo.pythOraclePrice, reserveInfo.pythOracleProduct)
-        )
-      ),
-      client.program.provider.connection.getMultipleAccountsInfo(reserveInfos.map(reserve => reserve.vault))
-    ])
+    const priceDatas = (
+      await client.program.provider.connection.getMultipleAccountsInfo(
+        reserveInfos.map(reserveInfo => reserveInfo.pythOraclePrice)
+      )
+    ).map(priceInfo => {
+      if (!priceInfo) {
+        throw new Error("Invalid pyth oracle price")
+      }
+      return parsePriceData(priceInfo.data)
+    })
+
+    const productDatas = (
+      await client.program.provider.connection.getMultipleAccountsInfo(
+        reserveInfos.map(reserveInfo => reserveInfo.pythOracleProduct)
+      )
+    ).map(productInfo => {
+      if (!productInfo) {
+        throw new Error("Invalid pyth oracle product")
+      }
+      return parseProductData(productInfo.data)
+    })
+
+    const vaultInfos = await client.program.provider.connection.getMultipleAccountsInfo(
+      reserveInfos.map(reserve => reserve.vault)
+    )
 
     const nullVaultIndex = vaultInfos.findIndex(vault => vault == null)
     if (nullVaultIndex !== -1) {
@@ -278,12 +295,11 @@ export class JetReserve {
     }
 
     const reserves = reserveInfos.map((reserveInfo, i) => {
-      const pythOracle = pythOracles[i]
       const data = JetReserve.decodeReserveData(
         reserveAddresses[i],
         reserveInfo,
-        pythOracle.priceData,
-        pythOracle.productData,
+        priceDatas[i],
+        productDatas[i],
         multipleMintInfo[i],
         bigIntToBn(vaults[i].amount)
       )
@@ -300,17 +316,11 @@ export class JetReserve {
    */
   async refresh(): Promise<void> {
     const data = await this.client.program.account.reserve.fetch(this.data.address)
-    const [
-      ,
-      pythOracle,
-      {
-        value: { amount: availableLiquidity }
-      }
-    ] = await Promise.all([
-      this.market.refresh(),
-      JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct),
-      this.client.program.provider.connection.getTokenAccountBalance(data.vault)
-    ])
+    await this.market.refresh()
+    const pythOracle = await JetReserve.loadPythOracle(this.client, data.pythOraclePrice, data.pythOracleProduct)
+    const {
+      value: { amount: availableLiquidity }
+    } = await this.client.program.provider.connection.getTokenAccountBalance(data.vault)
     const mintInfo = await this.client.program.provider.connection.getAccountInfo(data.tokenMint)
     if (!mintInfo) {
       throw new Error("reserve tokenMint does not exist")
