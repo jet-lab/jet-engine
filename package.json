@@ -31,7 +31,7 @@
     "fmt": "prettier src/ tests/ types/ --check",
     "fmt:fix": "prettier src/ tests/ types/ --write",
     "lint": "eslint src/ --ext .ts",
-    "test": "jest",
+    "test": "jest --testTimeout=10000",
     "docs": "typedoc --excludePrivate --includeVersion src/index.ts",
     "precommit": "npm run build && npm run fmt:fix && npm run lint && npm test",
     "prepare": "husky install",

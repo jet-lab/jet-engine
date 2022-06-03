@@ -17,7 +17,7 @@
 
 import { AnchorProvider } from "@project-serum/anchor"
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet"
-import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js"
+import { Connection, Keypair } from "@solana/web3.js"
 import { JetClient, JetMarket, JET_MARKET_ADDRESS_DEVNET } from "../src/pools"
 
 describe("JetMarket", () => {
@@ -26,7 +26,7 @@ describe("JetMarket", () => {
 
   beforeAll(async () => {
     const wallet = Keypair.generate()
-    const provider = new AnchorProvider(new Connection(clusterApiUrl("devnet")), new NodeWallet(wallet), {})
+    const provider = new AnchorProvider(new Connection("https://mango.devnet.rpcpool.com"), new NodeWallet(wallet), {})
     client = await JetClient.connect(provider, true)
   })
 
