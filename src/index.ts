@@ -29,27 +29,6 @@ export {
   DerivedAccount
 } from "./common"
 export * from "./gov"
-export {
-  JetControlIdl,
-  JetMarginIdl,
-  JetMarginPoolIdl,
-  JetMarginSerumIdl,
-  JetMarginSwapIdl,
-  JetMetadataIdl
-} from "./idl"
-export {
-  JetPrograms,
-  JetClient,
-  MarginAccount,
-  JetCluster,
-  JetConfig,
-  JetMarketConfig,
-  JetOracleConfig,
-  JetTokenConfig,
-  JetTokens,
-  JET_CONFIG
-} from "./margin"
-export { MarginPool, MarginPoolAddresses } from "./marginPool"
 export * from "./pools"
 export {
   Airdrop,

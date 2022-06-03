@@ -35,7 +35,7 @@
     "docs": "typedoc --excludePrivate --includeVersion src/index.ts",
     "precommit": "npm run build && npm run fmt:fix && npm run lint && npm test",
     "prepare": "husky install",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@project-serum/anchor": "^0.24.2",

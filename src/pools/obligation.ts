@@ -113,10 +113,9 @@ export class JetObligation implements Obligation {
     userAddress: PublicKey
   ): Promise<JetObligation> {
     const market = await JetMarket.load(client, marketAddress)
-    const [user, reserves] = await Promise.all([
-      JetUser.load(client, market, jetReserves, userAddress),
-      JetReserve.loadMultiple(client, market)
-    ])
+    const user = await JetUser.load(client, market, jetReserves, userAddress)
+    const reserves = await JetReserve.loadMultiple(client, market)
+
     return this.create(
       market,
       user,
