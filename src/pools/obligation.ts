@@ -182,16 +182,18 @@ export class JetObligation implements Obligation {
       }
 
       const price = reserve.priceData.price
-      if (price != undefined) {
-        if (balance.depositBalance) {
-          depositedValue += balance.depositBalance.muln(price).tokens
-        }
-        if (balance.collateralBalance) {
-          collateralValue += balance.collateralBalance.muln(price).tokens
-        }
-        if (balance.loanBalance) {
-          loanedValue += balance.loanBalance.muln(price).tokens
-        }
+      if (price === undefined) {
+        throw new Error("Invalid Reserve Pricing Data")
+      }
+
+      if (balance.depositBalance) {
+        depositedValue += balance.depositBalance.muln(price).tokens
+      }
+      if (balance.collateralBalance) {
+        collateralValue += balance.collateralBalance.muln(price).tokens
+      }
+      if (balance.loanBalance) {
+        loanedValue += balance.loanBalance.muln(price).tokens
       }
 
       balances[i] = balance
