@@ -193,7 +193,7 @@ export class JetObligation implements Obligation {
           loanedValue += balance.loanBalance.muln(price).tokens
         }
       } else {
-        throw new Error('Invalid Reserve Pricing Data')
+        throw new Error("Invalid Reserve Pricing Data")
       }
 
       balances[i] = balance
